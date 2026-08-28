@@ -32,7 +32,7 @@ export class LandslideDashboard {
   private container: HTMLElement;
   private viewMode: AppViewMode = 'authority';
   private lang: AppLanguage = 'en';
-  private isOfflineDemo = false; // Default to LIVE real-time telemetry on startup!
+  private isOfflineDemo = false;
   private currentScenario: DemoScenario = 'monsoon_deluge';
   private selectedDistrictId = 'as_dima_hasao';
   private selectedStateFilter: 'ALL' | NerState = 'ALL';
@@ -67,8 +67,14 @@ export class LandslideDashboard {
   public async init() {
     this.renderSkeleton();
     this.initComponents();
-    await this.refreshAllTelemetry();
     this.bindGlobalEvents();
+
+    // 1. Synchronously populate initial baseline data so UI is 100% interactive instantly (0ms delay)
+    this.populateInitialState();
+    this.renderAllViews();
+
+    // 2. Fetch live data in parallel in background without blocking UI
+    void this.refreshLiveTelemetryBackground();
   }
 
   private renderSkeleton() {
@@ -161,7 +167,7 @@ export class LandslideDashboard {
                 
                 <!-- State Filter Tabs -->
                 <div style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px;">
-                  <button class="state-filter-btn active" data-state="ALL" style="background: #1e293b; color: #38bdf8; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; white-space: nowrap; cursor: pointer;">ALL</button>
+                  <button class="state-filter-btn active" data-state="ALL" style="background: #1e293b; color: #38bdf8; border: 1px solid #0284c7; border-radius: 4px; padding: 2px 8px; font-size: 10px; white-space: nowrap; cursor: pointer;">ALL</button>
                   ${NER_STATES.map(s => `
                     <button class="state-filter-btn" data-state="${s}" style="background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; white-space: nowrap; cursor: pointer;">${s}</button>
                   `).join('')}
@@ -248,35 +254,64 @@ export class LandslideDashboard {
     });
   }
 
-  private async refreshAllTelemetry() {
-    // 1. Fetch or simulate seismic data
-    if (this.isOfflineDemo) {
-      this.liveEarthquakes = MOCK_EARTHQUAKES[this.currentScenario];
-    } else {
-      this.liveEarthquakes = await fetchLiveSeismicData();
+  private populateInitialState() {
+    this.liveEarthquakes = MOCK_EARTHQUAKES['monsoon_deluge'];
+
+    let maxRain = 0;
+    for (const d of NER_DISTRICTS) {
+      const weather = getMockWeatherForDistrict(d, this.isOfflineDemo ? this.currentScenario : 'monsoon_deluge');
+      const soil = getMockSoilForDistrict(d, this.isOfflineDemo ? this.currentScenario : 'monsoon_deluge');
+      const seismic = computeDistrictSeismicTelemetry(d.lat, d.lon, this.liveEarthquakes);
+      const risk = calculateLandslideRisk(d, weather, soil, seismic);
+
+      this.weatherMap.set(d.id, weather);
+      this.soilMap.set(d.id, soil);
+      this.seismicMap.set(d.id, seismic);
+      this.riskMap.set(d.id, risk);
+
+      if (weather.rainfall24hMm > maxRain) maxRain = weather.rainfall24hMm;
+      alertsManager.evaluateAndTriggerAlert(d, risk);
     }
+
+    const statMaxRainEl = document.getElementById('stat-max-rain');
+    if (statMaxRainEl) statMaxRainEl.textContent = `${maxRain} mm`;
 
     const statQuakesEl = document.getElementById('stat-quakes-count');
     if (statQuakesEl) statQuakesEl.textContent = String(this.liveEarthquakes.length);
+  }
 
-    let maxRain = 0;
+  private renderAllViews() {
+    this.renderDistrictList();
+    this.mapComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
+    this.mapComp?.renderCoolrLandslides(this.showCoolrLayer);
+    this.mapComp?.renderSeismicEvents(this.liveEarthquakes, this.showSeismicLayer);
+    this.updateActiveDistrictViews();
+  }
 
-    // 2. Fetch or simulate weather & soil telemetry for all districts
-    for (const d of NER_DISTRICTS) {
-      let weather: WeatherTelemetry;
-      let soil: SoilTelemetry;
+  private async refreshLiveTelemetryBackground() {
+    if (this.isOfflineDemo) return;
 
-      if (this.isOfflineDemo) {
-        weather = getMockWeatherForDistrict(d, this.currentScenario);
-        soil = getMockSoilForDistrict(d, this.currentScenario);
-      } else {
-        const mockFallbackWeather = getMockWeatherForDistrict(d, 'monsoon_deluge');
-        const mockFallbackSoil = getMockSoilForDistrict(d, 'monsoon_deluge');
-        weather = await fetchLiveWeather(d.id, d.lat, d.lon, mockFallbackWeather);
-        soil = await fetchLiveSoilMoisture(d.id, d.lat, d.lon, mockFallbackSoil);
+    try {
+      // 1. Fetch live earthquakes in background
+      const quakes = await fetchLiveSeismicData();
+      if (quakes && quakes.length > 0) {
+        this.liveEarthquakes = quakes;
+        const statQuakesEl = document.getElementById('stat-quakes-count');
+        if (statQuakesEl) statQuakesEl.textContent = String(this.liveEarthquakes.length);
       }
+    } catch (e) {
+      console.warn('[Seismic Ingestion] Live fetch fallback:', e);
+    }
 
-      if (weather.rainfall24hMm > maxRain) maxRain = weather.rainfall24hMm;
+    // 2. Fetch live weather & soil for all districts in parallel
+    const promises = NER_DISTRICTS.map(async (d) => {
+      const fallbackWeather = this.weatherMap.get(d.id) || getMockWeatherForDistrict(d, 'monsoon_deluge');
+      const fallbackSoil = this.soilMap.get(d.id) || getMockSoilForDistrict(d, 'monsoon_deluge');
+
+      const [weather, soil] = await Promise.all([
+        fetchLiveWeather(d.id, d.lat, d.lon, fallbackWeather),
+        fetchLiveSoilMoisture(d.id, d.lat, d.lon, fallbackSoil),
+      ]);
 
       const seismic = computeDistrictSeismicTelemetry(d.lat, d.lon, this.liveEarthquakes);
       const risk = calculateLandslideRisk(d, weather, soil, seismic);
@@ -286,21 +321,20 @@ export class LandslideDashboard {
       this.seismicMap.set(d.id, seismic);
       this.riskMap.set(d.id, risk);
 
-      // Evaluate and dispatch alerts
       alertsManager.evaluateAndTriggerAlert(d, risk);
-    }
+    });
+
+    await Promise.allSettled(promises);
+
+    let maxRain = 0;
+    this.weatherMap.forEach(w => {
+      if (w.rainfall24hMm > maxRain) maxRain = w.rainfall24hMm;
+    });
 
     const statMaxRainEl = document.getElementById('stat-max-rain');
     if (statMaxRainEl) statMaxRainEl.textContent = `${maxRain} mm`;
 
-    // Render district list and map layers
-    this.renderDistrictList();
-    this.mapComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
-    this.mapComp?.renderCoolrLandslides(this.showCoolrLayer);
-    this.mapComp?.renderSeismicEvents(this.liveEarthquakes, this.showSeismicLayer);
-
-    // Render active district HUD
-    this.updateActiveDistrictViews();
+    this.renderAllViews();
   }
 
   private renderDistrictList() {
@@ -343,7 +377,7 @@ export class LandslideDashboard {
 
         return `
         <div class="district-list-item ${isSelected ? 'selected' : ''}" data-id="${d.id}" style="padding: 10px 12px; border-bottom: 1px solid #1e293b; cursor: pointer; background: ${isSelected ? '#1e293b' : 'transparent'}; transition: background 0.15s ease;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; pointer-events: none;">
             <div style="font-weight: 700; font-size: 13px; color: ${isSelected ? '#38bdf8' : '#f1f5f9'};">
               ${this.lang === 'hi' ? d.nameHi : d.name}
             </div>
@@ -351,7 +385,7 @@ export class LandslideDashboard {
               ${score}
             </div>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; pointer-events: none;">
             <span>${d.state} &bull; ${d.elevationM}m</span>
             <span>🌧️ ${rain24}mm</span>
           </div>
@@ -359,17 +393,9 @@ export class LandslideDashboard {
       `;
       })
       .join('');
-
-    const items = listEl.querySelectorAll('.district-list-item');
-    items.forEach((item) => {
-      item.addEventListener('click', () => {
-        const id = item.getAttribute('data-id');
-        if (id) this.selectDistrict(id);
-      });
-    });
   }
 
-  private async selectDistrict(districtId: string) {
+  public async selectDistrict(districtId: string) {
     this.selectedDistrictId = districtId;
     const district = NER_DISTRICTS.find(d => d.id === districtId);
     if (!district) return;
@@ -410,6 +436,16 @@ export class LandslideDashboard {
   }
 
   private bindGlobalEvents() {
+    // District List Click Delegation (Guarantees every click on any district works immediately)
+    const listEl = document.getElementById('district-list-scroll');
+    listEl?.addEventListener('click', (e) => {
+      const target = (e.target as HTMLElement).closest('.district-list-item');
+      if (target) {
+        const id = target.getAttribute('data-id');
+        if (id) void this.selectDistrict(id);
+      }
+    });
+
     // Mode switch (Authority vs Citizen)
     const btnAuth = document.getElementById('btn-view-authority');
     const btnCit = document.getElementById('btn-view-citizen');
@@ -448,12 +484,14 @@ export class LandslideDashboard {
       const val = selScenario.value;
       if (val === 'live') {
         this.isOfflineDemo = false;
+        void this.refreshLiveTelemetryBackground();
       } else {
         this.isOfflineDemo = true;
         this.currentScenario = val as DemoScenario;
+        this.populateInitialState();
+        this.renderAllViews();
       }
       this.aiAdvisoryMap.clear();
-      await this.refreshAllTelemetry();
     });
 
     // Basemap Switcher
@@ -471,18 +509,19 @@ export class LandslideDashboard {
     });
 
     // State Filter Buttons
-    const stateBtns = document.querySelectorAll('.state-filter-btn');
-    stateBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        stateBtns.forEach(b => {
-          (b as HTMLElement).style.color = '#94a3b8';
-          (b as HTMLElement).style.borderColor = '#334155';
-        });
-        (btn as HTMLElement).style.color = '#38bdf8';
-        (btn as HTMLElement).style.borderColor = '#0284c7';
-        this.selectedStateFilter = btn.getAttribute('data-state') as any;
-        this.renderDistrictList();
+    const stateContainer = document.querySelector('aside div:nth-child(2)');
+    stateContainer?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.state-filter-btn') as HTMLElement;
+      if (!btn) return;
+      const allBtns = document.querySelectorAll('.state-filter-btn');
+      allBtns.forEach(b => {
+        (b as HTMLElement).style.color = '#94a3b8';
+        (b as HTMLElement).style.borderColor = '#334155';
       });
+      btn.style.color = '#38bdf8';
+      btn.style.borderColor = '#0284c7';
+      this.selectedStateFilter = (btn.getAttribute('data-state') as any) || 'ALL';
+      this.renderDistrictList();
     });
 
     // Right Sidebar Tab Switcher (HUD vs AI Terminal)
