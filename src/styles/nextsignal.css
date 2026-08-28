@@ -1,0 +1,2133 @@
+/*
+ * NextSignal Design System
+ * AI-Powered Scenario Intelligence Platform
+ *
+ * This stylesheet extends the base World Monitor CSS with the NextSignal
+ * brand identity, color system, typography, and new component styles.
+ *
+ * Built on World Monitor (AGPL-3.0) by Elie Habib
+ * Transformation: NextSignal — See the signals. Understand the scenarios.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+/* ============================================================
+   NextSignal Brand Colors
+   ============================================================ */
+:root {
+  /* NextSignal Brand Palette */
+  --ns-navy:          #0a0f1e;    /* Primary background */
+  --ns-navy-light:    #0f1628;    /* Secondary background */
+  --ns-graphite:      #111827;    /* Card/panel background */
+  --ns-graphite-light:#1a2236;    /* Elevated card */
+  --ns-graphite-hover:#1f2a42;    /* Hover state */
+
+  /* Signal colors */
+  --ns-signal-blue:   #1d6ed8;    /* Primary brand accent */
+  --ns-signal-blue-light: #3b82f6; /* Lighter blue for text/icons */
+  --ns-signal-green:  #10b981;    /* Bullish / positive signal */
+  --ns-signal-amber:  #f59e0b;    /* Warning / neutral signal */
+  --ns-signal-red:    #ef4444;    /* Bearish / negative signal */
+  --ns-signal-purple: #8b5cf6;    /* Intelligence / AI signal */
+  --ns-signal-cyan:   #06b6d4;    /* Info / data signal */
+
+  /* Scenario colors */
+  --ns-bull:          #10b981;    /* Bull case */
+  --ns-base:          #6b7280;    /* Base case */
+  --ns-bear:          #ef4444;    /* Bear case */
+
+  /* Risk levels */
+  --ns-risk-critical: #ef4444;
+  --ns-risk-high:     #f97316;
+  --ns-risk-medium:   #f59e0b;
+  --ns-risk-low:      #10b981;
+  --ns-risk-info:     #3b82f6;
+
+  /* Text */
+  --ns-text:          #f1f5f9;    /* Primary text */
+  --ns-text-secondary:#94a3b8;    /* Secondary text */
+  --ns-text-dim:      #64748b;    /* Dim text */
+  --ns-text-label:    #475569;    /* Label text */
+
+  /* Borders */
+  --ns-border:        #1e293b;    /* Default border */
+  --ns-border-light:  #2d3748;    /* Lighter border */
+  --ns-border-accent: #1d6ed840;  /* Brand-tinted border */
+
+  /* Gradients */
+  --ns-gradient-brand: linear-gradient(135deg, #1d6ed8, #10b981);
+  --ns-gradient-dark:  linear-gradient(180deg, #0f1628 0%, #0a0f1e 100%);
+  --ns-gradient-card:  linear-gradient(145deg, #1a2236, #111827);
+
+  /* Shadows */
+  --ns-shadow-sm:     0 1px 3px rgba(0, 0, 0, 0.4);
+  --ns-shadow-md:     0 4px 16px rgba(0, 0, 0, 0.5);
+  --ns-shadow-lg:     0 8px 32px rgba(0, 0, 0, 0.6);
+  --ns-shadow-brand:  0 0 20px rgba(29, 110, 216, 0.2);
+  --ns-shadow-signal: 0 0 12px rgba(16, 185, 129, 0.15);
+
+  /* Typography */
+  --ns-font-display:  'Outfit', 'Inter', system-ui, sans-serif;
+  --ns-font-body:     'Inter', system-ui, -apple-system, sans-serif;
+  --ns-font-mono:     'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+
+  /* Spacing */
+  --ns-radius-sm:     4px;
+  --ns-radius-md:     8px;
+  --ns-radius-lg:     12px;
+  --ns-radius-xl:     16px;
+
+  /* Animation */
+  --ns-transition:    all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --ns-transition-fast: all 0.1s ease;
+}
+
+/* ============================================================
+   NextSignal Global Typography Override
+   ============================================================ */
+body.nextsignal-active {
+  font-family: var(--ns-font-body);
+}
+
+/* ============================================================
+   NextSignal Unified Command Center Header
+   ============================================================ */
+.header.nextsignal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 44px !important;
+  padding: 0 12px !important;
+  background: rgba(6, 11, 24, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18) !important;
+  position: relative !important;
+  z-index: 8000 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 14px rgba(0, 240, 255, 0.08) !important;
+  overflow: hidden !important;
+  flex-wrap: nowrap !important;
+}
+
+.nextsignal-header .header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+}
+
+.nextsignal-header .header-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-left: auto !important;
+  flex: 0 0 auto !important;
+}
+
+/* Brand Link */
+.ns-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex-shrink: 0;
+  padding-right: 2px;
+}
+
+.ns-brand-icon-box {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, #1d6ed8 0%, #10b981 100%);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ns-font-display);
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  box-shadow: 0 0 12px rgba(29, 110, 216, 0.4);
+  flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ns-brand-link:hover .ns-brand-icon-box {
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.5);
+}
+
+.ns-brand-text-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ns-brand-title {
+  font-family: var(--ns-font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.4px;
+}
+
+.ns-brand-pill {
+  font-family: var(--ns-font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* Unified Navigation Tabs — Compact & Anti-Collision */
+.ns-header-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  border-radius: 6px;
+  padding: 2px 3px;
+  flex-shrink: 1;
+  overflow: hidden;
+}
+
+.ns-header-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ns-text-secondary);
+  font-family: var(--ns-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.ns-nav-icon {
+  font-size: 12px;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.ns-header-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.ns-header-nav-btn:hover .ns-nav-icon {
+  opacity: 1;
+}
+
+.ns-header-nav-btn.active {
+  background: linear-gradient(135deg, rgba(29, 110, 216, 0.35), rgba(16, 185, 129, 0.2)) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 14px rgba(29, 110, 216, 0.25) !important;
+}
+
+.ns-header-nav-btn.active .ns-nav-icon {
+  color: #38bdf8;
+  opacity: 1;
+}
+
+.ns-scenario-highlight-btn {
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.ns-scenario-highlight-btn:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+}
+
+/* Header Right Utility Controls */
+.ns-search-bar-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 5px 10px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  color: var(--ns-text-secondary) !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  transition: var(--ns-transition-fast) !important;
+}
+
+.ns-search-bar-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.ns-search-bar-btn kbd {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 10px;
+  font-family: var(--ns-font-mono);
+  color: var(--ns-text-dim);
+}
+
+/* Hide Discord overlay popup from covering panels */
+.community-widget {
+  display: none !important;
+}
+
+
+/* ============================================================
+   NextSignal Signal Cards
+   ============================================================ */
+.ns-signal-card {
+  background: var(--ns-graphite);
+  border: 1px solid var(--ns-border);
+  border-radius: var(--ns-radius-md);
+  padding: 14px 16px;
+  transition: var(--ns-transition);
+  cursor: pointer;
+}
+
+.ns-signal-card:hover {
+  border-color: var(--ns-border-light);
+  background: var(--ns-graphite-light);
+  transform: translateY(-1px);
+  box-shadow: var(--ns-shadow-md);
+}
+
+.ns-signal-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ns-signal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--ns-font-body);
+}
+
+.ns-signal-badge.bullish {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--ns-signal-green);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.ns-signal-badge.bearish {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--ns-signal-red);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.ns-signal-badge.neutral {
+  background: rgba(107, 114, 128, 0.15);
+  color: #9ca3af;
+  border: 1px solid rgba(107, 114, 128, 0.25);
+}
+
+.ns-signal-badge.risk {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--ns-signal-amber);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.ns-signal-strength {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.ns-signal-strength-bar {
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--ns-border);
+  transition: var(--ns-transition-fast);
+}
+
+.ns-signal-strength-bar.active.weak {
+  background: var(--ns-signal-amber);
+}
+
+.ns-signal-strength-bar.active.moderate {
+  background: var(--ns-signal-blue-light);
+}
+
+.ns-signal-strength-bar.active.strong {
+  background: var(--ns-signal-green);
+}
+
+.ns-signal-strength-bar.active.critical {
+  background: var(--ns-signal-red);
+}
+
+.ns-signal-title {
+  font-family: var(--ns-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ns-text);
+  line-height: 1.4;
+  margin: 0 0 6px;
+}
+
+.ns-signal-summary {
+  font-family: var(--ns-font-body);
+  font-size: 12px;
+  color: var(--ns-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.ns-signal-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ns-text-dim);
+  font-family: var(--ns-font-mono);
+}
+
+/* ============================================================
+   NextSignal Scenario Cards
+   ============================================================ */
+.ns-scenario-card {
+  background: var(--ns-graphite);
+  border: 1px solid var(--ns-border);
+  border-radius: var(--ns-radius-lg);
+  overflow: hidden;
+  transition: var(--ns-transition);
+}
+
+.ns-scenario-card:hover {
+  box-shadow: var(--ns-shadow-brand);
+  border-color: rgba(29, 110, 216, 0.3);
+}
+
+.ns-scenario-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--ns-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ns-scenario-entity {
+  font-family: var(--ns-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ns-text);
+}
+
+.ns-scenario-horizon {
+  font-family: var(--ns-font-body);
+  font-size: 11px;
+  color: var(--ns-text-dim);
+  margin-left: auto;
+}
+
+.ns-scenario-cases {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.ns-scenario-case {
+  padding: 14px 16px;
+  border-right: 1px solid var(--ns-border);
+}
+
+.ns-scenario-case:last-child {
+  border-right: none;
+}
+
+.ns-scenario-case-label {
+  font-family: var(--ns-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.ns-scenario-case.bull .ns-scenario-case-label { color: var(--ns-bull); }
+.ns-scenario-case.base .ns-scenario-case-label { color: var(--ns-text-secondary); }
+.ns-scenario-case.bear .ns-scenario-case-label { color: var(--ns-bear); }
+
+.ns-scenario-probability {
+  font-family: var(--ns-font-display);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.ns-scenario-case.bull .ns-scenario-probability { color: var(--ns-bull); }
+.ns-scenario-case.base .ns-scenario-probability { color: var(--ns-text); }
+.ns-scenario-case.bear .ns-scenario-probability { color: var(--ns-bear); }
+
+.ns-scenario-prob-label {
+  font-size: 9px;
+  color: var(--ns-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.ns-scenario-case-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ns-text-secondary);
+  line-height: 1.4;
+}
+
+.ns-scenario-footer {
+  padding: 10px 20px;
+  border-top: 1px solid var(--ns-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ns-confidence-bar {
+  flex: 1;
+  height: 3px;
+  background: var(--ns-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ns-confidence-fill {
+  height: 100%;
+  background: var(--ns-gradient-brand);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.ns-confidence-label {
+  font-size: 10px;
+  color: var(--ns-text-dim);
+  font-family: var(--ns-font-mono);
+  white-space: nowrap;
+}
+
+.ns-evidence-link {
+  font-size: 11px;
+  color: var(--ns-signal-blue-light);
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ns-evidence-link:hover {
+  color: var(--ns-text);
+}
+
+/* ============================================================
+   NextSignal Dashboard Widgets
+   ============================================================ */
+.ns-widget {
+  background: var(--ns-graphite);
+  border: 1px solid var(--ns-border);
+  border-radius: var(--ns-radius-md);
+  overflow: hidden;
+}
+
+.ns-widget-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ns-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ns-widget-title {
+  font-family: var(--ns-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ns-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.ns-widget-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--ns-signal-green);
+  margin-left: auto;
+}
+
+.ns-widget-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ns-signal-green);
+  animation: ns-pulse 2s ease infinite;
+}
+
+@keyframes ns-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.ns-widget-content {
+  padding: 14px 16px;
+}
+
+/* ============================================================
+   NextSignal "What Happens Next" Feature
+   ============================================================ */
+.ns-whn-container {
+  background: var(--ns-graphite);
+  border: 1px solid var(--ns-border-accent);
+  border-radius: var(--ns-radius-xl);
+  padding: 28px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: var(--ns-shadow-brand);
+}
+
+.ns-whn-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.ns-whn-title {
+  font-family: var(--ns-font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ns-text);
+  background: var(--ns-gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 8px;
+}
+
+.ns-whn-subtitle {
+  font-family: var(--ns-font-body);
+  font-size: 14px;
+  color: var(--ns-text-secondary);
+  margin: 0;
+}
+
+.ns-whn-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.ns-whn-input {
+  flex: 1;
+  background: var(--ns-navy);
+  border: 1px solid var(--ns-border-light);
+  border-radius: var(--ns-radius-md);
+  padding: 12px 16px;
+  font-family: var(--ns-font-body);
+  font-size: 15px;
+  color: var(--ns-text);
+  outline: none;
+  transition: var(--ns-transition);
+}
+
+.ns-whn-input:focus {
+  border-color: var(--ns-signal-blue);
+  box-shadow: 0 0 0 3px rgba(29, 110, 216, 0.15);
+}
+
+.ns-whn-input::placeholder {
+  color: var(--ns-text-dim);
+}
+
+.ns-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--ns-signal-blue);
+  border: none;
+  border-radius: var(--ns-radius-md);
+  font-family: var(--ns-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: var(--ns-transition);
+  white-space: nowrap;
+}
+
+.ns-btn-primary:hover {
+  background: #1558b0;
+  transform: translateY(-1px);
+  box-shadow: var(--ns-shadow-brand);
+}
+
+.ns-btn-primary:active {
+  transform: translateY(0);
+}
+
+.ns-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--ns-border-light);
+  border-radius: var(--ns-radius-md);
+  font-family: var(--ns-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ns-text-secondary);
+  cursor: pointer;
+  transition: var(--ns-transition);
+}
+
+.ns-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ns-text);
+}
+
+/* ============================================================
+   NextSignal Impact Chain Visualization
+   ============================================================ */
+.ns-impact-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ns-impact-node {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.ns-impact-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 32px;
+}
+
+.ns-impact-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ns-signal-blue);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.ns-impact-dot.critical { background: var(--ns-signal-red); }
+.ns-impact-dot.high     { background: var(--ns-signal-amber); }
+.ns-impact-dot.medium   { background: var(--ns-signal-blue-light); }
+.ns-impact-dot.low      { background: var(--ns-signal-green); }
+
+.ns-impact-line {
+  width: 2px;
+  flex: 1;
+  min-height: 24px;
+  background: linear-gradient(to bottom, var(--ns-signal-blue), transparent);
+  margin-top: 4px;
+  opacity: 0.4;
+}
+
+.ns-impact-content {
+  flex: 1;
+  padding-bottom: 20px;
+}
+
+.ns-impact-label {
+  font-family: var(--ns-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ns-text);
+  margin-bottom: 4px;
+}
+
+.ns-impact-type {
+  font-size: 10px;
+  color: var(--ns-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--ns-font-body);
+}
+
+.ns-impact-rationale {
+  font-size: 12px;
+  color: var(--ns-text-secondary);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* ============================================================
+   NextSignal Alert Components
+   ============================================================ */
+.ns-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--ns-radius-md);
+  border: 1px solid;
+  margin-bottom: 8px;
+  transition: var(--ns-transition);
+}
+
+.ns-alert.info {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.ns-alert.warning {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.ns-alert.critical {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+  animation: ns-pulse-border 3s ease infinite;
+}
+
+@keyframes ns-pulse-border {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.2); }
+  50% { border-color: rgba(239, 68, 68, 0.5); }
+}
+
+.ns-alert-icon {
+  font-size: 14px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.ns-alert.info .ns-alert-icon    { color: var(--ns-signal-blue-light); }
+.ns-alert.warning .ns-alert-icon { color: var(--ns-signal-amber); }
+.ns-alert.critical .ns-alert-icon { color: var(--ns-signal-red); }
+
+.ns-alert-body {
+  flex: 1;
+}
+
+.ns-alert-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ns-text);
+  margin: 0 0 3px;
+  font-family: var(--ns-font-body);
+}
+
+.ns-alert-summary {
+  font-size: 12px;
+  color: var(--ns-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ns-alert-time {
+  font-size: 10px;
+  color: var(--ns-text-dim);
+  font-family: var(--ns-font-mono);
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+/* ============================================================
+   NextSignal Loading / Empty States
+   ============================================================ */
+.ns-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.ns-empty-icon {
+  font-size: 32px;
+  opacity: 0.3;
+}
+
+.ns-empty-title {
+  font-family: var(--ns-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ns-text-secondary);
+  margin: 0;
+}
+
+.ns-empty-subtitle {
+  font-family: var(--ns-font-body);
+  font-size: 12px;
+  color: var(--ns-text-dim);
+  margin: 0;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.ns-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--ns-text-dim);
+  font-size: 12px;
+  font-family: var(--ns-font-body);
+}
+
+.ns-loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ns-border-light);
+  border-top-color: var(--ns-signal-blue);
+  border-radius: 50%;
+  animation: ns-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ns-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   NextSignal Probability Bar
+   ============================================================ */
+.ns-prob-bars {
+  display: flex;
+  gap: 2px;
+  height: 32px;
+  border-radius: var(--ns-radius-sm);
+  overflow: hidden;
+}
+
+.ns-prob-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  transition: all 0.5s ease;
+  cursor: default;
+}
+
+.ns-prob-bar.bull { background: var(--ns-bull); }
+.ns-prob-bar.base { background: #374151; }
+.ns-prob-bar.bear { background: var(--ns-bear); }
+
+/* ============================================================
+   NextSignal Evidence Chain
+   ============================================================ */
+.ns-evidence-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ns-evidence-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--ns-radius-sm);
+  border-left: 2px solid var(--ns-signal-blue);
+}
+
+.ns-evidence-rank {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(29, 110, 216, 0.2);
+  color: var(--ns-signal-blue-light);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--ns-font-mono);
+}
+
+.ns-evidence-text {
+  flex: 1;
+  font-size: 12px;
+  color: var(--ns-text-secondary);
+  line-height: 1.4;
+}
+
+.ns-evidence-text strong {
+  color: var(--ns-text);
+  font-weight: 600;
+}
+
+.ns-evidence-source {
+  font-size: 10px;
+  color: var(--ns-text-dim);
+  font-family: var(--ns-font-mono);
+  margin-top: 3px;
+}
+
+/* ============================================================
+   NextSignal Disclaimer
+   ============================================================ */
+.ns-disclaimer {
+  font-size: 11px;
+  color: var(--ns-text-dim);
+  font-style: italic;
+  line-height: 1.4;
+  padding: 8px 12px;
+  border-radius: var(--ns-radius-sm);
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--ns-border);
+}
+
+/* ============================================================
+   NextSignal Market Items (extending existing MarketPanel)
+   ============================================================ */
+.ns-market-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ns-border);
+  transition: var(--ns-transition-fast);
+}
+
+.ns-market-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ns-market-item:last-child {
+  border-bottom: none;
+}
+
+.ns-market-symbol {
+  font-family: var(--ns-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ns-text);
+  min-width: 56px;
+}
+
+.ns-market-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--ns-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ns-market-price {
+  font-family: var(--ns-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ns-text);
+  text-align: right;
+}
+
+.ns-market-change {
+  font-family: var(--ns-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: right;
+}
+
+.ns-market-change.positive { color: var(--ns-signal-green); }
+.ns-market-change.negative { color: var(--ns-signal-red); }
+
+.ns-market-signal {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ns-market-signal.bullish  { background: var(--ns-signal-green); box-shadow: 0 0 4px var(--ns-signal-green); }
+.ns-market-signal.bearish  { background: var(--ns-signal-red); box-shadow: 0 0 4px var(--ns-signal-red); }
+.ns-market-signal.neutral  { background: var(--ns-text-dim); }
+
+/* ============================================================
+   Responsive adjustments
+   ============================================================ */
+@media (max-width: 768px) {
+  .ns-navbar-brand-badge { display: none; }
+  .ns-navbar-item { padding: 6px 8px; font-size: 12px; }
+  .ns-scenario-cases { grid-template-columns: 1fr; }
+  .ns-scenario-case { border-right: none; border-bottom: 1px solid var(--ns-border); }
+  .ns-whn-container { padding: 20px 16px; }
+  .ns-whn-title { font-size: 22px; }
+  .ns-whn-search { flex-direction: column; }
+}
+
+/* ============================================================
+   NextSignal Scrollbar overrides
+   ============================================================ */
+.ns-scrollable::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.ns-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ns-scrollable::-webkit-scrollbar-thumb {
+  background: var(--ns-border-light);
+  border-radius: 4px;
+}
+
+.ns-scrollable::-webkit-scrollbar-thumb:hover {
+  background: var(--ns-text-dim);
+}
+
+/* ============================================================
+   Suppression of all Paid Badges, Locks & Paywall Banners
+   ============================================================ */
+.panel-pro-badge,
+.panel-toggle-pro-badge,
+.layer-pro-badge,
+.widget-pro-badge,
+.cdp-pro-badge,
+.pro-badge,
+.pro-banner-slot,
+.pro-banner,
+.paywall-overlay,
+.premium-gate-overlay,
+.pro-gate-overlay {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* ============================================================
+   SCI-FI UI OVERHAUL: Layout Stabilization & Zero-Overlap
+   ============================================================ */
+
+/* Lock viewport height and eliminate accidental body overflow */
+html, body {
+  height: 100% !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  background: #060914 !important;
+  color: #e2e8f0;
+}
+
+/* Header Firm Pinned & Elevated */
+.header.nextsignal-header {
+  position: relative !important;
+  height: 48px !important;
+  background: rgba(6, 11, 24, 0.95) !important;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 240, 255, 0.08) !important;
+  z-index: 1000 !important;
+}
+
+/* Two-column tactical HUD on all screens >= 1024px */
+@media (min-width: 1024px) {
+  .main-content {
+    display: grid !important;
+    grid-template-columns: var(--map-col-width, 58%) 6px 1fr !important;
+    grid-template-rows: 1fr !important;
+    gap: 0 !important;
+    height: calc(100vh - 48px) !important;
+    max-height: calc(100vh - 48px) !important;
+    overflow: hidden !important;
+    background: #070c18 !important;
+  }
+
+  .map-section {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    border-right: 1px solid rgba(0, 240, 255, 0.15) !important;
+    border-bottom: none !important;
+    position: relative !important;
+  }
+
+  .map-width-resize-handle {
+    display: flex !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    background: rgba(0, 240, 255, 0.08) !important;
+    transition: background 0.2s ease !important;
+  }
+
+  .map-width-resize-handle:hover {
+    background: rgba(0, 240, 255, 0.4) !important;
+  }
+
+  .panels-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 12px !important;
+    gap: 10px !important;
+    scrollbar-gutter: stable;
+  }
+
+  .site-footer {
+    display: none !important;
+  }
+}
+
+/* Panel Titles & Headers — Full Visibility, No Truncation */
+.panel-header-title,
+.panel-title,
+.panel-heading,
+.panel-header span {
+  font-family: var(--ns-font-display) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.6px !important;
+  color: #38bdf8 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.panel {
+  min-width: 0 !important;
+  background: rgba(6, 12, 26, 0.94) !important;
+  border: 1px solid rgba(0, 240, 255, 0.18) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+  color: #f1f5f9 !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.panel:hover {
+  border-color: rgba(0, 240, 255, 0.35) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 240, 255, 0.1) !important;
+}
+
+.panel-content {
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(0, 240, 255, 0.4) rgba(8, 14, 28, 0.7) !important;
+  color: #f1f5f9 !important;
+}
+
+/* ============================================================
+   PROMINENT SCI-FI CYBER SCROLLBARS
+   ============================================================ */
+
+/* Global sci-fi scrollbar */
+*::-webkit-scrollbar,
+.panels-grid::-webkit-scrollbar,
+.panel-content::-webkit-scrollbar,
+.ns-scrollable::-webkit-scrollbar,
+.ns-oracle-messages::-webkit-scrollbar {
+  width: 7px !important;
+  height: 7px !important;
+}
+
+*::-webkit-scrollbar-track,
+.panels-grid::-webkit-scrollbar-track,
+.panel-content::-webkit-scrollbar-track,
+.ns-scrollable::-webkit-scrollbar-track,
+.ns-oracle-messages::-webkit-scrollbar-track {
+  background: rgba(8, 14, 28, 0.7) !important;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb,
+.panels-grid::-webkit-scrollbar-thumb,
+.panel-content::-webkit-scrollbar-thumb,
+.ns-scrollable::-webkit-scrollbar-thumb,
+.ns-oracle-messages::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00f0ff 0%, #0284c7 100%) !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(0, 240, 255, 0.3) !important;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4) !important;
+}
+
+*::-webkit-scrollbar-thumb:hover,
+.panels-grid::-webkit-scrollbar-thumb:hover,
+.panel-content::-webkit-scrollbar-thumb:hover,
+.ns-scrollable::-webkit-scrollbar-thumb:hover,
+.ns-oracle-messages::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #38bdf8 0%, #00f0ff 100%) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.8) !important;
+}
+
+/* Firefox thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #0284c7 rgba(8, 14, 28, 0.7);
+}
+
+/* ============================================================
+   Tactical Sci-Fi HUD Panel Styling
+   ============================================================ */
+.panel {
+  background: rgba(11, 18, 36, 0.85) !important;
+  border: 1px solid rgba(0, 240, 255, 0.14) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.02) !important;
+  backdrop-filter: blur(12px) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  position: relative;
+}
+
+.panel:hover {
+  border-color: rgba(0, 240, 255, 0.35) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 240, 255, 0.1) !important;
+}
+
+.panel-header {
+  border-bottom: 1px solid rgba(0, 240, 255, 0.12) !important;
+  background: rgba(15, 23, 46, 0.6) !important;
+}
+
+.panel-title {
+  color: #f1f5f9 !important;
+  font-family: var(--ns-font-display) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2px !important;
+}
+
+/* Nav AI Predictor Pulse */
+.ns-oracle-nav-btn {
+  border-color: rgba(0, 240, 255, 0.3) !important;
+  background: rgba(0, 240, 255, 0.06) !important;
+  color: #38bdf8 !important;
+  font-weight: 600 !important;
+}
+
+.ns-oracle-nav-btn:hover {
+  background: rgba(0, 240, 255, 0.15) !important;
+  border-color: #00f0ff !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.3) !important;
+}
+
+.ns-oracle-pulse {
+  color: #00f0ff;
+  animation: ns-pulse-glow 1.8s infinite;
+}
+
+@keyframes ns-pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 2px #00f0ff); }
+  50% { opacity: 0.6; transform: scale(1.15); filter: drop-shadow(0 0 8px #00f0ff); }
+}
+
+/* ============================================================
+   QUANTUM ORACLE AI CHAT — Compact Cyber Launcher
+   ============================================================ */
+.ns-oracle-launcher {
+  position: fixed;
+  bottom: 14px;
+  right: 16px;
+  height: 32px;
+  padding: 0 12px;
+  background: rgba(6, 14, 32, 0.95);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 9200;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 240, 255, 0.25);
+  backdrop-filter: blur(16px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.ns-oracle-launcher:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 240, 255, 0.5);
+  border-color: #00f0ff;
+  background: rgba(10, 22, 50, 0.95);
+}
+
+.ns-oracle-launcher.active {
+  background: linear-gradient(135deg, #0284c7, #00f0ff);
+  border-color: #ffffff;
+}
+
+.ns-oracle-launcher.active .ns-oracle-launcher-text {
+  color: #04091a;
+  font-weight: 800;
+}
+
+.ns-oracle-launcher-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ns-oracle-launcher-icon {
+  font-family: var(--ns-font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: #00f0ff;
+  filter: drop-shadow(0 0 4px #00f0ff);
+}
+
+.ns-oracle-launcher-text {
+  font-family: var(--ns-font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
+}
+
+.ns-oracle-launcher-badge {
+  font-family: var(--ns-font-mono);
+  font-size: 8px;
+  font-weight: 800;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.14);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+/* Global Notifications & Alerts — Always in front of panels */
+.notification-toast,
+.toast-container,
+.breaking-news-banner,
+.critical-banner,
+.intelligence-alert-popup,
+.wm-toast,
+.alert-banner {
+  z-index: 99999 !important;
+  position: fixed !important;
+}
+
+/* Tab System Removal */
+.dashboard-tabs-mount,
+.dashboard-tabs-bar,
+.tab-bar,
+#panelTabsMount {
+  display: none !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Side Panels Full Takeover for Tactical Terminal */
+#ns-oracle-drawer {
+  display: none;
+}
+
+.main-content.ns-terminal-takeover .panels-grid {
+  display: none !important;
+}
+
+.main-content.ns-terminal-takeover #ns-oracle-drawer {
+  display: flex !important;
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: static !important;
+  border-left: 1.5px solid rgba(0, 240, 255, 0.3) !important;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.7) !important;
+  z-index: 100 !important;
+  background: rgba(3, 7, 18, 0.98) !important;
+  overflow: hidden !important;
+  flex-direction: column !important;
+  animation: ns-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* ============================================================
+   FLOATING COUNTRY INTELLIGENCE HUD POPUP OVER THE MAP
+   ============================================================ */
+#country-deep-dive-panel.country-deep-dive {
+  position: absolute !important;
+  top: 48px !important;
+  right: 14px !important;
+  width: 380px !important;
+  max-width: calc(100% - 28px) !important;
+  height: calc(100% - 62px) !important;
+  max-height: 560px !important;
+  background: rgba(4, 10, 24, 0.95) !important;
+  border: 1.5px solid rgba(0, 240, 255, 0.45) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 240, 255, 0.22) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  z-index: 1500 !important;
+  transform: none !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: ns-pop-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#country-deep-dive-panel.country-deep-dive[aria-hidden="true"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.country-deep-dive-shell {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#country-deep-dive-panel .panel-close {
+  position: absolute !important;
+  top: 10px !important;
+  right: 12px !important;
+  width: 26px !important;
+  height: 26px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(0, 240, 255, 0.3) !important;
+  border-radius: 6px !important;
+  color: #00f0ff !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  transition: all 0.2s ease !important;
+}
+
+#country-deep-dive-panel .panel-close:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+#country-deep-dive-panel .panel-content {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 12px 14px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #00f0ff rgba(6, 12, 28, 0.8) !important;
+}
+
+/* ============================================================
+   VIBRANT COLOR SYSTEM & INSTANT DATA DETECTION
+   ============================================================ */
+.cdp-country-header {
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25) !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+.cdp-country-name {
+  font-family: var(--ns-font-display) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.3) !important;
+}
+
+.cdp-country-subtitle {
+  color: #38bdf8 !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+}
+
+.cdp-card {
+  background: rgba(8, 16, 36, 0.75) !important;
+  border: 1px solid rgba(0, 240, 255, 0.2) !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  margin-bottom: 10px !important;
+}
+
+.cdp-card-title {
+  font-family: var(--ns-font-display) !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  color: #38bdf8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  margin-bottom: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* High-Contrast Vibrant Metric Badges */
+.cii-badge-critical,
+.badge-critical,
+.crit-badge {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(255, 0, 85, 0.35)) !important;
+  border: 1px solid #ff0055 !important;
+  color: #ff3366 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.4) !important;
+}
+
+.cii-badge-high,
+.badge-high {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.25), rgba(255, 109, 0, 0.35)) !important;
+  border: 1px solid #ff6d00 !important;
+  color: #ff9100 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 10px rgba(255, 109, 0, 0.4) !important;
+}
+
+.cii-badge-normal,
+.badge-normal,
+.badge-stable {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(0, 230, 118, 0.3)) !important;
+  border: 1px solid #00e676 !important;
+  color: #00ff88 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.35) !important;
+}
+
+/* Terminal Scanline CRT effect */
+.ns-terminal-scanlines {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.45;
+}
+
+/* Tactical Terminal Base Window / Pane */
+.ns-oracle-drawer {
+  position: fixed;
+  top: 44px;
+  right: -480px;
+  width: min(460px, 100vw);
+  height: calc(100vh - 44px);
+  background: rgba(3, 7, 18, 0.97);
+  border-left: 1.5px solid rgba(0, 240, 255, 0.25);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  z-index: 9400;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 240, 255, 0.08);
+  transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+}
+
+.ns-oracle-drawer.open:not(.docked-mode) {
+  right: 0;
+}
+
+/* Floating Window Mode */
+.ns-oracle-drawer.floating-mode.open {
+  position: fixed !important;
+  top: auto !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  width: 520px !important;
+  max-width: calc(100vw - 48px) !important;
+  height: 640px !important;
+  max-height: calc(100vh - 100px) !important;
+  border: 1.5px solid rgba(0, 240, 255, 0.4) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 240, 255, 0.25) !important;
+}
+
+/* Terminal Title Bar */
+.ns-oracle-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(8, 16, 36, 0.8);
+  flex-shrink: 0;
+}
+
+.ns-oracle-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ns-oracle-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid #00f0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ns-font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.ns-oracle-title {
+  font-family: var(--ns-font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  color: #00f0ff;
+  letter-spacing: 0.8px;
+}
+
+.ns-oracle-subtitle {
+  font-family: var(--ns-font-mono);
+  font-size: 9px;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+}
+
+.ns-oracle-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ns-oracle-icon-btn {
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 4px;
+  color: var(--ns-text-secondary);
+  font-family: var(--ns-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ns-oracle-icon-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+
+.ns-oracle-icon-btn.close:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+/* Telemetry & Model Select */
+.ns-oracle-telemetry {
+  padding: 6px 14px;
+  background: rgba(2, 6, 16, 0.6);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ns-oracle-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--ns-font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #00f0ff;
+  letter-spacing: 0.4px;
+}
+
+.ns-oracle-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.ns-oracle-status-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.ns-oracle-status-dot.connecting {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.ns-oracle-status-dot.offline {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+.ns-oracle-model-selector-wrap {
+  flex: 1;
+  max-width: 210px;
+}
+
+.ns-oracle-model-select {
+  width: 100%;
+  padding: 3px 6px;
+  background: rgba(5, 12, 28, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+  color: #38bdf8;
+  font-family: var(--ns-font-mono);
+  font-size: 10px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Quick Suggestion Chips Bar */
+.ns-oracle-chips-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  background: rgba(4, 8, 20, 0.4);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+}
+
+.ns-oracle-chip {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: #7dd3fc;
+  font-family: var(--ns-font-mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ns-oracle-chip:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+
+/* Terminal Log Messages */
+.ns-oracle-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--ns-font-mono);
+}
+
+.ns-oracle-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ns-oracle-msg-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+}
+
+.ns-oracle-msg-avatar {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 800;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+
+.ns-oracle-msg.user .ns-oracle-msg-avatar {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.ns-oracle-msg.assistant .ns-oracle-msg-avatar {
+  background: rgba(0, 240, 255, 0.2);
+  color: #00f0ff;
+  border: 1px solid #00f0ff;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.3);
+}
+
+.ns-oracle-msg-author {
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.ns-oracle-msg-time {
+  color: var(--ns-text-dim);
+  margin-left: auto;
+}
+
+.ns-oracle-copy-msg {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  color: var(--ns-text-dim);
+  cursor: pointer;
+}
+
+.ns-oracle-copy-msg:hover {
+  color: #00f0ff;
+}
+
+.ns-oracle-msg-body {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.ns-oracle-msg.user .ns-oracle-msg-body {
+  background: rgba(29, 78, 216, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #e2e8f0;
+}
+
+.ns-oracle-msg.assistant .ns-oracle-msg-body {
+  background: rgba(5, 12, 28, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.16);
+  color: #f1f5f9;
+}
+
+/* Collapsible Neural Thinking Block */
+.ns-terminal-thinking {
+  background: rgba(14, 25, 48, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-left: 3px solid #00f0ff;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.ns-thinking-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-family: var(--ns-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #38bdf8;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(0, 240, 255, 0.05);
+  outline: none;
+  list-style: none;
+}
+
+.ns-thinking-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ns-thinking-icon {
+  font-size: 12px;
+}
+
+.ns-thinking-label {
+  letter-spacing: 0.5px;
+}
+
+.ns-thinking-badge {
+  font-size: 8.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: auto;
+  font-weight: 800;
+}
+
+.ns-thinking-badge.pulsing {
+  background: rgba(0, 240, 255, 0.15);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  animation: ns-pulse-glow 1.2s infinite;
+}
+
+.ns-thinking-badge.done {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.ns-thinking-content {
+  padding: 10px 12px;
+  font-family: var(--ns-font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: #94a3b8;
+  border-top: 1px dashed rgba(0, 240, 255, 0.12);
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(3, 7, 18, 0.6);
+}
+
+/* Prompt Line & Command Bar */
+.ns-terminal-prompt-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--ns-font-mono);
+  font-size: 11px;
+  color: #38bdf8;
+  margin-bottom: 2px;
+}
+
+.ns-prompt-user {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.ns-prompt-path {
+  color: #38bdf8;
+}
+
+.ns-prompt-symbol {
+  color: #f1f5f9;
+  font-weight: 800;
+}
+
+.ns-prompt-cmd {
+  color: #00f0ff;
+  font-weight: 600;
+}
+
+.ns-oracle-input-bar {
+  padding: 10px 14px 14px;
+  background: rgba(4, 8, 20, 0.95);
+  border-top: 1px solid rgba(0, 240, 255, 0.16);
+  flex-shrink: 0;
+}
+
+.ns-oracle-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(6, 14, 32, 0.95);
+  border: 1.5px solid rgba(0, 240, 255, 0.25);
+  border-radius: 6px;
+  color: #44ff88;
+  font-family: var(--ns-font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  resize: none;
+  outline: none;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+
+.ns-oracle-input:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3), inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+}
+
+.ns-oracle-send-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  background: linear-gradient(135deg, #0284c7, #00f0ff);
+  border: none;
+  border-radius: 4px;
+  color: #04091a;
+  font-family: var(--ns-font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.ns-oracle-send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.7);
+  background: linear-gradient(135deg, #38bdf8, #00f0ff);
+}
+
+.ns-oracle-send-btn.abort {
+  background: linear-gradient(135deg, #991b1b, #ef4444);
+  color: #ffffff;
+}
+
+/* ============================================================
+   PANEL SLOTS DRAG & DROP REORDERING STYLES
+   ============================================================ */
+.panel .ns-panel-grip {
+  cursor: grab;
+  color: var(--ns-text-dim);
+  font-size: 12px;
+  margin-right: 5px;
+  user-select: none;
+  transition: color 0.15s ease;
+  display: inline-block;
+}
+
+.panel:hover .ns-panel-grip {
+  color: #00f0ff;
+}
+
+.panel.ns-panel-dragging {
+  opacity: 0.4;
+  border: 1.5px dashed #00f0ff !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
+  transform: scale(0.98);
+}
+
+.panel.ns-drop-target-before {
+  border-top: 3px solid #00f0ff !important;
+}
+
+.panel.ns-drop-target-after {
+  border-bottom: 3px solid #00f0ff !important;
+}
+
+.panel.ns-panel-just-dropped {
+  animation: ns-drop-snap 0.6s ease;
+}
+
+@keyframes ns-drop-snap {
+  0% { box-shadow: 0 0 25px rgba(0, 240, 255, 0.8); }
+  100% { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); }
+}
+
+
+
