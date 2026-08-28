@@ -8,7 +8,6 @@ import type {
   SeismicTelemetry,
   AppViewMode,
   AppLanguage,
-  LandslideAlert,
 } from '../services/landslide/types';
 import { fetchLiveWeather } from '../services/landslide/open-meteo';
 import { fetchLiveSoilMoisture } from '../services/landslide/nasa-power';
@@ -33,7 +32,7 @@ export class LandslideDashboard {
   private container: HTMLElement;
   private viewMode: AppViewMode = 'authority';
   private lang: AppLanguage = 'en';
-  private isOfflineDemo = true; // Default to offline demo for 100% stable presentation
+  private isOfflineDemo = false; // Default to LIVE real-time telemetry on startup!
   private currentScenario: DemoScenario = 'monsoon_deluge';
   private selectedDistrictId = 'as_dima_hasao';
   private selectedStateFilter: 'ALL' | NerState = 'ALL';
@@ -119,14 +118,14 @@ export class LandslideDashboard {
 
           <!-- Controls: Mode Switch, Offline Simulator Toggle, Language -->
           <div style="display: flex; align-items: center; gap: 10px;">
-            <!-- Demo Scenario / Live Mode Selector -->
+            <!-- Telemetry Data Mode Selector -->
             <div style="display: flex; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 2px 6px;">
-              <span style="font-size: 10px; color: #94a3b8; margin-right: 6px;">Mode:</span>
+              <span style="font-size: 10px; color: #94a3b8; margin-right: 6px;">Data Feed:</span>
               <select id="sel-scenario" style="background: transparent; color: #38bdf8; border: none; font-size: 11px; font-weight: bold; outline: none; cursor: pointer;">
-                <option value="monsoon_deluge" ${this.isOfflineDemo && this.currentScenario === 'monsoon_deluge' ? 'selected' : ''}>⛈️ Offline Demo (Monsoon Deluge)</option>
+                <option value="live" ${!this.isOfflineDemo ? 'selected' : ''}>📡 Live Ingestion (Open-Meteo & USGS)</option>
+                <option value="monsoon_deluge" ${this.isOfflineDemo && this.currentScenario === 'monsoon_deluge' ? 'selected' : ''}>⛈️ Offline Demo (Monsoon Deluge Crisis)</option>
                 <option value="seismic_crisis" ${this.isOfflineDemo && this.currentScenario === 'seismic_crisis' ? 'selected' : ''}>⚡ Offline Demo (Seismic Trigger M5.8)</option>
                 <option value="normal_baseline" ${this.isOfflineDemo && this.currentScenario === 'normal_baseline' ? 'selected' : ''}>☀️ Offline Demo (Baseline Normal)</option>
-                <option value="live" ${!this.isOfflineDemo ? 'selected' : ''}>📡 Live Ingestion (Open-Meteo & USGS)</option>
               </select>
             </div>
 
@@ -175,15 +174,28 @@ export class LandslideDashboard {
 
             <!-- Center View: 2D Interactive Map -->
             <main style="flex: 1; position: relative; display: flex; flex-direction: column;">
-              <!-- Map Layer Controls Overlay -->
-              <div style="position: absolute; top: 12px; right: 12px; z-index: 500; background: #0f172acc; backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; display: flex; gap: 12px; font-size: 11px; color: #f8fafc;">
+              <!-- Map Layer & Basemap Controls Overlay -->
+              <div style="position: absolute; top: 12px; right: 12px; z-index: 500; background: #0f172aee; backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 6px; padding: 6px 12px; display: flex; align-items: center; gap: 14px; font-size: 11px; color: #f8fafc; box-shadow: 0 4px 16px rgba(0,0,0,0.5);">
+                <!-- Basemap Selector -->
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="color: #94a3b8; font-size: 10px;">Basemap:</span>
+                  <select id="sel-basemap" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 3px 6px; font-size: 11px; outline: none; cursor: pointer;">
+                    <option value="topo" selected>🏔️ Topographic Relief</option>
+                    <option value="satellite">🛰️ Satellite Imagery</option>
+                    <option value="dark">🌙 Dark Street Map</option>
+                  </select>
+                </div>
+
+                <div style="height: 16px; width: 1px; background: #334155;"></div>
+
+                <!-- Overlays -->
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
                   <input type="checkbox" id="chk-coolr" ${this.showCoolrLayer ? 'checked' : ''} />
                   <span>NASA COOLR Landslides</span>
                 </label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
                   <input type="checkbox" id="chk-seismic" ${this.showSeismicLayer ? 'checked' : ''} />
-                  <span>USGS Earthquakes (72h)</span>
+                  <span>USGS Quakes (72h)</span>
                 </label>
               </div>
 
@@ -442,6 +454,13 @@ export class LandslideDashboard {
       }
       this.aiAdvisoryMap.clear();
       await this.refreshAllTelemetry();
+    });
+
+    // Basemap Switcher
+    const selBasemap = document.getElementById('sel-basemap') as HTMLSelectElement;
+    selBasemap?.addEventListener('change', () => {
+      const basemap = selBasemap.value as 'satellite' | 'topo' | 'dark';
+      this.mapComp?.setBaseMap(basemap);
     });
 
     // Search Input

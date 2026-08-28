@@ -40,8 +40,12 @@ body, html {
   font-family: inherit;
 }
 
+.dark-mode-tiles {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
 .landslide-custom-tooltip {
-  background: rgba(15, 23, 42, 0.92) !important;
+  background: rgba(15, 23, 42, 0.95) !important;
   backdrop-filter: blur(8px);
   border: 1px solid #334155 !important;
   border-radius: 6px !important;
@@ -53,8 +57,31 @@ body, html {
   border-top-color: #334155 !important;
 }
 
-/* Marquee Animation */
-@keyframes marquee {
+/* Alert Ticker Bar & Smooth Slow Marquee */
+.alert-ticker-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  font-size: 11px;
+  color: #ffffff;
+  overflow: hidden;
+  cursor: default;
+}
+
+.ticker-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee-slow 160s linear infinite;
+  will-change: transform;
+}
+
+.alert-ticker-bar:hover .ticker-marquee,
+.ticker-marquee:hover {
+  animation-play-state: paused !important;
+}
+
+@keyframes marquee-slow {
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
 }

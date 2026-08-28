@@ -36,21 +36,22 @@ export class AlertTicker {
     const marqueeItems = alerts
       .map(
         (a) => `
-      <span style="margin-right: 32px; font-weight: bold; color: ${a.level === 'CRITICAL' ? '#fecaca' : '#fed7aa'};">
-        ${this.isHi ? a.headlineHi : a.headlineEn} &bull; <span style="font-weight: normal; opacity: 0.9;">${this.isHi ? a.detailsHi : a.detailsEn}</span>
+      <span style="margin-right: 48px; font-size: 12px; color: ${a.level === 'CRITICAL' ? '#fecaca' : '#fed7aa'};">
+        <strong style="background: ${a.level === 'CRITICAL' ? '#ef4444' : '#f97316'}; color: #ffffff; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px;">${a.level}</strong>
+        <strong>${this.isHi ? a.headlineHi : a.headlineEn}</strong> &bull; <span style="opacity: 0.9;">${this.isHi ? a.detailsHi : a.detailsEn}</span>
       </span>
     `
       )
       .join('');
 
     this.container.innerHTML = `
-      <div style="background: ${tickerBg}; border-bottom: 1px solid ${tickerBorder}; padding: 6px 16px; display: flex; align-items: center; gap: 12px; font-size: 11px; color: #ffffff; overflow: hidden;">
-        <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap; font-weight: 800; text-transform: uppercase; background: #00000044; padding: 2px 8px; border-radius: 4px; border: 1px solid ${tickerBorder};">
+      <div class="alert-ticker-bar" style="background: ${tickerBg}; border-bottom: 1px solid ${tickerBorder};" title="Hover over ticker to pause scrolling">
+        <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap; font-weight: 800; text-transform: uppercase; background: #00000055; padding: 3px 8px; border-radius: 4px; border: 1px solid ${tickerBorder};">
           <span class="pulse-dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>
           <span>${this.isHi ? 'सक्रिय चेतावनी' : 'ACTIVE WARNINGS'} (${alerts.length})</span>
         </div>
         <div style="flex: 1; overflow: hidden; white-space: nowrap; position: relative;">
-          <div style="display: inline-block; animation: marquee 30s linear infinite;">
+          <div class="ticker-marquee">
             ${marqueeItems}
           </div>
         </div>
