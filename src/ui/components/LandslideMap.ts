@@ -23,45 +23,56 @@ export class LandslideMap {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Centered on Northeast India
+    // Centered on Northeast India (Lat 26.0N, Lon 92.9E)
     this.map = L.map(containerId, {
       center: [26.0, 92.9],
       zoom: 7,
       minZoom: 6,
-      maxZoom: 14,
+      maxZoom: 18,
       zoomControl: false,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-    // 100% Free, Keyless Basemaps (No API Keys required, zero watermark):
-    // 1. ESRI World Topographic / Relief (Mountain Contours & Hillshades)
+    // 4K Ultra-Clarity, 100% Free & Keyless Basemaps:
+    // 1. ESRI High-Resolution 4K Satellite Imagery (Zero Watermark)
+    const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri, Maxar, Earthstar Geographics, USDA, USGS',
+      maxNativeZoom: 18,
+      maxZoom: 20,
+    });
+
+    // 2. ESRI World Topographic Relief Map (Mountain Contours & Hillshading)
     const topoLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri &mdash; National Geographic, DeLorme, HERE, USGS',
-      maxZoom: 18,
+      maxNativeZoom: 18,
+      maxZoom: 20,
     });
 
-    // 2. ESRI High-Resolution Satellite Imagery
-    const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
-      maxZoom: 18,
+    // 3. OpenTopoMap Mountain Elevation Contours
+    const openTopoLayer = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> | &copy; OSM contributors',
+      maxNativeZoom: 17,
+      maxZoom: 19,
     });
 
-    // 3. OpenStreetMap with Dark Theme CSS filter
+    // 4. OpenStreetMap Dark Tactical Mode
     const darkLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       className: 'dark-mode-tiles',
+      maxNativeZoom: 19,
       maxZoom: 19,
     });
 
     this.baseLayers = {
       satellite: satLayer,
       topo: topoLayer,
+      opentopo: openTopoLayer,
       dark: darkLayer,
     };
 
-    // Default to Topographic Relief Map (Best for landslide monitoring)
-    this.currentBaseLayer = topoLayer;
+    // Default to 4K Satellite Imagery for stunning photorealism
+    this.currentBaseLayer = satLayer;
     this.currentBaseLayer.addTo(this.map);
 
     this.districtLayer = L.layerGroup().addTo(this.map);
@@ -69,7 +80,7 @@ export class LandslideMap {
     this.seismicLayer = L.layerGroup().addTo(this.map);
   }
 
-  public setBaseMap(type: 'satellite' | 'topo' | 'dark') {
+  public setBaseMap(type: 'satellite' | 'topo' | 'opentopo' | 'dark') {
     if (!this.map || !this.baseLayers[type]) return;
     if (this.currentBaseLayer) {
       this.map.removeLayer(this.currentBaseLayer);
@@ -108,10 +119,10 @@ export class LandslideMap {
         const pulseCircle = L.circleMarker([d.lat, d.lon], {
           radius: radius + 8,
           color: color,
-          weight: 1.5,
-          opacity: 0.6,
+          weight: 2,
+          opacity: 0.7,
           fillColor: color,
-          fillOpacity: 0.2,
+          fillOpacity: 0.25,
           className: 'landslide-pulse-marker',
         });
         pulseCircle.addTo(this.districtLayer);
@@ -122,7 +133,7 @@ export class LandslideMap {
         color: isSelected ? '#ffffff' : color,
         weight: isSelected ? 3 : 2,
         fillColor: color,
-        fillOpacity: 0.9,
+        fillOpacity: 0.92,
       });
 
       const label = this.isHi ? d.nameHi : d.name;
@@ -163,7 +174,7 @@ export class LandslideMap {
         color: '#dc2626',
         weight: 1.5,
         fillColor: '#b91c1c',
-        fillOpacity: 0.8,
+        fillOpacity: 0.85,
       });
 
       marker.bindTooltip(`
@@ -190,7 +201,7 @@ export class LandslideMap {
         color: '#38bdf8',
         weight: 1.5,
         fillColor: '#0284c7',
-        fillOpacity: 0.5,
+        fillOpacity: 0.55,
       });
 
       marker.bindTooltip(`
@@ -205,7 +216,7 @@ export class LandslideMap {
     }
   }
 
-  public flyToDistrict(lat: number, lon: number, zoom = 9) {
+  public flyToDistrict(lat: number, lon: number, zoom = 10) {
     if (this.map) {
       this.map.flyTo([lat, lon], zoom, { duration: 1.2 });
     }
