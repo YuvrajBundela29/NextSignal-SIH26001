@@ -22,8 +22,10 @@ import {
 import { alertsManager } from '../services/landslide/alerts-manager';
 import { generateDistrictAiAdvisory, type AiAdvisoryResponse } from '../services/landslide/ollama-advisory';
 import { NASA_COOLR_NER_EVENTS } from '../services/landslide/coolr-dataset';
+import { NER_HIGHWAY_CORRIDORS } from '../services/landslide/highway-corridors';
+import { NER_SAFE_SHELTERS } from '../services/landslide/safe-shelters';
 import { LandslideMap } from './components/LandslideMap';
-import { EarthGlobe3D } from './components/EarthGlobe3D';
+import { SatelliteIntelligenceDrawer } from './components/SatelliteIntelligenceDrawer';
 import { DistrictHud } from './components/DistrictHud';
 import { CitizenView } from './components/CitizenView';
 import { AiTerminal } from './components/AiTerminal';
@@ -32,19 +34,18 @@ import { AlertTicker } from './components/AlertTicker';
 export class LandslideDashboard {
   private container: HTMLElement;
   private viewMode: AppViewMode = 'authority';
-  private mapMode: '2d' | '3d' = '2d';
+  private rightTab: 'hud' | 'highways' | 'shelters' | 'ai' = 'hud';
   private lang: AppLanguage = 'en';
   private isOfflineDemo = false;
   private currentScenario: DemoScenario = 'monsoon_deluge';
   private selectedDistrictId = 'as_dima_hasao';
   private selectedStateFilter: 'ALL' | NerState = 'ALL';
   private searchQuery = '';
-  
-  // Sensor layer toggles
-  private showBorders = true;
-  private showClouds = false;
-  private showWeatherTrack = false;
-  private showThermal = false;
+  private showSatDrawer = true;
+
+  // Overlays
+  private showHighways = true;
+  private showShelters = true;
   private showCoolrLayer = true;
   private showSeismicLayer = true;
 
@@ -58,7 +59,7 @@ export class LandslideDashboard {
 
   // UI Components
   private mapComp: LandslideMap | null = null;
-  private globe3dComp: EarthGlobe3D | null = null;
+  private satDrawerComp: SatelliteIntelligenceDrawer | null = null;
   private hudComp: DistrictHud | null = null;
   private citizenComp: CitizenView | null = null;
   private aiTerminalComp: AiTerminal | null = null;
@@ -98,6 +99,7 @@ export class LandslideDashboard {
   private renderSkeleton() {
     this.container.innerHTML = `
       <div id="landslide-app-root" style="display: flex; flex-direction: column; height: 100vh; width: 100vw; background: #030712; color: #f8fafc; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        
         <!-- Top App Header -->
         <header style="background: #0f172a; border-bottom: 1px solid #1e293b; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; min-height: 56px;">
           <!-- Branding -->
@@ -140,7 +142,7 @@ export class LandslideDashboard {
             </div>
           </div>
 
-          <!-- Controls: Mode Switch, 3D Globe, Fullscreen, Language, SIH Audit -->
+          <!-- Controls: Mode Switch, Fullscreen, Language, SIH Audit -->
           <div style="display: flex; align-items: center; gap: 8px;">
             <!-- SIH Compliance Modal Button -->
             <button id="btn-sih-compliance" style="background: linear-gradient(135deg, #059669, #047857); border: none; color: white; padding: 6px 10px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; box-shadow: 0 0 10px rgba(5,150,105,0.4);">
@@ -195,7 +197,7 @@ export class LandslideDashboard {
 
         <!-- Main Workspace Area -->
         <div id="main-workspace-container" style="flex: 1; display: flex; position: relative; overflow: hidden;">
-          <!-- AUTHORITY VIEW: Left Sidebar + Center Map/Globe + Right HUD -->
+          <!-- AUTHORITY VIEW: Left Sidebar + Center 2D GIS Map & Satellite Drawer + Right Multifunction HUD -->
           <div id="authority-workspace" style="display: flex; width: 100%; height: 100%;">
             <!-- Left Sidebar: Regional District Explorer -->
             <aside style="width: 320px; background: #0f172a; border-right: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
@@ -216,76 +218,125 @@ export class LandslideDashboard {
               <div id="district-list-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;"></div>
             </aside>
 
-            <!-- Center View: 2D GIS Map & 3D NextSignal Globe -->
-            <main style="flex: 1; position: relative; display: flex; flex-direction: column; background: #030712;">
-              <!-- Map Controls Overlay -->
-              <div style="position: absolute; top: 12px; right: 12px; z-index: 500; background: #0f172aee; backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 10px; font-size: 11px; color: #f8fafc; box-shadow: 0 4px 16px rgba(0,0,0,0.6); max-width: 92%;">
-                <!-- 2D / 3D Mode Switcher -->
-                <div style="display: flex; background: #1e293b; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
-                  <button id="btn-map-2d" class="${this.mapMode === '2d' ? 'active' : ''}" style="padding: 4px 10px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; background: ${this.mapMode === '2d' ? '#0284c7' : 'transparent'}; color: white;">
-                    🗺️ 2D Map
-                  </button>
-                  <button id="btn-map-3d" class="${this.mapMode === '3d' ? 'active' : ''}" style="padding: 4px 10px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; background: ${this.mapMode === '3d' ? '#0284c7' : 'transparent'}; color: white;">
-                    🌐 3D Globe
-                  </button>
-                </div>
-
-                <!-- 2D Basemap Selector -->
-                <div id="basemap-selector-wrap" style="display: ${this.mapMode === '2d' ? 'flex' : 'none'}; align-items: center; gap: 4px;">
+            <!-- Center View: 2D GIS Tactical Map & Satellite Intelligence Section -->
+            <main style="flex: 1; position: relative; display: flex; flex-direction: column; background: #030712; overflow: hidden;">
+              <!-- Map Controls & Basemap Switcher -->
+              <div style="position: absolute; top: 12px; right: 12px; z-index: 500; background: #0f172aee; backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 10px; font-size: 11px; color: #f8fafc; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+                <div style="display: flex; align-items: center; gap: 4px;">
                   <span style="color: #94a3b8; font-size: 10px;">Basemap:</span>
                   <select id="sel-basemap" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 3px 6px; font-size: 11px; outline: none; cursor: pointer;">
-                    <option value="satellite" selected>🛰️ 4K Satellite</option>
-                    <option value="topo">🏔️ Topo Relief</option>
-                    <option value="opentopo">🌲 OpenTopo</option>
-                    <option value="dark">🌙 Dark Ops</option>
+                    <option value="satellite" selected>🛰️ 4K Satellite Imagery</option>
+                    <option value="topo">🏔️ Topographic Relief</option>
+                    <option value="opentopo">🌲 OpenTopo Contours</option>
+                    <option value="dark">🌙 Dark Operations</option>
                   </select>
                 </div>
 
                 <div style="height: 16px; width: 1px; background: #334155;"></div>
 
-                <!-- Sensor Trackers (Clouds / Weather / Thermal / Borders) -->
-                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;" title="NASA Real-Time Satellite Cloud Cover">
-                  <input type="checkbox" id="chk-clouds" ${this.showClouds ? 'checked' : ''} />
-                  <span>☁️ Clouds</span>
+                <!-- Layer Toggles -->
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="chk-highways" ${this.showHighways ? 'checked' : ''} />
+                  <span>🛣️ Highway Passes</span>
                 </label>
 
-                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;" title="Live RainViewer Weather Radar Track">
-                  <input type="checkbox" id="chk-weather-track" ${this.showWeatherTrack ? 'checked' : ''} />
-                  <span>🌧️ Weather Radar</span>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="chk-shelters" ${this.showShelters ? 'checked' : ''} />
+                  <span>🛡️ Shelters & Helipads</span>
                 </label>
 
-                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;" title="NASA MODIS Thermal Surface Hotspots">
-                  <input type="checkbox" id="chk-thermal" ${this.showThermal ? 'checked' : ''} />
-                  <span>🔥 Thermal Track</span>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="chk-coolr" ${this.showCoolrLayer ? 'checked' : ''} />
+                  <span>NASA COOLR</span>
                 </label>
 
-                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;" title="Official Survey of India State Boundaries">
-                  <input type="checkbox" id="chk-borders" ${this.showBorders ? 'checked' : ''} />
-                  <span>🗺️ Borders</span>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="chk-seismic" ${this.showSeismicLayer ? 'checked' : ''} />
+                  <span>USGS Quakes</span>
                 </label>
+
+                <button id="btn-toggle-sat-drawer" style="background: #0284c7; color: white; border: none; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer;">
+                  ${this.showSatDrawer ? 'Hide Sat Intelligence ▲' : 'Show Sat Intelligence ▼'}
+                </button>
               </div>
 
-              <!-- 2D Leaflet Map Container -->
-              <div id="landslide-leaflet-map" style="flex: 1; width: 100%; height: 100%; display: ${this.mapMode === '2d' ? 'block' : 'none'};"></div>
+              <!-- 2D Leaflet Tactical Map -->
+              <div id="landslide-leaflet-map" style="flex: 1; width: 100%; height: 100%;"></div>
 
-              <!-- 3D Globe.gl Container -->
-              <div id="landslide-3d-globe" style="flex: 1; width: 100%; height: 100%; display: ${this.mapMode === '3d' ? 'block' : 'none'}; position: relative;"></div>
+              <!-- Satellite & Earth Observation Intelligence Section Drawer (Bottom Center) -->
+              <div id="satellite-drawer-container" style="padding: 8px 12px; z-index: 400; display: ${this.showSatDrawer ? 'block' : 'none'}; max-height: 230px; overflow-y: auto;"></div>
             </main>
 
-            <!-- Right Sidebar: District HUD & AI Terminal (Tabs) -->
+            <!-- Right Sidebar: Multifunction Telemetry & Emergency Hub -->
             <aside style="width: 380px; background: #0b0f19; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
-              <!-- Tab Bar -->
-              <div style="display: flex; background: #0f172a; border-bottom: 1px solid #1e293b;">
-                <button id="tab-btn-hud" style="flex: 1; padding: 10px; font-size: 11px; font-weight: 700; cursor: pointer; border: none; background: #0b0f19; color: #38bdf8; border-bottom: 2px solid #38bdf8;">
-                  📊 District Telemetry HUD
+              <!-- Tab Bar (4 Essential Views) -->
+              <div style="display: flex; background: #0f172a; border-bottom: 1px solid #1e293b; font-size: 10px;">
+                <button id="tab-btn-hud" style="flex: 1; padding: 8px 4px; font-weight: 700; cursor: pointer; border: none; background: #0b0f19; color: #38bdf8; border-bottom: 2px solid #38bdf8;">
+                  📊 HUD
                 </button>
-                <button id="tab-btn-ai" style="flex: 1; padding: 10px; font-size: 11px; font-weight: 700; cursor: pointer; border: none; background: #0f172a; color: #94a3b8; border-bottom: 2px solid transparent;">
-                  🛡️ Disaster Command Console
+                <button id="tab-btn-highways" style="flex: 1; padding: 8px 4px; font-weight: 700; cursor: pointer; border: none; background: #0f172a; color: #94a3b8; border-bottom: 2px solid transparent;">
+                  🛣️ Highways
+                </button>
+                <button id="tab-btn-shelters" style="flex: 1; padding: 8px 4px; font-weight: 700; cursor: pointer; border: none; background: #0f172a; color: #94a3b8; border-bottom: 2px solid transparent;">
+                  🛡️ Shelters
+                </button>
+                <button id="tab-btn-ai" style="flex: 1; padding: 8px 4px; font-weight: 700; cursor: pointer; border: none; background: #0f172a; color: #94a3b8; border-bottom: 2px solid transparent;">
+                  🤖 Command
                 </button>
               </div>
 
               <!-- Tab Contents -->
-              <div id="hud-tab-content" style="flex: 1; overflow-y: auto; padding: 12px;"></div>
+              <div id="hud-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: block;"></div>
+              
+              <!-- Highways Tab -->
+              <div id="highways-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 10px;">
+                <div style="font-size: 12px; font-weight: 800; color: #38bdf8; text-transform: uppercase;">
+                  🛣️ Arterial Highway Choke-Point Status
+                </div>
+                ${NER_HIGHWAY_CORRIDORS.map(h => `
+                  <div style="background: #1e293b; border-radius: 8px; padding: 10px; border-left: 4px solid ${h.vulnerabilityLevel === 'CRITICAL' ? '#ef4444' : '#f97316'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <strong style="color: #ffffff; font-size: 12px;">${h.name}</strong>
+                      <span style="background: ${h.currentStatus === 'RESTRICTED' ? '#ef4444' : '#f97316'}; color: white; font-size: 9px; font-weight: bold; padding: 1px 6px; border-radius: 3px;">
+                        ${h.currentStatus}
+                      </span>
+                    </div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">${h.route}</div>
+                    <div style="font-size: 10px; color: #cbd5e1; margin-top: 4px;">
+                      Active Choke Points: <strong>${h.vulnerableChokePoints.join(', ')}</strong>
+                    </div>
+                    <div style="font-size: 10px; color: #38bdf8; margin-top: 4px;">
+                      Nearest PWD Depot: ${h.nearestPwdDepot} (${h.pwdEmergencyContact})
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <!-- Shelters Tab -->
+              <div id="shelters-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 10px;">
+                <div style="font-size: 12px; font-weight: 800; color: #34d399; text-transform: uppercase;">
+                  🛡️ Designated Safe Shelters & Evacuation Centers
+                </div>
+                ${NER_SAFE_SHELTERS.map(s => `
+                  <div style="background: #1e293b; border-radius: 8px; padding: 10px; border-left: 4px solid #10b981;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <strong style="color: #ffffff; font-size: 12px;">${s.name}</strong>
+                      <span style="color: #34d399; font-weight: 800; font-size: 11px;">${s.capacityPersons} pax</span>
+                    </div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                      ${s.type} &bull; ${s.elevationM}m MSL
+                    </div>
+                    <div style="font-size: 10px; color: #38bdf8; margin-top: 4px;">
+                      Emergency Helpline: <strong>${s.contactNumber}</strong>
+                    </div>
+                    <div style="font-size: 9px; color: #a7f3d0; margin-top: 2px;">
+                      ${s.hasMedicalPost ? '✓ Medical Post' : ''} ${s.hasGeneratorPower ? '✓ Generator Power' : ''} ${s.hasSatelliteComms ? '✓ Satellite Link' : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <!-- AI Command Tab -->
               <div id="ai-tab-content" style="flex: 1; display: none; flex-direction: column;"></div>
             </aside>
           </div>
@@ -322,15 +373,16 @@ export class LandslideDashboard {
               </div>
 
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                <strong style="color: #fbbf24; font-size: 13px;">3. Multi-Sensor Surveillance (Satellite Clouds, Radar, Thermal):</strong><br/>
-                &bull; <strong>Cloud Satellite View</strong>: Real-time NASA VIIRS TrueColor / IR clouds.<br/>
-                &bull; <strong>Weather Radar Track</strong>: Live RainViewer precipitation Doppler radar.<br/>
-                &bull; <strong>Thermal Hotspots</strong>: NASA MODIS Land surface thermal anomaly detection.
+                <strong style="color: #fbbf24; font-size: 13px;">3. Multi-Sensor Satellite Intelligence Hub:</strong><br/>
+                &bull; <strong>Visible RGB TrueColor (NASA VIIRS)</strong>: High-resolution daily satellite view.<br/>
+                &bull; <strong>Thermal Infrared Surface Hotspots (NASA MODIS)</strong>: Land surface temperature radiance.<br/>
+                &bull; <strong>Wind Vectors & Cloud Fraction (Open-Meteo)</strong>: Real-time wind speed, gusts, and cloud cover.<br/>
+                &bull; <strong>Live RainViewer Weather Radar</strong>: Real-time animated Doppler precipitation tracking.
               </div>
 
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #a855f7;">
-                <strong style="color: #c084fc; font-size: 13px;">4. Official State Boundaries & Google Earth Auto-Reveal:</strong><br/>
-                Hovering over any of the 8 NER states automatically highlights the polygon and reveals a rich situation card.
+                <strong style="color: #c084fc; font-size: 13px;">4. Multi-Tier AI Decision Support & Arterial Highway Monitoring:</strong><br/>
+                Monitors NH-6, NH-29, NH-10, NH-13, and NH-27 choke-points with automated NDRF/SDRF mobilization orders.
               </div>
             </div>
           </div>
@@ -344,8 +396,8 @@ export class LandslideDashboard {
       void this.selectDistrict(districtId);
     });
 
-    this.globe3dComp = new EarthGlobe3D('landslide-3d-globe', (districtId) => {
-      void this.selectDistrict(districtId);
+    this.satDrawerComp = new SatelliteIntelligenceDrawer('satellite-drawer-container', (layerId, enabled) => {
+      this.mapComp?.setSatelliteLayer(layerId, enabled);
     });
 
     this.hudComp = new DistrictHud('hud-tab-content');
@@ -394,10 +446,8 @@ export class LandslideDashboard {
     this.mapComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
     this.mapComp?.renderCoolrLandslides(this.showCoolrLayer);
     this.mapComp?.renderSeismicEvents(this.liveEarthquakes, this.showSeismicLayer);
-
-    this.globe3dComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
-    this.globe3dComp?.renderCoolrEvents(this.showCoolrLayer);
-    this.globe3dComp?.renderSeismicQuakes(this.liveEarthquakes, this.showSeismicLayer);
+    this.mapComp?.renderHighwayCorridors(this.showHighways);
+    this.mapComp?.renderSafeShelters(this.showShelters);
 
     this.updateActiveDistrictViews();
   }
@@ -517,13 +567,11 @@ export class LandslideDashboard {
     const district = NER_DISTRICTS.find(d => d.id === districtId);
     if (!district) return;
 
-    if (this.mapMode === '2d') {
-      this.mapComp?.flyToDistrict(district.lat, district.lon);
-      this.mapComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
-    } else {
-      this.globe3dComp?.orientToCoordinates(district.lat, district.lon, 0.65);
-      this.globe3dComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
-    }
+    this.mapComp?.flyToDistrict(district.lat, district.lon);
+    this.mapComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
+    
+    // Update satellite intelligence telemetry for newly selected district
+    void this.satDrawerComp?.updateDistrict(district);
 
     this.renderDistrictList();
     await this.updateActiveDistrictViews();
@@ -566,33 +614,6 @@ export class LandslideDashboard {
       }
     });
 
-    // 2D / 3D Mode
-    const btn2d = document.getElementById('btn-map-2d');
-    const btn3d = document.getElementById('btn-map-3d');
-    const map2dEl = document.getElementById('landslide-leaflet-map');
-    const map3dEl = document.getElementById('landslide-3d-globe');
-    const basemapWrap = document.getElementById('basemap-selector-wrap');
-
-    btn2d?.addEventListener('click', () => {
-      this.mapMode = '2d';
-      btn2d.style.background = '#0284c7';
-      if (btn3d) btn3d.style.background = 'transparent';
-      if (map2dEl) map2dEl.style.display = 'block';
-      if (map3dEl) map3dEl.style.display = 'none';
-      if (basemapWrap) basemapWrap.style.display = 'flex';
-      this.mapComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
-    });
-
-    btn3d?.addEventListener('click', () => {
-      this.mapMode = '3d';
-      if (btn2d) btn2d.style.background = 'transparent';
-      btn3d.style.background = '#0284c7';
-      if (map2dEl) map2dEl.style.display = 'none';
-      if (map3dEl) map3dEl.style.display = 'block';
-      if (basemapWrap) basemapWrap.style.display = 'none';
-      this.globe3dComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
-    });
-
     // Fullscreen Toggle
     const btnFullscreen = document.getElementById('btn-fullscreen-toggle');
     btnFullscreen?.addEventListener('click', () => {
@@ -603,6 +624,15 @@ export class LandslideDashboard {
         void document.exitFullscreen();
         if (btnFullscreen) btnFullscreen.innerHTML = '⛶ Fullscreen';
       }
+    });
+
+    // Satellite Drawer Toggle
+    const btnToggleSat = document.getElementById('btn-toggle-sat-drawer');
+    const satDrawerEl = document.getElementById('satellite-drawer-container');
+    btnToggleSat?.addEventListener('click', () => {
+      this.showSatDrawer = !this.showSatDrawer;
+      if (satDrawerEl) satDrawerEl.style.display = this.showSatDrawer ? 'block' : 'none';
+      if (btnToggleSat) btnToggleSat.innerHTML = this.showSatDrawer ? 'Hide Sat Intelligence ▲' : 'Show Sat Intelligence ▼';
     });
 
     // SIH Modal
@@ -644,7 +674,6 @@ export class LandslideDashboard {
     selLang?.addEventListener('change', () => {
       this.lang = selLang.value as AppLanguage;
       this.mapComp?.setLanguage(this.lang);
-      this.globe3dComp?.setLanguage(this.lang);
       this.alertTickerComp?.setLanguage(this.lang);
       this.updateActiveDistrictViews();
       this.renderDistrictList();
@@ -696,80 +725,93 @@ export class LandslideDashboard {
       this.renderDistrictList();
     });
 
-    // Right Sidebar Tab Switcher
+    // Right Sidebar Tab Switchers
     const tabBtnHud = document.getElementById('tab-btn-hud');
+    const tabBtnHwy = document.getElementById('tab-btn-highways');
+    const tabBtnShl = document.getElementById('tab-btn-shelters');
     const tabBtnAi = document.getElementById('tab-btn-ai');
+
     const hudContent = document.getElementById('hud-tab-content');
+    const hwyContent = document.getElementById('highways-tab-content');
+    const shlContent = document.getElementById('shelters-tab-content');
     const aiContent = document.getElementById('ai-tab-content');
 
+    const resetTabs = () => {
+      [tabBtnHud, tabBtnHwy, tabBtnShl, tabBtnAi].forEach(btn => {
+        if (btn) {
+          btn.style.background = '#0f172a';
+          btn.style.color = '#94a3b8';
+          btn.style.borderBottom = '2px solid transparent';
+        }
+      });
+      [hudContent, hwyContent, shlContent, aiContent].forEach(c => {
+        if (c) c.style.display = 'none';
+      });
+    };
+
     tabBtnHud?.addEventListener('click', () => {
-      if (tabBtnHud && tabBtnAi && hudContent && aiContent) {
+      resetTabs();
+      if (tabBtnHud && hudContent) {
         tabBtnHud.style.background = '#0b0f19';
         tabBtnHud.style.color = '#38bdf8';
         tabBtnHud.style.borderBottom = '2px solid #38bdf8';
-        tabBtnAi.style.background = '#0f172a';
-        tabBtnAi.style.color = '#94a3b8';
-        tabBtnAi.style.borderBottom = '2px solid transparent';
         hudContent.style.display = 'block';
-        aiContent.style.display = 'none';
+      }
+    });
+
+    tabBtnHwy?.addEventListener('click', () => {
+      resetTabs();
+      if (tabBtnHwy && hwyContent) {
+        tabBtnHwy.style.background = '#0b0f19';
+        tabBtnHwy.style.color = '#38bdf8';
+        tabBtnHwy.style.borderBottom = '2px solid #38bdf8';
+        hwyContent.style.display = 'flex';
+      }
+    });
+
+    tabBtnShl?.addEventListener('click', () => {
+      resetTabs();
+      if (tabBtnShl && shlContent) {
+        tabBtnShl.style.background = '#0b0f19';
+        tabBtnShl.style.color = '#38bdf8';
+        tabBtnShl.style.borderBottom = '2px solid #38bdf8';
+        shlContent.style.display = 'flex';
       }
     });
 
     tabBtnAi?.addEventListener('click', () => {
-      if (tabBtnHud && tabBtnAi && hudContent && aiContent) {
+      resetTabs();
+      if (tabBtnAi && aiContent) {
         tabBtnAi.style.background = '#0b0f19';
         tabBtnAi.style.color = '#38bdf8';
         tabBtnAi.style.borderBottom = '2px solid #38bdf8';
-        tabBtnHud.style.background = '#0f172a';
-        tabBtnHud.style.color = '#94a3b8';
-        tabBtnHud.style.borderBottom = '2px solid transparent';
         aiContent.style.display = 'flex';
-        hudContent.style.display = 'none';
       }
     });
 
-    // Sensor Trackers (Clouds / Weather Track / Thermal / Borders)
-    const chkClouds = document.getElementById('chk-clouds') as HTMLInputElement;
-    chkClouds?.addEventListener('change', () => {
-      this.showClouds = chkClouds.checked;
-      this.mapComp?.setSatelliteClouds(this.showClouds);
-      this.globe3dComp?.setSatelliteClouds(this.showClouds);
+    // Layer Toggles
+    const chkHighways = document.getElementById('chk-highways') as HTMLInputElement;
+    chkHighways?.addEventListener('change', () => {
+      this.showHighways = chkHighways.checked;
+      this.mapComp?.renderHighwayCorridors(this.showHighways);
     });
 
-    const chkWeatherTrack = document.getElementById('chk-weather-track') as HTMLInputElement;
-    chkWeatherTrack?.addEventListener('change', () => {
-      this.showWeatherTrack = chkWeatherTrack.checked;
-      this.mapComp?.setWeatherTrack(this.showWeatherTrack);
-      this.globe3dComp?.setWeatherTrack(this.showWeatherTrack);
+    const chkShelters = document.getElementById('chk-shelters') as HTMLInputElement;
+    chkShelters?.addEventListener('change', () => {
+      this.showShelters = chkShelters.checked;
+      this.mapComp?.renderSafeShelters(this.showShelters);
     });
 
-    const chkThermal = document.getElementById('chk-thermal') as HTMLInputElement;
-    chkThermal?.addEventListener('change', () => {
-      this.showThermal = chkThermal.checked;
-      this.mapComp?.setThermalTracker(this.showThermal);
-      this.globe3dComp?.setThermalTracker(this.showThermal);
-    });
-
-    const chkBorders = document.getElementById('chk-borders') as HTMLInputElement;
-    chkBorders?.addEventListener('change', () => {
-      this.showBorders = chkBorders.checked;
-      this.mapComp?.setVirtualBorders(this.showBorders);
-      this.globe3dComp?.setVirtualBorders(this.showBorders);
-    });
-
-    // NASA COOLR & Seismic
     const chkCoolr = document.getElementById('chk-coolr') as HTMLInputElement;
     chkCoolr?.addEventListener('change', () => {
       this.showCoolrLayer = chkCoolr.checked;
       this.mapComp?.renderCoolrLandslides(this.showCoolrLayer);
-      this.globe3dComp?.renderCoolrEvents(this.showCoolrLayer);
     });
 
     const chkSeismic = document.getElementById('chk-seismic') as HTMLInputElement;
     chkSeismic?.addEventListener('change', () => {
       this.showSeismicLayer = chkSeismic.checked;
       this.mapComp?.renderSeismicEvents(this.liveEarthquakes, this.showSeismicLayer);
-      this.globe3dComp?.renderSeismicQuakes(this.liveEarthquakes, this.showSeismicLayer);
     });
   }
 }

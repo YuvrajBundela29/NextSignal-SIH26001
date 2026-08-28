@@ -3,21 +3,23 @@ import 'leaflet/dist/leaflet.css';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
-import { NER_STATES_GEOJSON, type StateGeoMetadata } from '../../services/landslide/state-boundaries';
+import { NER_HIGHWAY_CORRIDORS, type HighwayCorridor } from '../../services/landslide/highway-corridors';
+import { NER_SAFE_SHELTERS, type SafeShelter } from '../../services/landslide/safe-shelters';
 
 export class LandslideMap {
   private map: L.Map | null = null;
   private baseLayers: Record<string, L.TileLayer> = {};
   private currentBaseLayer: L.TileLayer | null = null;
   
-  // Overlay Layer Groups
+  // Overlays
   private districtLayer: L.LayerGroup | null = null;
-  private boundaryLayer: L.GeoJSON | null = null;
   private coolrLayer: L.LayerGroup | null = null;
   private seismicLayer: L.LayerGroup | null = null;
-  private cloudLayer: L.TileLayer | null = null;
-  private weatherTrackLayer: L.TileLayer | null = null;
-  private thermalLayer: L.TileLayer | null = null;
+  private highwayLayer: L.LayerGroup | null = null;
+  private shelterLayer: L.LayerGroup | null = null;
+
+  // Remote Sensing Satellite Layers
+  private satLayers: Record<string, L.TileLayer> = {};
 
   private onSelectDistrict: (districtId: string) => void;
   private lang: AppLanguage = 'en';
@@ -41,7 +43,7 @@ export class LandslideMap {
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-    // 4K Ultra-Clarity Basemaps
+    // 4K Ultra-Clarity Basemaps (Clean, Professional, Zero Watermark)
     const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri, Maxar, Earthstar Geographics, USDA, USGS',
       maxNativeZoom: 18,
@@ -77,137 +79,118 @@ export class LandslideMap {
     this.currentBaseLayer = satLayer;
     this.currentBaseLayer.addTo(this.map);
 
-    // Specialized Sensor Trackers:
-    // 1. Cloud Satellite View (NASA GIBS / Real-time Satellite Infrared & Visible Clouds)
-    this.cloudLayer = L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
-      opacity: 0.65,
-      maxNativeZoom: 9,
-      maxZoom: 19,
-      attribution: '&copy; NASA EOSDIS GIBS',
-    });
-
-    // 2. Weather Track (Live Precipitation Radar Track)
-    this.weatherTrackLayer = L.tileLayer('https://tilecache.rainviewer.com/v2/radar/nowcast_0/512/{z}/{x}/{y}/2/1_1.png', {
-      opacity: 0.70,
-      maxNativeZoom: 12,
-      maxZoom: 19,
-      attribution: '&copy; RainViewer Live Weather Radar',
-    });
-
-    // 3. Thermal Tracker (NASA MODIS / VIIRS Thermal Hotspots & Surface Temperature)
-    this.thermalLayer = L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Thermal_Anomalies_All/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png', {
-      opacity: 0.80,
-      maxNativeZoom: 8,
-      maxZoom: 19,
-      attribution: '&copy; NASA FIRMS / MODIS Thermal Hotspots',
-    });
-
-    // Initialize Official State Boundaries with Google Earth Auto-Reveal
-    this.initOfficialBoundaries();
+    // Specialized Earth Remote Sensing Layers
+    this.satLayers = {
+      viirs_truecolor: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
+        opacity: 0.85,
+        maxNativeZoom: 9,
+        maxZoom: 19,
+        attribution: '&copy; NASA EOSDIS GIBS',
+      }),
+      clouds_ir: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Cloud_Top_Height_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+        opacity: 0.70,
+        maxNativeZoom: 6,
+        maxZoom: 19,
+        attribution: '&copy; NASA EOSDIS Infrared Cloud Satellites',
+      }),
+      thermal_anomalies: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Thermal_Anomalies_All/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png', {
+        opacity: 0.80,
+        maxNativeZoom: 8,
+        maxZoom: 19,
+        attribution: '&copy; NASA FIRMS / MODIS Land Surface Thermal Anomalies',
+      }),
+      weather_radar: L.tileLayer('https://tilecache.rainviewer.com/v2/radar/nowcast_0/512/{z}/{x}/{y}/2/1_1.png', {
+        opacity: 0.75,
+        maxNativeZoom: 12,
+        maxZoom: 19,
+        attribution: '&copy; RainViewer Real-Time Precipitation Doppler Radar',
+      }),
+    };
 
     this.districtLayer = L.layerGroup().addTo(this.map);
     this.coolrLayer = L.layerGroup().addTo(this.map);
     this.seismicLayer = L.layerGroup().addTo(this.map);
+    this.highwayLayer = L.layerGroup().addTo(this.map);
+    this.shelterLayer = L.layerGroup().addTo(this.map);
+
+    this.renderHighwayCorridors(true);
+    this.renderSafeShelters(true);
   }
 
-  private initOfficialBoundaries() {
+  public setSatelliteLayer(layerId: string, enabled: boolean) {
     if (!this.map) return;
+    const layer = this.satLayers[layerId];
+    if (!layer) return;
 
-    this.boundaryLayer = L.geoJSON(NER_STATES_GEOJSON as any, {
-      style: (feature) => {
-        const color = feature?.properties?.color || '#06b6d4';
-        return {
-          color: color,
-          weight: 2.5,
-          opacity: 0.9,
-          fillColor: color,
-          fillOpacity: 0.08,
-          dashArray: '6, 6',
-        };
-      },
-      onEachFeature: (feature, layer) => {
-        const p: StateGeoMetadata = feature.properties;
+    if (enabled) {
+      layer.addTo(this.map);
+    } else {
+      this.map.removeLayer(layer);
+    }
+  }
 
-        // Google Maps / Google Earth Auto-Reveal on Hover
-        const tooltipContent = `
-          <div style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); border: 1px solid ${p.color}; border-radius: 8px; padding: 10px 14px; color: #ffffff; font-family: -apple-system, system-ui, sans-serif; box-shadow: 0 6px 20px rgba(0,0,0,0.7); min-width: 170px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 4px; margin-bottom: 6px;">
-              <span style="font-size: 13px; font-weight: 800; color: ${p.color};">${p.state}</span>
-              <span style="font-size: 10px; color: #94a3b8;">${p.nameHi}</span>
-            </div>
-            <div style="font-size: 11px; line-height: 1.45; color: #cbd5e1;">
-              <div>Capital: <strong style="color: #fff;">${p.capital}</strong></div>
-              <div>Monitored Districts: <strong style="color: #fff;">${p.districtsCount} High-Risk</strong></div>
-              <div>Elevation Range: <strong style="color: #38bdf8;">${p.elevationRange}</strong></div>
-              <div>Arterial Corridor: <strong style="color: #fbbf24;">${p.primaryHighway}</strong></div>
-            </div>
+  public renderHighwayCorridors(show: boolean) {
+    if (!this.highwayLayer) return;
+    this.highwayLayer.clearLayers();
+    if (!show) return;
+
+    for (const h of NER_HIGHWAY_CORRIDORS) {
+      const color =
+        h.vulnerabilityLevel === 'CRITICAL'
+          ? '#ef4444'
+          : h.vulnerabilityLevel === 'HIGH'
+          ? '#f97316'
+          : '#eab308';
+
+      const polyline = L.polyline(h.coordinates, {
+        color: color,
+        weight: 3.5,
+        opacity: 0.9,
+      });
+
+      const tooltipContent = `
+        <div style="font-family: system-ui, sans-serif; font-size: 11px; line-height: 1.4; color: #fff; min-width: 170px;">
+          <div style="font-weight: bold; font-size: 12px; color: ${color};">${h.name}</div>
+          <div style="color: #cbd5e1; font-size: 10px; margin-top: 2px;">${h.route}</div>
+          <div style="margin-top: 4px; display: flex; justify-content: space-between;">
+            <span>Status:</span>
+            <strong style="color: ${h.currentStatus === 'RESTRICTED' ? '#ef4444' : '#f97316'};">${h.currentStatus}</strong>
           </div>
-        `;
+          <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+            Choke points: ${h.vulnerableChokePoints.slice(0, 2).join(', ')}
+          </div>
+        </div>
+      `;
 
-        layer.bindTooltip(tooltipContent, {
-          sticky: true,
-          className: 'landslide-custom-tooltip',
-          offset: [10, 10],
-        });
-
-        layer.on('mouseover', () => {
-          (layer as L.Path).setStyle({
-            weight: 4,
-            opacity: 1,
-            fillOpacity: 0.22,
-          });
-        });
-
-        layer.on('mouseout', () => {
-          (layer as L.Path).setStyle({
-            weight: 2.5,
-            opacity: 0.9,
-            fillOpacity: 0.08,
-          });
-        });
-
-        layer.on('click', () => {
-          if (this.map && (layer as any).getBounds) {
-            this.map.fitBounds((layer as any).getBounds(), { padding: [40, 40] });
-          }
-        });
-      },
-    }).addTo(this.map);
-  }
-
-  public setSatelliteClouds(show: boolean) {
-    if (!this.map || !this.cloudLayer) return;
-    if (show) {
-      this.cloudLayer.addTo(this.map);
-    } else {
-      this.map.removeLayer(this.cloudLayer);
+      polyline.bindTooltip(tooltipContent, { sticky: true, className: 'landslide-custom-tooltip' });
+      polyline.addTo(this.highwayLayer);
     }
   }
 
-  public setWeatherTrack(show: boolean) {
-    if (!this.map || !this.weatherTrackLayer) return;
-    if (show) {
-      this.weatherTrackLayer.addTo(this.map);
-    } else {
-      this.map.removeLayer(this.weatherTrackLayer);
-    }
-  }
+  public renderSafeShelters(show: boolean) {
+    if (!this.shelterLayer) return;
+    this.shelterLayer.clearLayers();
+    if (!show) return;
 
-  public setThermalTracker(show: boolean) {
-    if (!this.map || !this.thermalLayer) return;
-    if (show) {
-      this.thermalLayer.addTo(this.map);
-    } else {
-      this.map.removeLayer(this.thermalLayer);
-    }
-  }
+    for (const s of NER_SAFE_SHELTERS) {
+      const marker = L.circleMarker([s.lat, s.lon], {
+        radius: 6,
+        color: '#10b981',
+        weight: 2,
+        fillColor: '#059669',
+        fillOpacity: 0.9,
+      });
 
-  public setVirtualBorders(show: boolean) {
-    if (!this.map || !this.boundaryLayer) return;
-    if (show) {
-      this.boundaryLayer.addTo(this.map);
-    } else {
-      this.map.removeLayer(this.boundaryLayer);
+      marker.bindTooltip(`
+        <div style="font-family: system-ui, sans-serif; font-size: 11px; color: #fff;">
+          <strong style="color: #34d399;">🛡️ ${s.name}</strong><br/>
+          <span style="color: #94a3b8;">${s.type} &bull; ${s.elevationM}m MSL</span><br/>
+          <span>Capacity: <strong>${s.capacityPersons} persons</strong></span><br/>
+          <span style="color: #38bdf8;">DEOC Emergency: ${s.contactNumber}</span>
+        </div>
+      `, { direction: 'top', offset: [0, -6] });
+
+      marker.addTo(this.shelterLayer);
     }
   }
 
