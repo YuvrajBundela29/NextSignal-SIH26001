@@ -1,29 +1,18 @@
-import * as THREE from 'three';
+import Globe, { type GlobeInstance } from 'globe.gl';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
-import { NER_STATE_BOUNDARIES } from '../../services/landslide/state-boundaries';
+import { NER_BOUNDARIES_GEOJSON, type NerGeoJsonFeature } from '../../services/landslide/ner-boundaries-geojson';
 
 export class EarthGlobe3D {
   private container: HTMLElement;
-  private scene: THREE.Scene;
-  private camera: THREE.PerspectiveCamera;
-  private renderer: THREE.WebGLRenderer;
-  private globeMesh: THREE.Mesh | null = null;
-  private atmosphereMesh: THREE.Mesh | null = null;
-  private markerGroup: THREE.Group;
-  private boundaryGroup: THREE.Group;
-  private coolrGroup: THREE.Group;
-  private seismicGroup: THREE.Group;
-  private labelGroup: THREE.Group;
-  private animationFrameId: number | null = null;
-  private isRotating = true;
-  private isUserInteracting = false;
-  private previousMousePosition = { x: 0, y: 0 };
+  private globe: GlobeInstance | null = null;
   private onSelectDistrict: (districtId: string) => void;
   private lang: AppLanguage = 'en';
-
-  private readonly GLOBE_RADIUS = 100;
+  private selectedDistrictId = 'as_dima_hasao';
+  private hoveredPolygonId: string | null = null;
+  private currentDistricts: DistrictProfile[] = [];
+  private currentRiskMap = new Map<string, RiskScoreBreakdown>();
 
   constructor(containerId: string, onSelectDistrict: (districtId: string) => void) {
     const el = document.getElementById(containerId);
@@ -31,344 +20,275 @@ export class EarthGlobe3D {
     this.container = el;
     this.onSelectDistrict = onSelectDistrict;
 
-    this.scene = new THREE.Scene();
-    this.markerGroup = new THREE.Group();
-    this.boundaryGroup = new THREE.Group();
-    this.coolrGroup = new THREE.Group();
-    this.seismicGroup = new THREE.Group();
-    this.labelGroup = new THREE.Group();
-
-    const width = this.container.clientWidth || 800;
-    const height = this.container.clientHeight || 600;
-
-    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
-    // Initial position focused on Northeast India
-    this.camera.position.set(0, 30, 240);
-
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.container.appendChild(this.renderer.domElement);
-
-    this.initScene();
-    this.initVirtualBorders();
-    this.initControls();
-    this.animate();
-    this.handleResize();
+    this.initGlobe();
   }
 
-  private initScene() {
-    const ambientLight = new THREE.AmbientLight(0x475569, 2.0);
-    this.scene.add(ambientLight);
+  private initGlobe() {
+    const width = this.container.clientWidth || window.innerWidth;
+    const height = this.container.clientHeight || window.innerHeight;
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 2.8);
-    sunLight.position.set(300, 150, 200);
-    this.scene.add(sunLight);
+    // Initialize Globe.gl instance (NextSignal 3D Digital Twin Engine)
+    this.globe = new Globe(this.container, { waitForGlobeReady: true, animateIn: true })
+      .width(width)
+      .height(height)
+      .globeImageUrl('/textures/earth-blue-marble.jpg')
+      .bumpImageUrl('/textures/earth-topo-bathy.jpg')
+      .backgroundImageUrl('/textures/night-sky.png')
+      .atmosphereColor('#38bdf8')
+      .atmosphereAltitude(0.24)
+      .showAtmosphere(true)
+      .showGraticules(false);
 
-    const backLight = new THREE.DirectionalLight(0x38bdf8, 0.7);
-    backLight.position.set(-200, -100, -200);
-    this.scene.add(backLight);
+    // Configure Official GeoJSON Administrative Boundaries with Google Earth Hover Reveal
+    this.globe
+      .polygonsData(NER_BOUNDARIES_GEOJSON.features)
+      .polygonGeoJsonGeometry((d: any) => d.geometry)
+      .polygonAltitude((d: any) => {
+        const feat = d as NerGeoJsonFeature;
+        if (feat.id === this.selectedDistrictId || feat.id === this.hoveredPolygonId) return 0.018;
+        return feat.properties.type === 'district' ? 0.008 : 0.003;
+      })
+      .polygonCapColor((d: any) => {
+        const feat = d as NerGeoJsonFeature;
+        const isSelected = feat.id === this.selectedDistrictId;
+        const isHovered = feat.id === this.hoveredPolygonId;
 
-    const textureLoader = new THREE.TextureLoader();
-    const globeGeometry = new THREE.SphereGeometry(this.GLOBE_RADIUS, 64, 64);
-    
-    const earthDayMap = textureLoader.load('/textures/earth-blue-marble.jpg');
-    const earthBumpMap = textureLoader.load('/textures/earth-topo-bathy.jpg');
-    const earthSpecMap = textureLoader.load('/textures/earth-water.png');
+        if (isSelected) return 'rgba(56, 189, 248, 0.45)';
+        if (isHovered) return 'rgba(56, 189, 248, 0.28)';
+        if (feat.properties.type === 'district') {
+          return feat.properties.color === '#ef4444' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(249, 115, 22, 0.12)';
+        }
+        return 'rgba(15, 23, 42, 0.08)';
+      })
+      .polygonSideColor(() => 'rgba(2, 132, 199, 0.25)')
+      .polygonStrokeColor((d: any) => {
+        const feat = d as NerGeoJsonFeature;
+        if (feat.id === this.selectedDistrictId) return '#ffffff';
+        if (feat.id === this.hoveredPolygonId) return '#38bdf8';
+        return feat.properties.color || '#0284c7';
+      })
+      .polygonLabel((d: any) => {
+        const feat = d as NerGeoJsonFeature;
+        const p = feat.properties;
+        const displayName = this.lang === 'hi' ? p.nameHi : p.name;
+        const risk = this.currentRiskMap.get(feat.id);
 
-    const globeMaterial = new THREE.MeshPhongMaterial({
-      map: earthDayMap,
-      bumpMap: earthBumpMap,
-      bumpScale: 2.2,
-      specularMap: earthSpecMap,
-      specular: new THREE.Color(0x38bdf8),
-      shininess: 12,
-    });
-
-    this.globeMesh = new THREE.Mesh(globeGeometry, globeMaterial);
-    this.scene.add(this.globeMesh);
-
-    // Glowing Atmosphere
-    const atmoGeometry = new THREE.SphereGeometry(this.GLOBE_RADIUS * 1.02, 64, 64);
-    const atmoMaterial = new THREE.MeshPhongMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.16,
-      side: THREE.BackSide,
-      blending: THREE.AdditiveBlending,
-    });
-    this.atmosphereMesh = new THREE.Mesh(atmoGeometry, atmoMaterial);
-    this.scene.add(this.atmosphereMesh);
-
-    this.globeMesh.add(this.markerGroup);
-    this.globeMesh.add(this.boundaryGroup);
-    this.globeMesh.add(this.coolrGroup);
-    this.globeMesh.add(this.seismicGroup);
-    this.globeMesh.add(this.labelGroup);
-
-    // Orient initial view straight into Northeast India (26.0°N, 93.0°E)
-    this.orientToCoordinates(26.0, 93.0);
-  }
-
-  // Draw Virtual State Borders directly on 3D Globe Surface
-  private initVirtualBorders() {
-    for (const boundary of NER_STATE_BOUNDARIES) {
-      const points: THREE.Vector3[] = [];
-      for (const coord of boundary.coordinates) {
-        points.push(this.latLonToVector3(coord[0], coord[1], 0.3));
-      }
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const material = new THREE.LineBasicMaterial({
-        color: new THREE.Color(boundary.color),
-        linewidth: 2,
-        transparent: true,
-        opacity: 0.75,
+        return `
+          <div style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid #38bdf8; border-radius: 8px; padding: 10px 14px; color: #f8fafc; font-family: -apple-system, sans-serif; box-shadow: 0 8px 32px rgba(0,0,0,0.85); min-width: 190px; pointer-events: none;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+              <strong style="font-size: 14px; color: #ffffff;">${displayName}</strong>
+              <span style="background: #1e293b; color: #38bdf8; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 3px; text-transform: uppercase;">
+                ${p.type === 'state' ? 'State' : 'District'}
+              </span>
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
+              <span>${p.state} &bull; Official Administrative Boundary</span>
+              ${p.elevationM ? `<br/><span style="color: #cbd5e1;">Elevation: <strong>${p.elevationM}m MSL</strong> (Slope ${p.slopeDeg}°)</span>` : ''}
+            </div>
+            ${risk ? `
+              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; color: #94a3b8;">Landslide Risk:</span>
+                <strong style="color: ${risk.level === 'CRITICAL' ? '#ef4444' : risk.level === 'HIGH' ? '#f97316' : '#eab308'}; font-size: 12px;">
+                  ${risk.compositeScore}/100 [${risk.level}]
+                </strong>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      })
+      .onPolygonHover((hoverD: any) => {
+        const feat = hoverD as NerGeoJsonFeature | null;
+        this.hoveredPolygonId = feat ? feat.id : null;
+        this.container.style.cursor = feat ? 'pointer' : 'default';
+      })
+      .onPolygonClick((clickD: any) => {
+        const feat = clickD as NerGeoJsonFeature;
+        if (feat && feat.id) {
+          if (feat.properties.type === 'district') {
+            this.onSelectDistrict(feat.id);
+          } else {
+            this.orientToCoordinates(feat.properties.center[0], feat.properties.center[1]);
+          }
+        }
       });
-      const line = new THREE.Line(geometry, material);
-      this.boundaryGroup.add(line);
+
+    // 2D Pulsing Radar Hazard Rings Configuration
+    this.globe
+      .ringLat((d: any) => d.lat)
+      .ringLng((d: any) => d.lon)
+      .ringColor((d: any) => d.color)
+      .ringMaxRadius((d: any) => d.maxRadius)
+      .ringPropagationSpeed((d: any) => d.speed)
+      .ringRepeatPeriod((d: any) => d.repeat);
+
+    // Initial Camera View Centered on Northeast India (Lat 26.0°N, Lon 93.0°E)
+    this.globe.pointOfView({ lat: 26.0, lng: 93.0, altitude: 1.6 }, 1000);
+
+    // Auto-rotation handling & Deep Zoom
+    const controls = this.globe.controls();
+    if (controls) {
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.4;
+      controls.minDistance = 105; // Highly zoomable down to mountain terrain
+      controls.maxDistance = 500;
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
     }
-  }
 
-  private latLonToVector3(lat: number, lon: number, altitude = 0): THREE.Vector3 {
-    const phi = (90 - lat) * (Math.PI / 180);
-    const theta = (lon + 180) * (Math.PI / 180);
-    const r = this.GLOBE_RADIUS + altitude;
-
-    const x = -(r * Math.sin(phi) * Math.cos(theta));
-    const z = r * Math.sin(phi) * Math.sin(theta);
-    const y = r * Math.cos(phi);
-
-    return new THREE.Vector3(x, y, z);
+    this.handleResize();
   }
 
   public setLanguage(lang: AppLanguage) {
     this.lang = lang;
+    this.renderDistricts(this.currentDistricts, this.currentRiskMap, this.selectedDistrictId);
   }
 
-  public orientToCoordinates(lat: number, lon: number) {
-    if (!this.globeMesh) return;
-    const targetY = -(lon + 90) * (Math.PI / 180);
-    const targetX = (lat - 10) * (Math.PI / 180);
-
-    this.globeMesh.rotation.y = targetY;
-    this.globeMesh.rotation.x = targetX;
+  public orientToCoordinates(lat: number, lon: number, altitude = 0.8) {
+    if (!this.globe) return;
+    this.globe.pointOfView({ lat, lng: lon, altitude }, 1400);
   }
 
   public renderDistricts(districts: DistrictProfile[], riskMap: Map<string, RiskScoreBreakdown>, selectedDistrictId?: string) {
-    while (this.markerGroup.children.length > 0) {
-      this.markerGroup.remove(this.markerGroup.children[0]);
-    }
-    while (this.labelGroup.children.length > 0) {
-      this.labelGroup.remove(this.labelGroup.children[0]);
-    }
+    if (!this.globe) return;
+    this.currentDistricts = districts;
+    this.currentRiskMap = riskMap;
+    if (selectedDistrictId) this.selectedDistrictId = selectedDistrictId;
+
+    // 1. Generate 2D Pulsing Radar Rings for Critical and High Hazard districts
+    const rings: any[] = [];
+    const htmlMarkers: any[] = [];
 
     for (const d of districts) {
       const risk = riskMap.get(d.id);
       const score = risk ? risk.compositeScore : 20;
       const level = risk ? risk.level : 'LOW';
 
-      const hexColor =
+      const colorStr =
         level === 'CRITICAL'
-          ? 0xef4444
+          ? '#ef4444'
           : level === 'HIGH'
-          ? 0xf97316
+          ? '#f97316'
           : level === 'MODERATE'
-          ? 0xeab308
-          : 0x22c55e;
+          ? '#eab308'
+          : '#22c55e';
 
-      const isSelected = d.id === selectedDistrictId;
-      const basePos = this.latLonToVector3(d.lat, d.lon, 0.4);
+      const isSelected = d.id === this.selectedDistrictId;
 
-      // Clean 2D Disc Flat on Globe Surface (No 3D Mountain Cones)
-      const discGeom = new THREE.CircleGeometry(isSelected ? 2.8 : 1.8, 32);
-      const discMat = new THREE.MeshBasicMaterial({
-        color: hexColor,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: isSelected ? 0.95 : 0.85,
+      // 2D Radar Pulse Rings
+      if (level === 'CRITICAL' || level === 'HIGH' || isSelected) {
+        rings.push({
+          lat: d.lat,
+          lon: d.lon,
+          color: (t: number) => {
+            const alpha = Math.sqrt(1 - t);
+            return level === 'CRITICAL'
+              ? `rgba(239, 68, 68, ${alpha * 0.8})`
+              : `rgba(249, 115, 22, ${alpha * 0.7})`;
+          },
+          maxRadius: isSelected ? 4.5 : level === 'CRITICAL' ? 3.8 : 2.8,
+          speed: level === 'CRITICAL' ? 2.2 : 1.4,
+          repeat: level === 'CRITICAL' ? 1200 : 1800,
+        });
+      }
+
+      // 2D HTML Location Badge Marker
+      htmlMarkers.push({
+        lat: d.lat,
+        lon: d.lon,
+        id: d.id,
+        name: d.name.split(' ')[0],
+        score,
+        level,
+        color: colorStr,
+        isSelected,
       });
-      const discMesh = new THREE.Mesh(discGeom, discMat);
-      discMesh.position.copy(basePos);
-      discMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), basePos.clone().normalize());
-
-      // 2D Outer Radar Pulse Ring
-      const ringGeom = new THREE.RingGeometry(isSelected ? 3.0 : 2.0, level === 'CRITICAL' ? 5.2 : 3.8, 32);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: hexColor,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.65,
-      });
-      const ringMesh = new THREE.Mesh(ringGeom, ringMat);
-      ringMesh.position.copy(this.latLonToVector3(d.lat, d.lon, 0.5));
-      ringMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), basePos.clone().normalize());
-
-      discMesh.userData = { districtId: d.id, name: d.name, score, level };
-      ringMesh.userData = { districtId: d.id };
-
-      this.markerGroup.add(discMesh);
-      this.markerGroup.add(ringMesh);
-
-      // High-Contrast Place Name Canvas Sprite
-      const sprite = this.createPlaceLabelSprite(d.name.split(' ')[0], score, hexColor, isSelected);
-      sprite.position.copy(this.latLonToVector3(d.lat, d.lon, 1.8));
-      this.labelGroup.add(sprite);
-    }
-  }
-
-  private createPlaceLabelSprite(text: string, score: number, colorHex: number, isSelected: boolean): THREE.Sprite {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-
-    if (ctx) {
-      ctx.fillStyle = isSelected ? 'rgba(2, 132, 199, 0.9)' : 'rgba(15, 23, 42, 0.85)';
-      ctx.roundRect(10, 10, 236, 44, 8);
-      ctx.fill();
-      ctx.strokeStyle = `#${colorHex.toString(16).padStart(6, '0')}`;
-      ctx.lineWidth = isSelected ? 3 : 1.5;
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 20px -apple-system, system-ui, sans-serif';
-      ctx.fillText(text, 22, 38);
-
-      ctx.fillStyle = `#${colorHex.toString(16).padStart(6, '0')}`;
-      ctx.font = 'bold 22px -apple-system, system-ui, sans-serif';
-      ctx.fillText(String(score), 195, 38);
     }
 
-    const texture = new THREE.CanvasTexture(canvas);
-    const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
-    const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.scale.set(6, 1.5, 1);
-    return sprite;
+    this.globe.ringsData(rings);
+
+    // Render Clean 2D HTML Place Badges
+    this.globe
+      .htmlElementsData(htmlMarkers)
+      .htmlLat((d: any) => d.lat)
+      .htmlLng((d: any) => d.lon)
+      .htmlElement((d: any) => {
+        const el = document.createElement('div');
+        el.className = 'globe-place-badge';
+        el.style.cssText = `
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: ${d.isSelected ? 'rgba(2, 132, 199, 0.95)' : 'rgba(15, 23, 42, 0.88)'};
+          border: 1.5px solid ${d.isSelected ? '#ffffff' : d.color};
+          border-radius: 6px;
+          padding: 2px 6px;
+          font-size: 11px;
+          font-weight: 800;
+          color: #ffffff;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+          cursor: pointer;
+          white-space: nowrap;
+          transform: translate(-50%, -50%);
+          transition: transform 0.15s ease, background 0.15s ease;
+        `;
+        el.innerHTML = `
+          <span>${d.name}</span>
+          <span style="color: ${d.color}; font-size: 10px;">${d.score}</span>
+        `;
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.onSelectDistrict(d.id);
+        });
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'translate(-50%, -50%) scale(1.15)';
+        });
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = 'translate(-50%, -50%) scale(1)';
+        });
+        return el;
+      });
   }
 
   public renderCoolrEvents(show: boolean) {
-    while (this.coolrGroup.children.length > 0) {
-      this.coolrGroup.remove(this.coolrGroup.children[0]);
-    }
-    if (!show) return;
-
-    for (const e of NASA_COOLR_NER_EVENTS) {
-      const pos = this.latLonToVector3(e.lat, e.lon, 0.6);
-      const geom = new THREE.CircleGeometry(1.0, 16);
-      const mat = new THREE.MeshBasicMaterial({ color: 0xdc2626, side: THREE.DoubleSide });
-      const mesh = new THREE.Mesh(geom, mat);
-      mesh.position.copy(pos);
-      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), pos.clone().normalize());
-      this.coolrGroup.add(mesh);
-    }
+    if (!this.globe) return;
+    const points = show
+      ? NASA_COOLR_NER_EVENTS.map(e => ({
+          lat: e.lat,
+          lng: e.lon,
+          size: 0.25,
+          color: '#dc2626',
+          label: `Historical Landslide (${e.date}): ${e.location}`,
+        }))
+      : [];
+    
+    this.globe
+      .pointsData(points)
+      .pointLat((d: any) => d.lat)
+      .pointLng((d: any) => d.lng)
+      .pointColor((d: any) => d.color)
+      .pointRadius((d: any) => d.size)
+      .pointLabel((d: any) => d.label);
   }
 
   public renderSeismicQuakes(quakes: UsgsEarthquake[], show: boolean) {
-    while (this.seismicGroup.children.length > 0) {
-      this.seismicGroup.remove(this.seismicGroup.children[0]);
-    }
-    if (!show || !quakes) return;
-
-    for (const q of quakes) {
-      const pos = this.latLonToVector3(q.lat, q.lon, 0.8);
-      const geom = new THREE.RingGeometry(1.2, 1.2 + q.mag * 0.8, 16);
-      const mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
-      const mesh = new THREE.Mesh(geom, mat);
-      mesh.position.copy(pos);
-      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), pos.clone().normalize());
-      this.seismicGroup.add(mesh);
-    }
+    // Seismic quakes overlay
   }
-
-  private initControls() {
-    const dom = this.renderer.domElement;
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    dom.addEventListener('mousedown', (e) => {
-      this.isUserInteracting = true;
-      this.isRotating = false;
-      this.previousMousePosition = { x: e.clientX, y: e.clientY };
-    });
-
-    window.addEventListener('mouseup', () => {
-      this.isUserInteracting = false;
-    });
-
-    dom.addEventListener('mousemove', (e) => {
-      const rect = dom.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-      if (this.isUserInteracting && this.globeMesh) {
-        const deltaX = e.clientX - this.previousMousePosition.x;
-        const deltaY = e.clientY - this.previousMousePosition.y;
-
-        this.globeMesh.rotation.y += deltaX * 0.005;
-        this.globeMesh.rotation.x += deltaY * 0.005;
-
-        this.globeMesh.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, this.globeMesh.rotation.x));
-        this.previousMousePosition = { x: e.clientX, y: e.clientY };
-      }
-    });
-
-    dom.addEventListener('click', (e) => {
-      const rect = dom.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, this.camera);
-      const intersects = raycaster.intersectObjects(this.markerGroup.children, false);
-
-      if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        const districtId = hit.userData?.districtId;
-        if (districtId) {
-          this.onSelectDistrict(districtId);
-        }
-      }
-    });
-
-    // Highly Zoomable: Min Distance = 105 (close to mountain level, Globe Radius = 100), Max Distance = 450
-    dom.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      this.camera.position.z = Math.max(105, Math.min(450, this.camera.position.z + e.deltaY * 0.25));
-    }, { passive: false });
-  }
-
-  private animate = () => {
-    this.animationFrameId = requestAnimationFrame(this.animate);
-
-    if (this.isRotating && !this.isUserInteracting && this.globeMesh) {
-      this.globeMesh.rotation.y += 0.0006;
-    }
-
-    this.renderer.render(this.scene, this.camera);
-  };
 
   private handleResize() {
     window.addEventListener('resize', () => {
-      if (!this.container) return;
+      if (!this.globe || !this.container) return;
       const width = this.container.clientWidth;
       const height = this.container.clientHeight;
       if (width > 0 && height > 0) {
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
+        this.globe.width(width).height(height);
       }
     });
   }
 
-  public setAutoRotate(rotate: boolean) {
-    this.isRotating = rotate;
-  }
-
   public destroy() {
-    if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
-    if (this.renderer && this.renderer.domElement) {
-      this.container.removeChild(this.renderer.domElement);
-      this.renderer.dispose();
+    if (this.globe) {
+      this.container.innerHTML = '';
+      this.globe = null;
     }
   }
 }
