@@ -1,4 +1,4 @@
-﻿export type NerState =
+export type NerState =
   | 'Assam'
   | 'Meghalaya'
   | 'Arunachal Pradesh'
@@ -10,10 +10,18 @@
 
 export type RiskLevel = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
 
+export type AppLanguage = 'en' | 'hi' | 'as' | 'bn' | 'mni' | 'lus' | 'kha' | 'ne';
+
 export interface DistrictProfile {
   id: string;
   name: string;
   nameHi: string;
+  nameAs?: string;   // Assamese
+  nameBn?: string;   // Bengali
+  nameMni?: string;  // Manipuri (Meitei)
+  nameLus?: string;  // Mizo
+  nameKha?: string;  // Khasi
+  nameNe?: string;   // Nepali
   state: NerState;
   lat: number;
   lon: number;
@@ -117,4 +125,3 @@ export interface CitizenSafetyTip {
 }
 
 export type AppViewMode = 'authority' | 'citizen';
-export type AppLanguage = 'en' | 'hi';

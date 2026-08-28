@@ -39,6 +39,8 @@ export class LandslideDashboard {
   private selectedDistrictId = 'as_dima_hasao';
   private selectedStateFilter: 'ALL' | NerState = 'ALL';
   private searchQuery = '';
+  private showBorders = true;
+  private isFullscreen = false;
 
   // Telemetry caches
   private riskMap = new Map<string, RiskScoreBreakdown>();
@@ -72,12 +74,23 @@ export class LandslideDashboard {
     this.initComponents();
     this.bindGlobalEvents();
 
-    // 1. Synchronously populate initial baseline data so UI is 100% interactive instantly (0ms delay)
     this.populateInitialState();
     this.renderAllViews();
 
-    // 2. Fetch live data in parallel in background without blocking UI
     void this.refreshLiveTelemetryBackground();
+  }
+
+  private getDistrictDisplayName(d: DistrictProfile): string {
+    switch (this.lang) {
+      case 'hi': return d.nameHi || d.name;
+      case 'as': return d.nameAs || d.name;
+      case 'bn': return d.nameBn || d.name;
+      case 'mni': return d.nameMni || d.name;
+      case 'lus': return d.nameLus || d.name;
+      case 'kha': return d.nameKha || d.name;
+      case 'ne': return d.nameNe || d.name;
+      default: return d.name;
+    }
   }
 
   private renderSkeleton() {
@@ -125,42 +138,57 @@ export class LandslideDashboard {
             </div>
           </div>
 
-          <!-- Controls: Mode Switch, 3D Globe, Language, SIH Audit -->
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <!-- Controls: Mode Switch, 3D Globe, Fullscreen, Language, SIH Audit -->
+          <div style="display: flex; align-items: center; gap: 8px;">
             <!-- SIH Compliance Modal Button -->
-            <button id="btn-sih-compliance" style="background: linear-gradient(135deg, #059669, #047857); border: none; color: white; padding: 6px 12px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; box-shadow: 0 0 10px rgba(5,150,105,0.4);">
-              🏆 SIH26001 Audit
+            <button id="btn-sih-compliance" style="background: linear-gradient(135deg, #059669, #047857); border: none; color: white; padding: 6px 10px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; box-shadow: 0 0 10px rgba(5,150,105,0.4);">
+              🏆 SIH Audit
+            </button>
+
+            <!-- Fullscreen Button -->
+            <button id="btn-fullscreen-toggle" style="background: #1e293b; border: 1px solid #334155; color: #f8fafc; padding: 6px 10px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer;" title="Toggle Fullscreen">
+              ⛶ Fullscreen
             </button>
 
             <!-- Telemetry Data Mode Selector -->
             <div style="display: flex; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 2px 6px;">
-              <span style="font-size: 10px; color: #94a3b8; margin-right: 6px;">Data Feed:</span>
+              <span style="font-size: 10px; color: #94a3b8; margin-right: 4px;">Feed:</span>
               <select id="sel-scenario" style="background: transparent; color: #38bdf8; border: none; font-size: 11px; font-weight: bold; outline: none; cursor: pointer;">
-                <option value="live" ${!this.isOfflineDemo ? 'selected' : ''}>📡 Live Ingestion (Open-Meteo & USGS)</option>
-                <option value="monsoon_deluge" ${this.isOfflineDemo && this.currentScenario === 'monsoon_deluge' ? 'selected' : ''}>⛈️ Offline Demo (Monsoon Deluge Crisis)</option>
-                <option value="seismic_crisis" ${this.isOfflineDemo && this.currentScenario === 'seismic_crisis' ? 'selected' : ''}>⚡ Offline Demo (Seismic Trigger M5.8)</option>
-                <option value="normal_baseline" ${this.isOfflineDemo && this.currentScenario === 'normal_baseline' ? 'selected' : ''}>☀️ Offline Demo (Baseline Normal)</option>
+                <option value="live" ${!this.isOfflineDemo ? 'selected' : ''}>📡 Live (Open-Meteo & USGS)</option>
+                <option value="monsoon_deluge" ${this.isOfflineDemo && this.currentScenario === 'monsoon_deluge' ? 'selected' : ''}>⛈️ Demo (Monsoon Deluge)</option>
+                <option value="seismic_crisis" ${this.isOfflineDemo && this.currentScenario === 'seismic_crisis' ? 'selected' : ''}>⚡ Demo (Seismic M5.8)</option>
+                <option value="normal_baseline" ${this.isOfflineDemo && this.currentScenario === 'normal_baseline' ? 'selected' : ''}>☀️ Demo (Normal Baseline)</option>
               </select>
             </div>
 
             <!-- View Switcher (Authority vs Citizen) -->
             <div style="display: flex; background: #1e293b; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
-              <button id="btn-view-authority" class="tab-btn ${this.viewMode === 'authority' ? 'active' : ''}" style="padding: 6px 12px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; background: ${this.viewMode === 'authority' ? '#0284c7' : 'transparent'}; color: white;">
-                Authority View
+              <button id="btn-view-authority" class="tab-btn ${this.viewMode === 'authority' ? 'active' : ''}" style="padding: 6px 10px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; background: ${this.viewMode === 'authority' ? '#0284c7' : 'transparent'}; color: white;">
+                Authority
               </button>
-              <button id="btn-view-citizen" class="tab-btn ${this.viewMode === 'citizen' ? 'active' : ''}" style="padding: 6px 12px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; background: ${this.viewMode === 'citizen' ? '#0284c7' : 'transparent'}; color: white;">
-                Citizen View
+              <button id="btn-view-citizen" class="tab-btn ${this.viewMode === 'citizen' ? 'active' : ''}" style="padding: 6px 10px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; background: ${this.viewMode === 'citizen' ? '#0284c7' : 'transparent'}; color: white;">
+                Citizen
               </button>
             </div>
 
-            <!-- Language Switcher (EN / HI) -->
-            <button id="btn-toggle-lang" style="background: #1e293b; border: 1px solid #334155; color: #f8fafc; padding: 6px 10px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer;">
-              🌐 ${this.lang === 'en' ? 'हिन्दी' : 'English'}
-            </button>
+            <!-- Multi-Language Selector Dropdown -->
+            <div style="display: flex; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 2px 6px;">
+              <span style="font-size: 11px; margin-right: 4px;">🌐</span>
+              <select id="sel-app-language" style="background: transparent; color: #f8fafc; border: none; font-size: 11px; font-weight: bold; outline: none; cursor: pointer;">
+                <option value="en" ${this.lang === 'en' ? 'selected' : ''}>English</option>
+                <option value="hi" ${this.lang === 'hi' ? 'selected' : ''}>हिन्दी (Hindi)</option>
+                <option value="as" ${this.lang === 'as' ? 'selected' : ''}>অসমীয়া (Assamese)</option>
+                <option value="bn" ${this.lang === 'bn' ? 'selected' : ''}>বাংলা (Bengali)</option>
+                <option value="mni" ${this.lang === 'mni' ? 'selected' : ''}>ꯃꯤꯇꯩꯂꯣꯟ (Manipuri)</option>
+                <option value="lus" ${this.lang === 'lus' ? 'selected' : ''}>Mizo ṭawng (Mizo)</option>
+                <option value="kha" ${this.lang === 'kha' ? 'selected' : ''}>Ka Ktien Khasi (Khasi)</option>
+                <option value="ne" ${this.lang === 'ne' ? 'selected' : ''}>नेपाली (Nepali)</option>
+              </select>
+            </div>
           </div>
         </header>
 
-        <!-- Alert Ticker -->
+        <!-- Controlled Alert Ticker -->
         <div id="alert-ticker-container"></div>
 
         <!-- Main Workspace Area -->
@@ -171,7 +199,7 @@ export class LandslideDashboard {
             <aside style="width: 320px; background: #0f172a; border-right: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
               <!-- Search & Filter Bar -->
               <div style="padding: 10px; border-bottom: 1px solid #1e293b; display: flex; flex-direction: column; gap: 8px;">
-                <input id="input-search-district" type="text" placeholder="${this.lang === 'hi' ? 'जिला या राज्य खोजें...' : 'Search NER District or State...'}" style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-size: 12px; outline: none; box-sizing: border-box;" />
+                <input id="input-search-district" type="text" placeholder="Search District or State..." style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-size: 12px; outline: none; box-sizing: border-box;" />
                 
                 <!-- State Filter Tabs -->
                 <div style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px;">
@@ -213,6 +241,12 @@ export class LandslideDashboard {
 
                 <div style="height: 16px; width: 1px; background: #334155;"></div>
 
+                <!-- Virtual Borders Toggle -->
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                  <input type="checkbox" id="chk-borders" ${this.showBorders ? 'checked' : ''} />
+                  <span>State Borders</span>
+                </label>
+
                 <!-- Overlays -->
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
                   <input type="checkbox" id="chk-coolr" ${this.showCoolrLayer ? 'checked' : ''} />
@@ -239,7 +273,7 @@ export class LandslideDashboard {
                   📊 District Telemetry HUD
                 </button>
                 <button id="tab-btn-ai" style="flex: 1; padding: 10px; font-size: 11px; font-weight: 700; cursor: pointer; border: none; background: #0f172a; color: #94a3b8; border-bottom: 2px solid transparent;">
-                  🤖 AI Advisory Terminal
+                  🛡️ Disaster Command Console
                 </button>
               </div>
 
@@ -265,7 +299,6 @@ export class LandslideDashboard {
               <button id="btn-close-sih-modal" style="background: #1e293b; color: #ffffff; border: 1px solid #334155; border-radius: 6px; padding: 6px 12px; font-weight: bold; cursor: pointer;">✕ Close</button>
             </div>
 
-            <!-- Audit Cards Grid -->
             <div style="display: flex; flex-direction: column; gap: 14px; font-size: 12px; line-height: 1.5;">
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #10b981;">
                 <strong style="color: #34d399; font-size: 13px;">1. Explainable Mathematical Scoring Engine:</strong><br/>
@@ -284,17 +317,17 @@ export class LandslideDashboard {
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b;">
                 <strong style="color: #fbbf24; font-size: 13px;">3. Dual Persona Architecture (Authority vs Citizen):</strong><br/>
                 &bull; <strong>Authority HUD</strong>: Detailed telemetry breakdown, 5-factor weight bars, and official printable PDF Situation Reports.<br/>
-                &bull; <strong>Citizen Safety Portal</strong>: High-contrast emergency safety status, bilingual Hindi/English instructions, and 1-Tap Speed Dial for NDRF (1078), SDMA (1070), 112, and 108.
+                &bull; <strong>Citizen Safety Portal</strong>: High-contrast emergency safety status, 8 regional language translations, and 1-Tap Speed Dial for NDRF (1078), SDMA (1070), 112, and 108.
               </div>
 
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #a855f7;">
-                <strong style="color: #c084fc; font-size: 13px;">4. Local AI Disaster Advisory Engine (Ollama Integration):</strong><br/>
-                Context-aware local LLM generation for emergency road warnings (NH-6, NH-29, NH-10) and SDRF quick-response staging.
+                <strong style="color: #c084fc; font-size: 13px;">4. Multi-Tier AI Decision Intelligence (Local & Server API):</strong><br/>
+                Ultralight local models (Qwen2.5 / Gemma2) + Server AI API (Google Gemini 1.5 / Groq) + Deterministic geological expert engine.
               </div>
 
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #ec4899;">
                 <strong style="color: #f472b6; font-size: 13px;">5. 3D Digital Twin Globe & 4K GIS Topography:</strong><br/>
-                Seamless 1-click toggle between 4K Ultra-Clarity Satellite/Relief maps and a 3D interactive Earth Globe with altitude hazard pillars.
+                Highly zoomable 3D Globe with 2D surface radar hazard rings, virtual state borders, and 4K satellite relief basemaps.
               </div>
             </div>
           </div>
@@ -423,7 +456,13 @@ export class LandslideDashboard {
     }
     if (this.searchQuery.trim()) {
       const q = this.searchQuery.toLowerCase();
-      filtered = filtered.filter(d => d.name.toLowerCase().includes(q) || d.state.toLowerCase().includes(q) || d.nameHi.includes(q));
+      filtered = filtered.filter(d => 
+        d.name.toLowerCase().includes(q) || 
+        d.state.toLowerCase().includes(q) || 
+        (d.nameHi && d.nameHi.includes(q)) ||
+        (d.nameAs && d.nameAs.includes(q)) ||
+        (d.nameBn && d.nameBn.includes(q))
+      );
     }
 
     filtered.sort((a, b) => {
@@ -454,7 +493,7 @@ export class LandslideDashboard {
         <div class="district-list-item ${isSelected ? 'selected' : ''}" data-id="${d.id}" style="padding: 10px 12px; border-bottom: 1px solid #1e293b; cursor: pointer; background: ${isSelected ? '#1e293b' : 'transparent'}; transition: background 0.15s ease;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; pointer-events: none;">
             <div style="font-weight: 700; font-size: 13px; color: ${isSelected ? '#38bdf8' : '#f1f5f9'};">
-              ${this.lang === 'hi' ? d.nameHi : d.name}
+              ${this.getDistrictDisplayName(d)}
             </div>
             <div style="font-weight: 800; font-size: 13px; color: ${badgeColor};">
               ${score}
@@ -510,7 +549,7 @@ export class LandslideDashboard {
     this.citizenComp?.setLanguage(this.lang === 'hi');
     this.citizenComp?.render(district, risk, weather);
 
-    this.aiTerminalComp?.setLanguage(this.lang === 'hi');
+    this.aiTerminalComp?.setLanguage(this.lang);
     this.aiTerminalComp?.updateContext(district, risk, weather, soil, seismic);
   }
 
@@ -524,6 +563,7 @@ export class LandslideDashboard {
       }
     });
 
+    // 2D / 3D Mode
     const btn2d = document.getElementById('btn-map-2d');
     const btn3d = document.getElementById('btn-map-3d');
     const map2dEl = document.getElementById('landslide-leaflet-map');
@@ -550,6 +590,19 @@ export class LandslideDashboard {
       this.globe3dComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
     });
 
+    // Fullscreen Toggle
+    const btnFullscreen = document.getElementById('btn-fullscreen-toggle');
+    btnFullscreen?.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        void document.documentElement.requestFullscreen();
+        if (btnFullscreen) btnFullscreen.innerHTML = '⛷️ Exit Fullscreen';
+      } else {
+        void document.exitFullscreen();
+        if (btnFullscreen) btnFullscreen.innerHTML = '⛶ Fullscreen';
+      }
+    });
+
+    // SIH Modal
     const btnSihModal = document.getElementById('btn-sih-compliance');
     const sihModal = document.getElementById('sih-modal');
     const btnCloseModal = document.getElementById('btn-close-sih-modal');
@@ -561,6 +614,7 @@ export class LandslideDashboard {
       if (sihModal) sihModal.style.display = 'none';
     });
 
+    // Authority vs Citizen View
     const btnAuth = document.getElementById('btn-view-authority');
     const btnCit = document.getElementById('btn-view-citizen');
     const authSpace = document.getElementById('authority-workspace');
@@ -582,16 +636,18 @@ export class LandslideDashboard {
       if (citSpace) citSpace.style.display = 'block';
     });
 
-    const btnLang = document.getElementById('btn-toggle-lang');
-    btnLang?.addEventListener('click', () => {
-      this.lang = this.lang === 'en' ? 'hi' : 'en';
-      if (btnLang) btnLang.innerHTML = `🌐 ${this.lang === 'en' ? 'हिन्दी' : 'English'}`;
-      this.mapComp?.setLanguage(this.lang === 'hi');
-      this.globe3dComp?.setLanguage(this.lang === 'hi');
+    // Language Dropdown
+    const selLang = document.getElementById('sel-app-language') as HTMLSelectElement;
+    selLang?.addEventListener('change', () => {
+      this.lang = selLang.value as AppLanguage;
+      this.mapComp?.setLanguage(this.lang);
+      this.globe3dComp?.setLanguage(this.lang);
+      this.alertTickerComp?.setLanguage(this.lang);
       this.updateActiveDistrictViews();
       this.renderDistrictList();
     });
 
+    // Scenario Selector
     const selScenario = document.getElementById('sel-scenario') as HTMLSelectElement;
     selScenario?.addEventListener('change', async () => {
       const val = selScenario.value;
@@ -607,18 +663,21 @@ export class LandslideDashboard {
       this.aiAdvisoryMap.clear();
     });
 
+    // Basemap Switcher
     const selBasemap = document.getElementById('sel-basemap') as HTMLSelectElement;
     selBasemap?.addEventListener('change', () => {
       const basemap = selBasemap.value as 'satellite' | 'topo' | 'opentopo' | 'dark';
       this.mapComp?.setBaseMap(basemap);
     });
 
+    // Search Input
     const searchInput = document.getElementById('input-search-district') as HTMLInputElement;
     searchInput?.addEventListener('input', () => {
       this.searchQuery = searchInput.value;
       this.renderDistrictList();
     });
 
+    // State Filter Buttons
     const stateContainer = document.querySelector('aside div:nth-child(2)');
     stateContainer?.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('.state-filter-btn') as HTMLElement;
@@ -634,6 +693,7 @@ export class LandslideDashboard {
       this.renderDistrictList();
     });
 
+    // Right Sidebar Tab Switcher
     const tabBtnHud = document.getElementById('tab-btn-hud');
     const tabBtnAi = document.getElementById('tab-btn-ai');
     const hudContent = document.getElementById('hud-tab-content');
@@ -665,6 +725,14 @@ export class LandslideDashboard {
       }
     });
 
+    // Virtual Borders Toggle
+    const chkBorders = document.getElementById('chk-borders') as HTMLInputElement;
+    chkBorders?.addEventListener('change', () => {
+      this.showBorders = chkBorders.checked;
+      this.mapComp?.renderStateBorders(this.showBorders);
+    });
+
+    // Map Layer Toggles
     const chkCoolr = document.getElementById('chk-coolr') as HTMLInputElement;
     chkCoolr?.addEventListener('change', () => {
       this.showCoolrLayer = chkCoolr.checked;

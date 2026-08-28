@@ -1,18 +1,20 @@
-﻿import L from 'leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { DistrictProfile, RiskScoreBreakdown } from '../../services/landslide/types';
+import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
+import { NER_STATE_BOUNDARIES } from '../../services/landslide/state-boundaries';
 
 export class LandslideMap {
   private map: L.Map | null = null;
   private baseLayers: Record<string, L.TileLayer> = {};
   private currentBaseLayer: L.TileLayer | null = null;
   private districtLayer: L.LayerGroup | null = null;
+  private boundaryLayer: L.LayerGroup | null = null;
   private coolrLayer: L.LayerGroup | null = null;
   private seismicLayer: L.LayerGroup | null = null;
   private onSelectDistrict: (districtId: string) => void;
-  private isHi = false;
+  private lang: AppLanguage = 'en';
 
   constructor(containerId: string, onSelectDistrict: (districtId: string) => void) {
     this.onSelectDistrict = onSelectDistrict;
@@ -23,42 +25,37 @@ export class LandslideMap {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Centered on Northeast India (Lat 26.0N, Lon 92.9E)
     this.map = L.map(containerId, {
       center: [26.0, 92.9],
       zoom: 7,
-      minZoom: 6,
-      maxZoom: 18,
+      minZoom: 5,
+      maxZoom: 19,
       zoomControl: false,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-    // 4K Ultra-Clarity, 100% Free & Keyless Basemaps:
-    // 1. ESRI High-Resolution 4K Satellite Imagery (Zero Watermark)
+    // 4K Ultra-Clarity Basemaps
     const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri, Maxar, Earthstar Geographics, USDA, USGS',
       maxNativeZoom: 18,
       maxZoom: 20,
     });
 
-    // 2. ESRI World Topographic Relief Map (Mountain Contours & Hillshading)
     const topoLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri &mdash; National Geographic, DeLorme, HERE, USGS',
       maxNativeZoom: 18,
       maxZoom: 20,
     });
 
-    // 3. OpenTopoMap Mountain Elevation Contours
     const openTopoLayer = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> | &copy; OSM contributors',
       maxNativeZoom: 17,
       maxZoom: 19,
     });
 
-    // 4. OpenStreetMap Dark Tactical Mode
     const darkLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution: '&copy; OpenStreetMap contributors',
       className: 'dark-mode-tiles',
       maxNativeZoom: 19,
       maxZoom: 19,
@@ -71,13 +68,32 @@ export class LandslideMap {
       dark: darkLayer,
     };
 
-    // Default to 4K Satellite Imagery for stunning photorealism
     this.currentBaseLayer = satLayer;
     this.currentBaseLayer.addTo(this.map);
 
+    this.boundaryLayer = L.layerGroup().addTo(this.map);
     this.districtLayer = L.layerGroup().addTo(this.map);
     this.coolrLayer = L.layerGroup().addTo(this.map);
     this.seismicLayer = L.layerGroup().addTo(this.map);
+
+    this.renderStateBorders(true);
+  }
+
+  public renderStateBorders(show: boolean) {
+    if (!this.boundaryLayer) return;
+    this.boundaryLayer.clearLayers();
+    if (!show) return;
+
+    for (const b of NER_STATE_BOUNDARIES) {
+      const polyline = L.polyline(b.coordinates, {
+        color: b.color,
+        weight: 2.5,
+        opacity: 0.85,
+        dashArray: '6, 6',
+      });
+      polyline.bindTooltip(`<strong>${b.state} State Boundary</strong>`, { sticky: true });
+      polyline.addTo(this.boundaryLayer);
+    }
   }
 
   public setBaseMap(type: 'satellite' | 'topo' | 'opentopo' | 'dark') {
@@ -89,8 +105,21 @@ export class LandslideMap {
     this.currentBaseLayer.addTo(this.map);
   }
 
-  public setLanguage(isHi: boolean) {
-    this.isHi = isHi;
+  public setLanguage(lang: AppLanguage) {
+    this.lang = lang;
+  }
+
+  private getDistrictDisplayName(d: DistrictProfile): string {
+    switch (this.lang) {
+      case 'hi': return d.nameHi || d.name;
+      case 'as': return d.nameAs || d.name;
+      case 'bn': return d.nameBn || d.name;
+      case 'mni': return d.nameMni || d.name;
+      case 'lus': return d.nameLus || d.name;
+      case 'kha': return d.nameKha || d.name;
+      case 'ne': return d.nameNe || d.name;
+      default: return d.name;
+    }
   }
 
   public renderDistricts(districts: DistrictProfile[], riskMap: Map<string, RiskScoreBreakdown>, selectedDistrictId?: string) {
@@ -112,9 +141,8 @@ export class LandslideMap {
           : '#22c55e';
 
       const isSelected = d.id === selectedDistrictId;
-      const radius = isSelected ? 18 : level === 'CRITICAL' ? 15 : level === 'HIGH' ? 13 : 10;
+      const radius = isSelected ? 16 : level === 'CRITICAL' ? 14 : level === 'HIGH' ? 12 : 9;
 
-      // Pulse ring for Critical & High risk zones
       if (level === 'CRITICAL' || level === 'HIGH') {
         const pulseCircle = L.circleMarker([d.lat, d.lon], {
           radius: radius + 8,
@@ -136,7 +164,7 @@ export class LandslideMap {
         fillOpacity: 0.92,
       });
 
-      const label = this.isHi ? d.nameHi : d.name;
+      const label = this.getDistrictDisplayName(d);
       const tooltipContent = `
         <div style="font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.4; color: #fff; min-width: 140px;">
           <div style="font-weight: bold; font-size: 13px; color: ${color};">${label}</div>
