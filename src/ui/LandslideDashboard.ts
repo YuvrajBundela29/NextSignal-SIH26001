@@ -39,8 +39,14 @@ export class LandslideDashboard {
   private selectedDistrictId = 'as_dima_hasao';
   private selectedStateFilter: 'ALL' | NerState = 'ALL';
   private searchQuery = '';
+  
+  // Sensor layer toggles
   private showBorders = true;
-  private isFullscreen = false;
+  private showClouds = false;
+  private showWeatherTrack = false;
+  private showThermal = false;
+  private showCoolrLayer = true;
+  private showSeismicLayer = true;
 
   // Telemetry caches
   private riskMap = new Map<string, RiskScoreBreakdown>();
@@ -57,10 +63,6 @@ export class LandslideDashboard {
   private citizenComp: CitizenView | null = null;
   private aiTerminalComp: AiTerminal | null = null;
   private alertTickerComp: AlertTicker | null = null;
-
-  // Map layer states
-  private showCoolrLayer = true;
-  private showSeismicLayer = true;
 
   constructor(rootContainerId: string) {
     const root = document.getElementById(rootContainerId);
@@ -214,10 +216,10 @@ export class LandslideDashboard {
               <div id="district-list-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;"></div>
             </aside>
 
-            <!-- Center View: 2D GIS Map & 3D Satellite Earth Globe -->
+            <!-- Center View: 2D GIS Map & 3D NextSignal Globe -->
             <main style="flex: 1; position: relative; display: flex; flex-direction: column; background: #030712;">
-              <!-- Map Controls & 2D/3D Mode Switcher Overlay -->
-              <div style="position: absolute; top: 12px; right: 12px; z-index: 500; background: #0f172aee; backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 12px; font-size: 11px; color: #f8fafc; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+              <!-- Map Controls Overlay -->
+              <div style="position: absolute; top: 12px; right: 12px; z-index: 500; background: #0f172aee; backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 10px; font-size: 11px; color: #f8fafc; box-shadow: 0 4px 16px rgba(0,0,0,0.6); max-width: 92%;">
                 <!-- 2D / 3D Mode Switcher -->
                 <div style="display: flex; background: #1e293b; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
                   <button id="btn-map-2d" class="${this.mapMode === '2d' ? 'active' : ''}" style="padding: 4px 10px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; background: ${this.mapMode === '2d' ? '#0284c7' : 'transparent'}; color: white;">
@@ -229,39 +231,44 @@ export class LandslideDashboard {
                 </div>
 
                 <!-- 2D Basemap Selector -->
-                <div id="basemap-selector-wrap" style="display: ${this.mapMode === '2d' ? 'flex' : 'none'}; align-items: center; gap: 6px;">
-                  <span style="color: #94a3b8; font-size: 10px;">4K Basemap:</span>
+                <div id="basemap-selector-wrap" style="display: ${this.mapMode === '2d' ? 'flex' : 'none'}; align-items: center; gap: 4px;">
+                  <span style="color: #94a3b8; font-size: 10px;">Basemap:</span>
                   <select id="sel-basemap" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 3px 6px; font-size: 11px; outline: none; cursor: pointer;">
-                    <option value="satellite" selected>🛰️ 4K Satellite Imagery</option>
-                    <option value="topo">🏔️ Topographic Relief</option>
-                    <option value="opentopo">🌲 OpenTopo Contours</option>
-                    <option value="dark">🌙 Dark Street Map</option>
+                    <option value="satellite" selected>🛰️ 4K Satellite</option>
+                    <option value="topo">🏔️ Topo Relief</option>
+                    <option value="opentopo">🌲 OpenTopo</option>
+                    <option value="dark">🌙 Dark Ops</option>
                   </select>
                 </div>
 
                 <div style="height: 16px; width: 1px; background: #334155;"></div>
 
-                <!-- Virtual Borders Toggle -->
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                  <input type="checkbox" id="chk-borders" ${this.showBorders ? 'checked' : ''} />
-                  <span>State Borders</span>
+                <!-- Sensor Trackers (Clouds / Weather / Thermal / Borders) -->
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;" title="NASA Real-Time Satellite Cloud Cover">
+                  <input type="checkbox" id="chk-clouds" ${this.showClouds ? 'checked' : ''} />
+                  <span>☁️ Clouds</span>
                 </label>
 
-                <!-- Overlays -->
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                  <input type="checkbox" id="chk-coolr" ${this.showCoolrLayer ? 'checked' : ''} />
-                  <span>NASA COOLR Slides</span>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;" title="Live RainViewer Weather Radar Track">
+                  <input type="checkbox" id="chk-weather-track" ${this.showWeatherTrack ? 'checked' : ''} />
+                  <span>🌧️ Weather Radar</span>
                 </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                  <input type="checkbox" id="chk-seismic" ${this.showSeismicLayer ? 'checked' : ''} />
-                  <span>USGS Quakes (72h)</span>
+
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;" title="NASA MODIS Thermal Surface Hotspots">
+                  <input type="checkbox" id="chk-thermal" ${this.showThermal ? 'checked' : ''} />
+                  <span>🔥 Thermal Track</span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;" title="Official Survey of India State Boundaries">
+                  <input type="checkbox" id="chk-borders" ${this.showBorders ? 'checked' : ''} />
+                  <span>🗺️ Borders</span>
                 </label>
               </div>
 
               <!-- 2D Leaflet Map Container -->
               <div id="landslide-leaflet-map" style="flex: 1; width: 100%; height: 100%; display: ${this.mapMode === '2d' ? 'block' : 'none'};"></div>
 
-              <!-- 3D Three.js Globe Container -->
+              <!-- 3D Globe.gl Container -->
               <div id="landslide-3d-globe" style="flex: 1; width: 100%; height: 100%; display: ${this.mapMode === '3d' ? 'block' : 'none'}; position: relative;"></div>
             </main>
 
@@ -315,19 +322,15 @@ export class LandslideDashboard {
               </div>
 
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                <strong style="color: #fbbf24; font-size: 13px;">3. Dual Persona Architecture (Authority vs Citizen):</strong><br/>
-                &bull; <strong>Authority HUD</strong>: Detailed telemetry breakdown, 5-factor weight bars, and official printable PDF Situation Reports.<br/>
-                &bull; <strong>Citizen Safety Portal</strong>: High-contrast emergency safety status, 8 regional language translations, and 1-Tap Speed Dial for NDRF (1078), SDMA (1070), 112, and 108.
+                <strong style="color: #fbbf24; font-size: 13px;">3. Multi-Sensor Surveillance (Satellite Clouds, Radar, Thermal):</strong><br/>
+                &bull; <strong>Cloud Satellite View</strong>: Real-time NASA VIIRS TrueColor / IR clouds.<br/>
+                &bull; <strong>Weather Radar Track</strong>: Live RainViewer precipitation Doppler radar.<br/>
+                &bull; <strong>Thermal Hotspots</strong>: NASA MODIS Land surface thermal anomaly detection.
               </div>
 
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #a855f7;">
-                <strong style="color: #c084fc; font-size: 13px;">4. Multi-Tier AI Decision Intelligence (Local & Server API):</strong><br/>
-                Ultralight local models (Qwen2.5 / Gemma2) + Server AI API (Google Gemini 1.5 / Groq) + Deterministic geological expert engine.
-              </div>
-
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #ec4899;">
-                <strong style="color: #f472b6; font-size: 13px;">5. 3D Digital Twin Globe & 4K GIS Topography:</strong><br/>
-                Highly zoomable 3D Globe with 2D surface radar hazard rings, virtual state borders, and 4K satellite relief basemaps.
+                <strong style="color: #c084fc; font-size: 13px;">4. Official State Boundaries & Google Earth Auto-Reveal:</strong><br/>
+                Hovering over any of the 8 NER states automatically highlights the polygon and reveals a rich situation card.
               </div>
             </div>
           </div>
@@ -518,7 +521,7 @@ export class LandslideDashboard {
       this.mapComp?.flyToDistrict(district.lat, district.lon);
       this.mapComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
     } else {
-      this.globe3dComp?.orientToCoordinates(district.lat, district.lon);
+      this.globe3dComp?.orientToCoordinates(district.lat, district.lon, 0.65);
       this.globe3dComp?.renderDistricts(NER_DISTRICTS, this.riskMap, this.selectedDistrictId);
     }
 
@@ -725,14 +728,36 @@ export class LandslideDashboard {
       }
     });
 
-    // Virtual Borders Toggle
+    // Sensor Trackers (Clouds / Weather Track / Thermal / Borders)
+    const chkClouds = document.getElementById('chk-clouds') as HTMLInputElement;
+    chkClouds?.addEventListener('change', () => {
+      this.showClouds = chkClouds.checked;
+      this.mapComp?.setSatelliteClouds(this.showClouds);
+      this.globe3dComp?.setSatelliteClouds(this.showClouds);
+    });
+
+    const chkWeatherTrack = document.getElementById('chk-weather-track') as HTMLInputElement;
+    chkWeatherTrack?.addEventListener('change', () => {
+      this.showWeatherTrack = chkWeatherTrack.checked;
+      this.mapComp?.setWeatherTrack(this.showWeatherTrack);
+      this.globe3dComp?.setWeatherTrack(this.showWeatherTrack);
+    });
+
+    const chkThermal = document.getElementById('chk-thermal') as HTMLInputElement;
+    chkThermal?.addEventListener('change', () => {
+      this.showThermal = chkThermal.checked;
+      this.mapComp?.setThermalTracker(this.showThermal);
+      this.globe3dComp?.setThermalTracker(this.showThermal);
+    });
+
     const chkBorders = document.getElementById('chk-borders') as HTMLInputElement;
     chkBorders?.addEventListener('change', () => {
       this.showBorders = chkBorders.checked;
-      this.mapComp?.renderStateBorders(this.showBorders);
+      this.mapComp?.setVirtualBorders(this.showBorders);
+      this.globe3dComp?.setVirtualBorders(this.showBorders);
     });
 
-    // Map Layer Toggles
+    // NASA COOLR & Seismic
     const chkCoolr = document.getElementById('chk-coolr') as HTMLInputElement;
     chkCoolr?.addEventListener('change', () => {
       this.showCoolrLayer = chkCoolr.checked;

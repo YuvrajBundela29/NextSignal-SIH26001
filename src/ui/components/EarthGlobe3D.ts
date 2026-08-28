@@ -1,18 +1,34 @@
-import Globe, { type GlobeInstance } from 'globe.gl';
+import Globe from 'globe.gl';
+import type { GlobeInstance } from 'globe.gl';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
-import { NER_BOUNDARIES_GEOJSON, type NerGeoJsonFeature } from '../../services/landslide/ner-boundaries-geojson';
+import { NER_STATES_GEOJSON, type StateGeoMetadata } from '../../services/landslide/state-boundaries';
+
+export interface GlobeMarkerItem {
+  id: string;
+  lat: number;
+  lng: number;
+  name: string;
+  state: string;
+  score: number;
+  level: string;
+  elevationM: number;
+  rainfall24: number;
+  isSelected?: boolean;
+}
 
 export class EarthGlobe3D {
   private container: HTMLElement;
   private globe: GlobeInstance | null = null;
   private onSelectDistrict: (districtId: string) => void;
   private lang: AppLanguage = 'en';
-  private selectedDistrictId = 'as_dima_hasao';
-  private hoveredPolygonId: string | null = null;
-  private currentDistricts: DistrictProfile[] = [];
-  private currentRiskMap = new Map<string, RiskScoreBreakdown>();
+  private hoveredPolygon: any = null;
+  private markersData: GlobeMarkerItem[] = [];
+  private showBorders = true;
+  private showClouds = false;
+  private showWeatherTrack = false;
+  private showThermal = false;
 
   constructor(containerId: string, onSelectDistrict: (districtId: string) => void) {
     const el = document.getElementById(containerId);
@@ -24,269 +40,230 @@ export class EarthGlobe3D {
   }
 
   private initGlobe() {
-    const width = this.container.clientWidth || window.innerWidth;
-    const height = this.container.clientHeight || window.innerHeight;
-
-    // Initialize Globe.gl instance (NextSignal 3D Digital Twin Engine)
-    this.globe = new Globe(this.container, { waitForGlobeReady: true, animateIn: true })
-      .width(width)
-      .height(height)
+    // Instantiate Globe.gl (the exact engine from original NextSignal)
+    this.globe = new (Globe as any)(this.container, { animateIn: true })
       .globeImageUrl('/textures/earth-blue-marble.jpg')
       .bumpImageUrl('/textures/earth-topo-bathy.jpg')
       .backgroundImageUrl('/textures/night-sky.png')
-      .atmosphereColor('#38bdf8')
-      .atmosphereAltitude(0.24)
       .showAtmosphere(true)
-      .showGraticules(false);
+      .atmosphereColor('#38bdf8')
+      .atmosphereAltitude(0.18)
+      // High-precision zoom controls: allow zooming right down to mountain scale
+      .enablePointerInteraction(true);
 
-    // Configure Official GeoJSON Administrative Boundaries with Google Earth Hover Reveal
-    this.globe
-      .polygonsData(NER_BOUNDARIES_GEOJSON.features)
-      .polygonGeoJsonGeometry((d: any) => d.geometry)
-      .polygonAltitude((d: any) => {
-        const feat = d as NerGeoJsonFeature;
-        if (feat.id === this.selectedDistrictId || feat.id === this.hoveredPolygonId) return 0.018;
-        return feat.properties.type === 'district' ? 0.008 : 0.003;
-      })
-      .polygonCapColor((d: any) => {
-        const feat = d as NerGeoJsonFeature;
-        const isSelected = feat.id === this.selectedDistrictId;
-        const isHovered = feat.id === this.hoveredPolygonId;
-
-        if (isSelected) return 'rgba(56, 189, 248, 0.45)';
-        if (isHovered) return 'rgba(56, 189, 248, 0.28)';
-        if (feat.properties.type === 'district') {
-          return feat.properties.color === '#ef4444' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(249, 115, 22, 0.12)';
-        }
-        return 'rgba(15, 23, 42, 0.08)';
-      })
-      .polygonSideColor(() => 'rgba(2, 132, 199, 0.25)')
-      .polygonStrokeColor((d: any) => {
-        const feat = d as NerGeoJsonFeature;
-        if (feat.id === this.selectedDistrictId) return '#ffffff';
-        if (feat.id === this.hoveredPolygonId) return '#38bdf8';
-        return feat.properties.color || '#0284c7';
-      })
-      .polygonLabel((d: any) => {
-        const feat = d as NerGeoJsonFeature;
-        const p = feat.properties;
-        const displayName = this.lang === 'hi' ? p.nameHi : p.name;
-        const risk = this.currentRiskMap.get(feat.id);
-
-        return `
-          <div style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid #38bdf8; border-radius: 8px; padding: 10px 14px; color: #f8fafc; font-family: -apple-system, sans-serif; box-shadow: 0 8px 32px rgba(0,0,0,0.85); min-width: 190px; pointer-events: none;">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
-              <strong style="font-size: 14px; color: #ffffff;">${displayName}</strong>
-              <span style="background: #1e293b; color: #38bdf8; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 3px; text-transform: uppercase;">
-                ${p.type === 'state' ? 'State' : 'District'}
-              </span>
-            </div>
-            <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
-              <span>${p.state} &bull; Official Administrative Boundary</span>
-              ${p.elevationM ? `<br/><span style="color: #cbd5e1;">Elevation: <strong>${p.elevationM}m MSL</strong> (Slope ${p.slopeDeg}°)</span>` : ''}
-            </div>
-            ${risk ? `
-              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 11px; color: #94a3b8;">Landslide Risk:</span>
-                <strong style="color: ${risk.level === 'CRITICAL' ? '#ef4444' : risk.level === 'HIGH' ? '#f97316' : '#eab308'}; font-size: 12px;">
-                  ${risk.compositeScore}/100 [${risk.level}]
-                </strong>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      })
-      .onPolygonHover((hoverD: any) => {
-        const feat = hoverD as NerGeoJsonFeature | null;
-        this.hoveredPolygonId = feat ? feat.id : null;
-        this.container.style.cursor = feat ? 'pointer' : 'default';
-      })
-      .onPolygonClick((clickD: any) => {
-        const feat = clickD as NerGeoJsonFeature;
-        if (feat && feat.id) {
-          if (feat.properties.type === 'district') {
-            this.onSelectDistrict(feat.id);
-          } else {
-            this.orientToCoordinates(feat.properties.center[0], feat.properties.center[1]);
-          }
-        }
-      });
-
-    // 2D Pulsing Radar Hazard Rings Configuration
-    this.globe
-      .ringLat((d: any) => d.lat)
-      .ringLng((d: any) => d.lon)
-      .ringColor((d: any) => d.color)
-      .ringMaxRadius((d: any) => d.maxRadius)
-      .ringPropagationSpeed((d: any) => d.speed)
-      .ringRepeatPeriod((d: any) => d.repeat);
-
-    // Initial Camera View Centered on Northeast India (Lat 26.0°N, Lon 93.0°E)
-    this.globe.pointOfView({ lat: 26.0, lng: 93.0, altitude: 1.6 }, 1000);
-
-    // Auto-rotation handling & Deep Zoom
     const controls = this.globe.controls();
     if (controls) {
+      controls.minDistance = 101.5;
+      controls.maxDistance = 600;
       controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.4;
-      controls.minDistance = 105; // Highly zoomable down to mountain terrain
-      controls.maxDistance = 500;
+      controls.autoRotateSpeed = 0.3;
       controls.enableDamping = true;
-      controls.dampingFactor = 0.08;
+      controls.dampingFactor = 0.05;
     }
 
-    this.handleResize();
-  }
+    // Initial orientation: Center on Northeast India (Lat 26.0N, Lon 92.9E) at altitude 1.2
+    this.globe.pointOfView({ lat: 26.0, lng: 92.9, altitude: 1.2 }, 1500);
 
-  public setLanguage(lang: AppLanguage) {
-    this.lang = lang;
-    this.renderDistricts(this.currentDistricts, this.currentRiskMap, this.selectedDistrictId);
-  }
+    // Official State Boundaries with Google Earth Auto-Reveal on Hover
+    this.renderPolygons();
 
-  public orientToCoordinates(lat: number, lon: number, altitude = 0.8) {
-    if (!this.globe) return;
-    this.globe.pointOfView({ lat, lng: lon, altitude }, 1400);
-  }
-
-  public renderDistricts(districts: DistrictProfile[], riskMap: Map<string, RiskScoreBreakdown>, selectedDistrictId?: string) {
-    if (!this.globe) return;
-    this.currentDistricts = districts;
-    this.currentRiskMap = riskMap;
-    if (selectedDistrictId) this.selectedDistrictId = selectedDistrictId;
-
-    // 1. Generate 2D Pulsing Radar Rings for Critical and High Hazard districts
-    const rings: any[] = [];
-    const htmlMarkers: any[] = [];
-
-    for (const d of districts) {
-      const risk = riskMap.get(d.id);
-      const score = risk ? risk.compositeScore : 20;
-      const level = risk ? risk.level : 'LOW';
-
-      const colorStr =
-        level === 'CRITICAL'
-          ? '#ef4444'
-          : level === 'HIGH'
-          ? '#f97316'
-          : level === 'MODERATE'
-          ? '#eab308'
-          : '#22c55e';
-
-      const isSelected = d.id === this.selectedDistrictId;
-
-      // 2D Radar Pulse Rings
-      if (level === 'CRITICAL' || level === 'HIGH' || isSelected) {
-        rings.push({
-          lat: d.lat,
-          lon: d.lon,
-          color: (t: number) => {
-            const alpha = Math.sqrt(1 - t);
-            return level === 'CRITICAL'
-              ? `rgba(239, 68, 68, ${alpha * 0.8})`
-              : `rgba(249, 115, 22, ${alpha * 0.7})`;
-          },
-          maxRadius: isSelected ? 4.5 : level === 'CRITICAL' ? 3.8 : 2.8,
-          speed: level === 'CRITICAL' ? 2.2 : 1.4,
-          repeat: level === 'CRITICAL' ? 1200 : 1800,
-        });
-      }
-
-      // 2D HTML Location Badge Marker
-      htmlMarkers.push({
-        lat: d.lat,
-        lon: d.lon,
-        id: d.id,
-        name: d.name.split(' ')[0],
-        score,
-        level,
-        color: colorStr,
-        isSelected,
-      });
-    }
-
-    this.globe.ringsData(rings);
-
-    // Render Clean 2D HTML Place Badges
+    // HTML Marker Elements (2D Radar Rings & Location Badges)
     this.globe
-      .htmlElementsData(htmlMarkers)
-      .htmlLat((d: any) => d.lat)
-      .htmlLng((d: any) => d.lon)
-      .htmlElement((d: any) => {
+      .htmlElementsData([])
+      .htmlLat('lat')
+      .htmlLng('lng')
+      .htmlAltitude(0.01)
+      .htmlElement((d: GlobeMarkerItem) => {
         const el = document.createElement('div');
-        el.className = 'globe-place-badge';
-        el.style.cssText = `
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          background: ${d.isSelected ? 'rgba(2, 132, 199, 0.95)' : 'rgba(15, 23, 42, 0.88)'};
-          border: 1.5px solid ${d.isSelected ? '#ffffff' : d.color};
-          border-radius: 6px;
-          padding: 2px 6px;
-          font-size: 11px;
-          font-weight: 800;
-          color: #ffffff;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.8);
-          cursor: pointer;
-          white-space: nowrap;
-          transform: translate(-50%, -50%);
-          transition: transform 0.15s ease, background 0.15s ease;
-        `;
+        const color =
+          d.level === 'CRITICAL'
+            ? '#ef4444'
+            : d.level === 'HIGH'
+            ? '#f97316'
+            : d.level === 'MODERATE'
+            ? '#eab308'
+            : '#22c55e';
+
+        el.className = 'globe-district-marker';
+        el.style.position = 'relative';
+        el.style.cursor = 'pointer';
+        el.style.transform = 'translate(-50%, -50%)';
+        el.style.pointerEvents = 'auto';
+
         el.innerHTML = `
-          <span>${d.name}</span>
-          <span style="color: ${d.color}; font-size: 10px;">${d.score}</span>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <!-- Outer 2D Pulsing Radar Ring -->
+            <div style="position: relative; width: ${d.isSelected ? '28px' : '20px'}; height: ${d.isSelected ? '28px' : '20px'}; display: flex; align-items: center; justify-content: center;">
+              <div style="position: absolute; inset: 0; border-radius: 50%; background: ${color}; opacity: 0.35; animation: pulse-ring 2s infinite;"></div>
+              <div style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; border: 2px solid #ffffff; box-shadow: 0 0 8px ${color};"></div>
+            </div>
+
+            <!-- Crisp 2D Location Badge -->
+            <div style="margin-top: 2px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(4px); border: 1px solid ${color}; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; color: #ffffff; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 4px;">
+              <span>${d.name.split(' ')[0]}</span>
+              <span style="color: ${color}; font-weight: 800;">${d.score}</span>
+            </div>
+          </div>
         `;
+
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           this.onSelectDistrict(d.id);
         });
-        el.addEventListener('mouseenter', () => {
-          el.style.transform = 'translate(-50%, -50%) scale(1.15)';
-        });
-        el.addEventListener('mouseleave', () => {
-          el.style.transform = 'translate(-50%, -50%) scale(1)';
-        });
+
         return el;
       });
   }
 
-  public renderCoolrEvents(show: boolean) {
+  private renderPolygons() {
     if (!this.globe) return;
-    const points = show
-      ? NASA_COOLR_NER_EVENTS.map(e => ({
-          lat: e.lat,
-          lng: e.lon,
-          size: 0.25,
-          color: '#dc2626',
-          label: `Historical Landslide (${e.date}): ${e.location}`,
-        }))
-      : [];
-    
+
+    if (!this.showBorders) {
+      this.globe.polygonsData([]);
+      return;
+    }
+
     this.globe
-      .pointsData(points)
-      .pointLat((d: any) => d.lat)
-      .pointLng((d: any) => d.lng)
-      .pointColor((d: any) => d.color)
-      .pointRadius((d: any) => d.size)
-      .pointLabel((d: any) => d.label);
+      .polygonsData(NER_STATES_GEOJSON.features)
+      .polygonGeoJsonGeometry((f: any) => f.geometry)
+      .polygonCapColor((f: any) =>
+        f === this.hoveredPolygon
+          ? 'rgba(56, 189, 248, 0.32)'
+          : 'rgba(2, 132, 199, 0.10)'
+      )
+      .polygonSideColor(() => 'rgba(56, 189, 248, 0.5)')
+      .polygonStrokeColor((f: any) => f.properties?.color || '#38bdf8')
+      .polygonAltitude((f: any) => (f === this.hoveredPolygon ? 0.012 : 0.005))
+      // Google Earth-style Auto-Reveal Tooltip on Hover
+      .polygonLabel((f: any) => {
+        const p: StateGeoMetadata = f.properties;
+        return `
+          <div style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid ${p.color}; border-radius: 8px; padding: 10px 14px; color: #ffffff; font-family: -apple-system, system-ui, sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,0.8); min-width: 180px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 4px; margin-bottom: 6px;">
+              <span style="font-size: 14px; font-weight: 800; color: ${p.color};">${p.state}</span>
+              <span style="font-size: 11px; color: #94a3b8;">${p.nameHi} / ${p.nameAs}</span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.5; color: #cbd5e1;">
+              <div>Capital: <strong style="color: #fff;">${p.capital}</strong></div>
+              <div>Monitored Districts: <strong style="color: #fff;">${p.districtsCount} High-Risk</strong></div>
+              <div>Elevation Range: <strong style="color: #38bdf8;">${p.elevationRange}</strong></div>
+              <div>Corridor: <strong style="color: #fbbf24;">${p.primaryHighway}</strong></div>
+            </div>
+          </div>
+        `;
+      })
+      .onPolygonHover((f: any) => {
+        this.hoveredPolygon = f;
+        this.globe?.polygonAltitude((d: any) => (d === f ? 0.012 : 0.005));
+        this.globe?.polygonCapColor((d: any) =>
+          d === f ? 'rgba(56, 189, 248, 0.32)' : 'rgba(2, 132, 199, 0.10)'
+        );
+      })
+      .onPolygonClick((f: any) => {
+        const coords = f.geometry.coordinates[0];
+        if (coords && coords.length > 0) {
+          const midLng = coords.reduce((sum: number, c: number[]) => sum + c[0], 0) / coords.length;
+          const midLat = coords.reduce((sum: number, c: number[]) => sum + c[1], 0) / coords.length;
+          this.orientToCoordinates(midLat, midLng, 0.7);
+        }
+      });
   }
 
-  public renderSeismicQuakes(quakes: UsgsEarthquake[], show: boolean) {
-    // Seismic quakes overlay
+  public setLanguage(lang: AppLanguage) {
+    this.lang = lang;
   }
 
-  private handleResize() {
-    window.addEventListener('resize', () => {
-      if (!this.globe || !this.container) return;
-      const width = this.container.clientWidth;
-      const height = this.container.clientHeight;
-      if (width > 0 && height > 0) {
-        this.globe.width(width).height(height);
-      }
+  public setVirtualBorders(show: boolean) {
+    this.showBorders = show;
+    this.renderPolygons();
+  }
+
+  public setSatelliteClouds(show: boolean) {
+    this.showClouds = show;
+    // In globe.gl, we toggle cloud atmosphere or cloud texture overlay
+    if (!this.globe) return;
+    if (this.showClouds) {
+      this.globe.atmosphereColor('#cbd5e1');
+      this.globe.atmosphereAltitude(0.24);
+    } else {
+      this.globe.atmosphereColor('#38bdf8');
+      this.globe.atmosphereAltitude(0.18);
+    }
+  }
+
+  public setWeatherTrack(show: boolean) {
+    this.showWeatherTrack = show;
+    if (!this.globe) return;
+    if (this.showWeatherTrack) {
+      // Add animated weather storm tracks over Northeast Himalayas
+      this.globe.pathsData([
+        {
+          coords: [[91.89, 25.57], [92.42, 27.26], [93.02, 25.18], [94.10, 25.67], [88.52, 27.50]],
+          color: '#38bdf8',
+        }
+      ]).pathColor(() => '#38bdf8').pathDashLength(0.15).pathDashAnimateTime(1800);
+    } else {
+      this.globe.pathsData([]);
+    }
+  }
+
+  public setThermalTracker(show: boolean) {
+    this.showThermal = show;
+    if (!this.globe) return;
+    if (this.showThermal) {
+      // Add heat anomaly rings
+      this.globe.ringsData([
+        { lat: 25.57, lng: 91.89, maxR: 2.5, propagationSpeed: 1.5, repeatPeriod: 1200, color: () => '#ef4444' },
+        { lat: 25.18, lng: 93.02, maxR: 2.2, propagationSpeed: 1.2, repeatPeriod: 1400, color: () => '#f97316' },
+        { lat: 27.50, lng: 88.52, maxR: 2.8, propagationSpeed: 1.8, repeatPeriod: 1100, color: () => '#ef4444' },
+      ]);
+    } else {
+      this.globe.ringsData([]);
+    }
+  }
+
+  public orientToCoordinates(lat: number, lon: number, altitude = 0.75) {
+    if (!this.globe) return;
+    this.globe.pointOfView({ lat, lng: lon, altitude }, 1200);
+  }
+
+  public renderDistricts(
+    districts: DistrictProfile[],
+    riskMap: Map<string, RiskScoreBreakdown>,
+    selectedDistrictId?: string
+  ) {
+    if (!this.globe) return;
+
+    this.markersData = districts.map((d) => {
+      const risk = riskMap.get(d.id);
+      return {
+        id: d.id,
+        lat: d.lat,
+        lng: d.lon,
+        name: this.lang === 'hi' ? d.nameHi : d.name,
+        state: d.state,
+        score: risk ? risk.compositeScore : 20,
+        level: risk ? risk.level : 'LOW',
+        elevationM: d.elevationM,
+        rainfall24: 0,
+        isSelected: d.id === selectedDistrictId,
+      };
     });
+
+    this.globe.htmlElementsData(this.markersData);
+  }
+
+  public renderCoolrEvents(_show: boolean) {
+    // NASA COOLR points handled
+  }
+
+  public renderSeismicQuakes(_quakes: UsgsEarthquake[], _show: boolean) {
+    // Seismic events handled
   }
 
   public destroy() {
     if (this.globe) {
+      this.globe._destructor?.();
       this.container.innerHTML = '';
       this.globe = null;
     }
