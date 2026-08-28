@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type Plugin } from 'vite';
+﻿import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import type { OutputBundle } from 'rollup';
 import { resolve, dirname, extname } from 'path';
@@ -12,7 +12,7 @@ import {
   renderVariantDashboardHtml,
   variantDashboardFileName,
 } from './src/config/variant-dashboard-html';
-// Single source of truth for the RSS proxy allowlist — the dev-server proxy
+// Single source of truth for the RSS proxy allowlist â€” the dev-server proxy
 // below reuses the SAME www-tolerant predicate the Edge handler enforces
 // (api/rss-proxy.js) so dev and prod agree on allow/deny. Previously a
 // hand-maintained Set here had drifted ~138 domains from prod.
@@ -32,21 +32,21 @@ const STATIC_SCRIPT_NONCE = 'wm-static-bootstrap';
 // package.json so the runtime SDK matches the @clerk/clerk-js types we compile
 // against, and inject it via `define` (__CLERK_JS_VERSION__). Fall back to
 // devDependencies in case the (types-only) dep is moved there, and fail the
-// build loudly if it can't be resolved — an empty version yields a `.../@/dist`
+// build loudly if it can't be resolved â€” an empty version yields a `.../@/dist`
 // URL that 404s and silently breaks auth in production.
 const CLERK_DEPS = pkg.dependencies as Record<string, string>;
 const CLERK_DEV_DEPS = (pkg.devDependencies ?? {}) as Record<string, string>;
 const CLERK_JS_VERSION = (CLERK_DEPS['@clerk/clerk-js'] || CLERK_DEV_DEPS['@clerk/clerk-js'] || '')
   .replace(/^[\^~>=<\s]*/, '');
 if (!CLERK_JS_VERSION) {
-  throw new Error('[vite] @clerk/clerk-js not found in package.json — __CLERK_JS_VERSION__ would be empty and 404 the Clerk Frontend API script URL.');
+  throw new Error('[vite] @clerk/clerk-js not found in package.json â€” __CLERK_JS_VERSION__ would be empty and 404 the Clerk Frontend API script URL.');
 }
 // @clerk/ui (the runtime UI controller, pinned by CLERK_UI_VERSION in
 // src/services/clerk.ts) is major 1, which pairs with @clerk/clerk-js major 6.
 // Fail the build if the SDK major drifts so the pairing is updated deliberately
 // rather than loading an incompatible UI controller and breaking auth at runtime.
 if (CLERK_JS_VERSION.split('.')[0] !== '6') {
-  throw new Error(`[vite] @clerk/clerk-js major is ${CLERK_JS_VERSION.split('.')[0]}, expected 6 — update CLERK_UI_VERSION in src/services/clerk.ts to the paired @clerk/ui major, then bump this guard.`);
+  throw new Error(`[vite] @clerk/clerk-js major is ${CLERK_JS_VERSION.split('.')[0]}, expected 6 â€” update CLERK_UI_VERSION in src/services/clerk.ts to the paired @clerk/ui major, then bump this guard.`);
 }
 
 const PANEL_CHUNK_NAMES = [
@@ -138,7 +138,7 @@ const PANEL_CLUSTER: Record<string, PanelChunkName> = {
   TradePolicy: 'panels-economy',
   // Country briefs / signals / monitors / agent surfaces.
   // CorrelationPanel base lives here, so all *Correlation consumers MUST stay
-  // in this cluster — splitting them across clusters caused TDZ on init.
+  // in this cluster â€” splitting them across clusters caused TDZ on init.
   ChatAnalyst: 'panels-intel', CII: 'panels-intel',
   Cascade: 'panels-intel', Correlation: 'panels-intel',
   CountryBrief: 'panels-intel', CountryBriefPage: 'panels-intel',
@@ -245,7 +245,7 @@ function htmlVariantPlugin(activeMeta: VariantMeta, activeVariant: string, isDes
         .replace(/"description": "Real-time global intelligence dashboard with live news, markets, military tracking, infrastructure monitoring, and geopolitical data."/, `"description": "${activeMeta.description}"`)
         .replace(/"featureList": \[[\s\S]*?\]/, `"featureList": ${JSON.stringify(activeMeta.features, null, 8).replace(/\n/g, '\n      ')}`);
 
-      // Theme-color meta — warm cream for happy variant
+      // Theme-color meta â€” warm cream for happy variant
       if (activeVariant === 'happy') {
         result = result.replace(
           /<meta name="theme-color" content=".*?" \/>/,
@@ -254,7 +254,7 @@ function htmlVariantPlugin(activeMeta: VariantMeta, activeVariant: string, isDes
       }
 
       // Desktop builds: inject build-time variant into the inline script so data-variant is set
-      // before CSS loads. Web builds always use 'full' — runtime hostname detection handles variants.
+      // before CSS loads. Web builds always use 'full' â€” runtime hostname detection handles variants.
       if (activeVariant !== 'full') {
         result = result.replace(
           /if\(v\)document\.documentElement\.dataset\.variant=v;/,
@@ -318,7 +318,7 @@ function dashboardHtmlOutputPlugin(): Plugin {
 // Emit dashboard-<variant>.html siblings of dashboard.html for the variant
 // subdomains (#4996). The web deployment serves the 'full' build to every
 // host, so tech/finance/commodity/happy/energy.worldmonitor.app/dashboard
-// shipped full-brand meta and a cross-host canonical pointing at www —
+// shipped full-brand meta and a cross-host canonical pointing at www â€”
 // crawlers saw five duplicate pages that all declared themselves NOT to be
 // the sitemap URL they were fetched from. vercel.json host-based rewrites
 // map each variant host's /dashboard to its generated file. Runs in
@@ -371,7 +371,7 @@ function shouldDeferDashboardStylesheet(tag: string, bundle: OutputBundle): bool
 // that already set media= (an intentionally print/screen-scoped sheet) or are
 // already deferred are skipped. NOTE: during the defer window only the UNLAYERED
 // inline critical CSS in index.html applies (the bundle is @layer base), so any
-// future *unconditional* inline rule will beat the bundle (see PR #4346) — keep
+// future *unconditional* inline rule will beat the bundle (see PR #4346) â€” keep
 // inline rules scoped to a transient/closed state.
 function deferDashboardStylesheetLinks(html: string, bundle: OutputBundle): string {
   return html.replace(/<link\b(?=[^>]*\brel=["']stylesheet["'])(?=[^>]*\bhref=["'][^"']+\.css["'])[^>]*>/gi, (tag) => {
@@ -420,7 +420,7 @@ function polymarketPlugin(): Plugin {
           res.setHeader('X-Polymarket-Source', 'gamma');
           res.end(data);
         } catch {
-          // Expected: Cloudflare JA3 blocks server-side TLS — return empty array
+          // Expected: Cloudflare JA3 blocks server-side TLS â€” return empty array
           res.setHeader('Cache-Control', 'public, max-age=300');
           res.end('[]');
         }
@@ -445,87 +445,18 @@ function sebufApiPlugin(): Plugin {
     const [
       routerMod, corsMod, errorMod,
       seismologyServerMod, seismologyHandlerMod,
-      wildfireServerMod, wildfireHandlerMod,
       climateServerMod, climateHandlerMod,
-      predictionServerMod, predictionHandlerMod,
-      displacementServerMod, displacementHandlerMod,
-      aviationServerMod, aviationHandlerMod,
-      researchServerMod, researchHandlerMod,
-      unrestServerMod, unrestHandlerMod,
-      conflictServerMod, conflictHandlerMod,
-      maritimeServerMod, maritimeHandlerMod,
-      cyberServerMod, cyberHandlerMod,
-      economicServerMod, economicHandlerMod,
-      infrastructureServerMod, infrastructureHandlerMod,
-      marketServerMod, marketHandlerMod,
-      newsServerMod, newsHandlerMod,
-      intelligenceServerMod, intelligenceHandlerMod,
-      militaryServerMod, militaryHandlerMod,
-      positiveEventsServerMod, positiveEventsHandlerMod,
-      givingServerMod, givingHandlerMod,
-      tradeServerMod, tradeHandlerMod,
-      supplyChainServerMod, supplyChainHandlerMod,
       naturalServerMod, naturalHandlerMod,
-      resilienceServerMod, resilienceHandlerMod,
-      leadsServerMod, leadsHandlerMod,
-      scenarioServerMod, scenarioHandlerMod,
-      shippingV2ServerMod, shippingV2HandlerMod,
     ] = await Promise.all([
         import('./server/router'),
         import('./server/cors'),
         import('./server/error-mapper'),
         import('./src/generated/server/worldmonitor/seismology/v1/service_server'),
         import('./server/worldmonitor/seismology/v1/handler'),
-        import('./src/generated/server/worldmonitor/wildfire/v1/service_server'),
-        import('./server/worldmonitor/wildfire/v1/handler'),
         import('./src/generated/server/worldmonitor/climate/v1/service_server'),
         import('./server/worldmonitor/climate/v1/handler'),
-        import('./src/generated/server/worldmonitor/prediction/v1/service_server'),
-        import('./server/worldmonitor/prediction/v1/handler'),
-        import('./src/generated/server/worldmonitor/displacement/v1/service_server'),
-        import('./server/worldmonitor/displacement/v1/handler'),
-        import('./src/generated/server/worldmonitor/aviation/v1/service_server'),
-        import('./server/worldmonitor/aviation/v1/handler'),
-        import('./src/generated/server/worldmonitor/research/v1/service_server'),
-        import('./server/worldmonitor/research/v1/handler'),
-        import('./src/generated/server/worldmonitor/unrest/v1/service_server'),
-        import('./server/worldmonitor/unrest/v1/handler'),
-        import('./src/generated/server/worldmonitor/conflict/v1/service_server'),
-        import('./server/worldmonitor/conflict/v1/handler'),
-        import('./src/generated/server/worldmonitor/maritime/v1/service_server'),
-        import('./server/worldmonitor/maritime/v1/handler'),
-        import('./src/generated/server/worldmonitor/cyber/v1/service_server'),
-        import('./server/worldmonitor/cyber/v1/handler'),
-        import('./src/generated/server/worldmonitor/economic/v1/service_server'),
-        import('./server/worldmonitor/economic/v1/handler'),
-        import('./src/generated/server/worldmonitor/infrastructure/v1/service_server'),
-        import('./server/worldmonitor/infrastructure/v1/handler'),
-        import('./src/generated/server/worldmonitor/market/v1/service_server'),
-        import('./server/worldmonitor/market/v1/handler'),
-        import('./src/generated/server/worldmonitor/news/v1/service_server'),
-        import('./server/worldmonitor/news/v1/handler'),
-        import('./src/generated/server/worldmonitor/intelligence/v1/service_server'),
-        import('./server/worldmonitor/intelligence/v1/handler'),
-        import('./src/generated/server/worldmonitor/military/v1/service_server'),
-        import('./server/worldmonitor/military/v1/handler'),
-        import('./src/generated/server/worldmonitor/positive_events/v1/service_server'),
-        import('./server/worldmonitor/positive-events/v1/handler'),
-        import('./src/generated/server/worldmonitor/giving/v1/service_server'),
-        import('./server/worldmonitor/giving/v1/handler'),
-        import('./src/generated/server/worldmonitor/trade/v1/service_server'),
-        import('./server/worldmonitor/trade/v1/handler'),
-        import('./src/generated/server/worldmonitor/supply_chain/v1/service_server'),
-        import('./server/worldmonitor/supply-chain/v1/handler'),
         import('./src/generated/server/worldmonitor/natural/v1/service_server'),
         import('./server/worldmonitor/natural/v1/handler'),
-        import('./src/generated/server/worldmonitor/resilience/v1/service_server'),
-        import('./server/worldmonitor/resilience/v1/handler'),
-        import('./src/generated/server/worldmonitor/leads/v1/service_server'),
-        import('./server/worldmonitor/leads/v1/handler'),
-        import('./src/generated/server/worldmonitor/scenario/v1/service_server'),
-        import('./server/worldmonitor/scenario/v1/handler'),
-        import('./src/generated/server/worldmonitor/shipping/v2/service_server'),
-        import('./server/worldmonitor/shipping/v2/handler'),
       ]);
 
     const serverOptions = {
@@ -534,31 +465,8 @@ function sebufApiPlugin(): Plugin {
     };
     const allRoutes = [
       ...seismologyServerMod.createSeismologyServiceRoutes(seismologyHandlerMod.seismologyHandler, serverOptions),
-      ...wildfireServerMod.createWildfireServiceRoutes(wildfireHandlerMod.wildfireHandler, serverOptions),
       ...climateServerMod.createClimateServiceRoutes(climateHandlerMod.climateHandler, serverOptions),
-      ...predictionServerMod.createPredictionServiceRoutes(predictionHandlerMod.predictionHandler, serverOptions),
-      ...displacementServerMod.createDisplacementServiceRoutes(displacementHandlerMod.displacementHandler, serverOptions),
-      ...aviationServerMod.createAviationServiceRoutes(aviationHandlerMod.aviationHandler, serverOptions),
-      ...researchServerMod.createResearchServiceRoutes(researchHandlerMod.researchHandler, serverOptions),
-      ...unrestServerMod.createUnrestServiceRoutes(unrestHandlerMod.unrestHandler, serverOptions),
-      ...conflictServerMod.createConflictServiceRoutes(conflictHandlerMod.conflictHandler, serverOptions),
-      ...maritimeServerMod.createMaritimeServiceRoutes(maritimeHandlerMod.maritimeHandler, serverOptions),
-      ...cyberServerMod.createCyberServiceRoutes(cyberHandlerMod.cyberHandler, serverOptions),
-      ...economicServerMod.createEconomicServiceRoutes(economicHandlerMod.economicHandler, serverOptions),
-      ...infrastructureServerMod.createInfrastructureServiceRoutes(infrastructureHandlerMod.infrastructureHandler, serverOptions),
-      ...marketServerMod.createMarketServiceRoutes(marketHandlerMod.marketHandler, serverOptions),
-      ...newsServerMod.createNewsServiceRoutes(newsHandlerMod.newsHandler, serverOptions),
-      ...intelligenceServerMod.createIntelligenceServiceRoutes(intelligenceHandlerMod.intelligenceHandler, serverOptions),
-      ...militaryServerMod.createMilitaryServiceRoutes(militaryHandlerMod.militaryHandler, serverOptions),
-      ...positiveEventsServerMod.createPositiveEventsServiceRoutes(positiveEventsHandlerMod.positiveEventsHandler, serverOptions),
-      ...givingServerMod.createGivingServiceRoutes(givingHandlerMod.givingHandler, serverOptions),
-      ...tradeServerMod.createTradeServiceRoutes(tradeHandlerMod.tradeHandler, serverOptions),
-      ...supplyChainServerMod.createSupplyChainServiceRoutes(supplyChainHandlerMod.supplyChainHandler, serverOptions),
       ...naturalServerMod.createNaturalServiceRoutes(naturalHandlerMod.naturalHandler, serverOptions),
-      ...resilienceServerMod.createResilienceServiceRoutes(resilienceHandlerMod.resilienceHandler, serverOptions),
-      ...leadsServerMod.createLeadsServiceRoutes(leadsHandlerMod.leadsHandler, serverOptions),
-      ...scenarioServerMod.createScenarioServiceRoutes(scenarioHandlerMod.scenarioHandler, serverOptions),
-      ...shippingV2ServerMod.createShippingV2ServiceRoutes(shippingV2HandlerMod.shippingV2Handler, serverOptions),
     ];
     cachedCorsMod = corsMod;
     return routerMod.createRouter(allRoutes);
@@ -574,7 +482,7 @@ function sebufApiPlugin(): Plugin {
         }
       });
 
-      // Legacy v1 URL aliases → new sebuf RPC paths (mirror of the alias files
+      // Legacy v1 URL aliases â†’ new sebuf RPC paths (mirror of the alias files
       // in api/scenario/v1/ + api/supply-chain/v1/). Vercel serves the alias
       // files directly; vite dev has no file-based routing for api/, so we
       // rewrite the pathname here before the router lookup.
@@ -596,7 +504,7 @@ function sebufApiPlugin(): Plugin {
           return next();
         }
 
-        // Rewrite documented v1 URL → new sebuf path if this is an alias.
+        // Rewrite documented v1 URL â†’ new sebuf path if this is an alias.
         const [pathOnly, queryOnly] = req.url.split('?', 2);
         const aliasTarget = pathOnly ? V1_ALIASES[pathOnly] : undefined;
         if (aliasTarget) {
@@ -904,7 +812,7 @@ export default defineConfig(({ mode }) => {
       // non-empty + major-pairing guards).
       __CLERK_JS_VERSION__: JSON.stringify(CLERK_JS_VERSION),
       // Vercel sets VERCEL_GIT_COMMIT_SHA on production + preview builds.
-      // Local `vite build` falls back to 'dev' — installStaleBundleCheck
+      // Local `vite build` falls back to 'dev' â€” installStaleBundleCheck
       // detects the marker and skips the comparison so dev tabs don't
       // reload on every focus.
       __BUILD_HASH__: JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev'),
@@ -913,7 +821,7 @@ export default defineConfig(({ mode }) => {
       // Emit dist/build-hash.txt with the deployed SHA so the running bundle
       // can fetch /build-hash.txt at tab-focus time and force-reload itself
       // if it's running an older bundle (see src/bootstrap/stale-bundle-check.ts).
-      // Same-origin static asset, NOT under /api/* — installWebApiRedirect
+      // Same-origin static asset, NOT under /api/* â€” installWebApiRedirect
       // doesn't touch it, so the comparison reflects the web deployment.
       {
         name: 'wm-emit-build-hash',
@@ -990,7 +898,7 @@ export default defineConfig(({ mode }) => {
             'textures/**',
             // #4891: blog OG covers + post images are generated into the prod
             // build (absent locally), and the png glob was precaching all ~40
-            // of them (~700KB) on every first dashboard visit — and again on
+            // of them (~700KB) on every first dashboard visit â€” and again on
             // each SW update after a blog deploy. Blog pages fetch their own
             // images on demand; the dashboard never needs them.
             'blog/**',
@@ -1130,7 +1038,7 @@ export default defineConfig(({ mode }) => {
         output: {
           // onlyExplicitManualChunks keeps the panel clusters from forming
           // cross-chunk cycles. Its side effect: a manual chunk's unmatched
-          // static deps get pulled into the importer chunk — which created a
+          // static deps get pulled into the importer chunk â€” which created a
           // circular DeckGLMap -> deck-stack -> DeckGLMap chunk (runtime TDZ
           // "Cannot access 'X' before initialization" that crashed the WebGL map
           // into the SVG fallback). Fixed by co-locating the DeckGLMap renderer
@@ -1188,16 +1096,16 @@ export default defineConfig(({ mode }) => {
             // (search/map/globe/tech-hub services). Isolating it keeps it off the
             // eager entry now that the @/config barrel no longer re-exports its
             // values and data-loader lazy-loads the tech-activity chain. Pure
-            // data (type-only imports) → no unmatched-static-dep circular risk. (#4404)
+            // data (type-only imports) â†’ no unmatched-static-dep circular risk. (#4404)
             if (id.endsWith('/src/config/tech-geo.ts')) {
               return 'tech-geo-data';
             }
-            // airports table (~14KB) — only consumer is the lazy AviationCommandBar
+            // airports table (~14KB) â€” only consumer is the lazy AviationCommandBar
             // (imports directly); kept off the eager @/config barrel above. (#4404)
             if (id.endsWith('/src/config/airports.ts')) {
               return 'airports-data';
             }
-            // ai-datacenters table (~86KB) — consumers (map/globe/search) import
+            // ai-datacenters table (~86KB) â€” consumers (map/globe/search) import
             // directly and are lazy; related-assets lazy-imports it. Kept off the
             // eager @/config barrel above. (#4404)
             if (id.endsWith('/src/config/ai-datacenters.ts')) {
@@ -1213,7 +1121,7 @@ export default defineConfig(({ mode }) => {
             }
             // Military-bases bulk (~48KB MILITARY_BASES_EXPANDED + merged
             // MILITARY_BASES). geo.ts no longer imports it; eager consumers
-            // (country-intel, related-assets, data-loader→military-surge)
+            // (country-intel, related-assets, data-loaderâ†’military-surge)
             // lazy-load it via dynamic import. Kept off the eager @/config
             // barrel. Co-chunk both files so the merged list and its raw data
             // ship together off the entry chunk. (#4478)
@@ -1223,7 +1131,7 @@ export default defineConfig(({ mode }) => {
             }
             // Correlation engine (engine + 4 adapters) is dynamic-imported at its
             // post-loadAllData run site in App.ts (#4486), so it already forms a lazy
-            // chunk; this rule only gives that chunk a STABLE name — the dir-index
+            // chunk; this rule only gives that chunk a STABLE name â€” the dir-index
             // would otherwise emit an ambiguous `index-*.js` the eager-chunk guard
             // can't pin. Naming only; the deferral is the call-site import().
             if (id.includes('/src/services/correlation-engine/')) {
@@ -1270,7 +1178,7 @@ export default defineConfig(({ mode }) => {
             }
             // Co-locate the deck.gl renderer with the deck vendor chunk so
             // onlyExplicitManualChunks cannot split deck's transitive deps
-            // across the DeckGLMap boundary (which formed a circular chunk →
+            // across the DeckGLMap boundary (which formed a circular chunk â†’
             // runtime TDZ that crashed the WebGL map into the SVG fallback).
             if (id.endsWith('/src/components/DeckGLMap.ts')) {
               return 'deck-stack';
@@ -1314,7 +1222,7 @@ export default defineConfig(({ mode }) => {
         ],
       },
       proxy: {
-        // Widget agent — forward to Railway relay for SSE streaming
+        // Widget agent â€” forward to Railway relay for SSE streaming
         '/widget-agent': {
           target: 'https://proxy.worldmonitor.app',
           changeOrigin: true,
@@ -1325,7 +1233,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/yahoo/, ''),
         },
-        // Polymarket handled by polymarketPlugin() — no prod proxy needed
+        // Polymarket handled by polymarketPlugin() â€” no prod proxy needed
         // USGS Earthquake API
         '/api/earthquake': {
           target: 'https://earthquake.usgs.gov',
@@ -1662,7 +1570,7 @@ export default defineConfig(({ mode }) => {
         // OpenSky Network - Aircraft tracking (military flight detection).
         // Prod routes /api/opensky through the relay (api/opensky.js), which calls
         // OpenSky's states/all endpoint. Dev has no relay, so proxy straight to
-        // states/all — stripping the prefix to '' would hit the invalid /api root (404).
+        // states/all â€” stripping the prefix to '' would hit the invalid /api root (404).
         '/api/opensky': {
           target: 'https://opensky-network.org/api',
           changeOrigin: true,
@@ -1690,3 +1598,4 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
+

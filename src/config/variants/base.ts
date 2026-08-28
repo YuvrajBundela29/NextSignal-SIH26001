@@ -1,8 +1,10 @@
-// Base configuration shared across all variants
+﻿// Base configuration shared across all variants
 import type { PanelConfig, MapLayers } from '@/types';
 
 // Shared exports (re-exported by all variants)
-export { SECTORS, COMMODITIES, MARKET_SYMBOLS } from '../markets';
+export const SECTORS = [] as const;
+export const COMMODITIES = [] as const;
+export const MARKET_SYMBOLS = [] as const;
 // UNDERSEA_CABLES + AI_DATA_CENTERS intentionally not re-exported (kept off the
 // eager @/config barrel); consumers import directly from '@/config/geo-map' and
 // '@/config/ai-datacenters'. (#4404)
@@ -63,12 +65,12 @@ export const REFRESH_INTERVALS = {
   climateNews: 30 * 60 * 1000, // seeded every 30min; match cadence
   intelligence: 15 * 60 * 1000,
   correlationEngine: 5 * 60 * 1000,
-  defensePatents: 24 * 60 * 60 * 1000, // 24h — data is weekly, daily poll is sufficient
+  defensePatents: 24 * 60 * 60 * 1000, // 24h â€” data is weekly, daily poll is sufficient
   wsbTickers: 10 * 60 * 1000,
   crossSourceSignals: 15 * 60 * 1000,
-  hormuzTracker: 60 * 60 * 1000, // 1h — data updates daily
-  hyperliquidFlow: 5 * 60 * 1000, // 5min — matches Railway seed cadence
-  energyCrisis: 6 * 60 * 60 * 1000, // 6h — policy data updates infrequently
+  hormuzTracker: 60 * 60 * 1000, // 1h â€” data updates daily
+  hyperliquidFlow: 5 * 60 * 1000, // 5min â€” matches Railway seed cadence
+  energyCrisis: 6 * 60 * 60 * 1000, // 6h â€” policy data updates infrequently
   pipelineStatus: 24 * 60 * 60 * 1000, // curated registry reseeds weekly; daily poll keeps long-lived sessions fresh
   storageFacilityMap: 24 * 60 * 60 * 1000, // curated registry reseeds weekly; daily poll keeps long-lived sessions fresh
   fuelShortages: 60 * 60 * 1000, // active shortage alerts can change intra-day
@@ -113,9 +115,9 @@ export const STORAGE_KEYS = {
   panelLayoutVariant: 'worldmonitor-panel-layout-variant',
   // Schema version for the disabledFeeds set. Bumped on each migration that
   // mutates the set in a backwards-incompatible way. Currently:
-  //   missing/0 → pre-2026-05-01 alphabetical-cap state. Eligible for
+  //   missing/0 â†’ pre-2026-05-01 alphabetical-cap state. Eligible for
   //               one-time recovery of fully-disabled categories.
-  //   1 → recovery has run; the set is post-migration and must NOT be
+  //   1 â†’ recovery has run; the set is post-migration and must NOT be
   //       re-recovered on subsequent loads (otherwise user-explicit
   //       full-category disabling would be silently undone forever).
   disabledFeedsSchema: 'worldmonitor-disabled-feeds-schema',
@@ -123,7 +125,7 @@ export const STORAGE_KEYS = {
   // in the per-variant server digest, so its capped per-feed fetch rotates
   // through its sources a window at a time (#5873). The cycle has to survive a
   // reload or short sessions would replay window 0 forever and the rotation
-  // would never reach sources 4..N — the exact defect it exists to fix.
+  // would never reach sources 4..N â€” the exact defect it exists to fix.
   newsFeedRotation: 'worldmonitor-news-feed-rotation',
   liveChannels: 'worldmonitor-live-channels',
   mapMode: 'worldmonitor-map-mode',          // 'flat' | 'globe'
@@ -142,3 +144,4 @@ export interface VariantConfig {
   mapLayers: MapLayers;
   mobileMapLayers: MapLayers;
 }
+

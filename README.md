@@ -1,164 +1,107 @@
-# NextSignal
+﻿# NextSignal SIH26001 — AI-Based Early Warning & Landslide Risk Monitoring System in North Eastern Region (NER), India
 
-**AI-Powered Scenario Intelligence** — See the signals. Understand the scenarios. Prepare for what's next.
+[![Smart India Hackathon 2024](https://img.shields.io/badge/SIH-2024%20Submission-blue?style=for-the-badge)](https://sih.gov.in)
+[![Ministry](https://img.shields.io/badge/Ministry-MDoNER-darkgreen?style=for-the-badge)](https://mdoner.gov.in)
+[![Theme](https://img.shields.io/badge/Theme-Disaster%20Management-red?style=for-the-badge)]()
+[![Free APIs](https://img.shields.io/badge/APIs-100%25%20Free%20%26%20Keyless-teal?style=for-the-badge)]()
 
-NextSignal analyzes global signals from markets, geopolitics, news, and economic data, and produces **probabilistic scenarios** about what could happen next. It helps answer:
-
-- **"What is changing?"**
-- **"Why does it matter?"**
-- **"What could happen next?"**
-- **"What assets, sectors, or systems are affected?"**
+An end-to-end, multi-sensor, AI-powered landslide susceptibility and early-warning intelligence dashboard tailored specifically for the 8 North Eastern States of India (Assam, Meghalaya, Arunachal Pradesh, Nagaland, Manipur, Mizoram, Tripura, Sikkim).
 
 ---
 
-## What NextSignal Does
+## 📌 Problem Statement (SIH26001)
 
-- **Signal Engine** — Converts raw events into structured, actionable signals (geopolitical risk, supply disruption, market divergence, economic stress, and more)
-- **Scenario Engine** — Generates AI-powered Bull/Base/Bear scenarios for assets, countries, sectors, and global topics
-- **"What Happens Next?"** — Flagship feature: comprehensive probabilistic scenario analysis for any entity
-- **Market Radar** — Live monitoring of stocks, ETFs, crypto, commodities, currencies with signal context
-- **Impact Map** — Visual chain from event → direct impacts → second-order effects → affected assets
-- **Watchlist** — User-defined entity monitoring with signal and scenario change tracking
-- **Global Monitor** — Real-time world event monitoring (conflict, disasters, aviation, maritime, cyber)
-- **AI Explainability** — Every AI conclusion traced to supporting evidence
+- **ID**: SIH26001
+- **Title**: AI-Based Early Warning and Landslide Risk Monitoring System in North Eastern Region (NER), India
+- **Organization**: Ministry of Development of North Eastern Region (MDoNER)
+- **Category**: Software
+- **Theme**: Disaster Management
 
-> **Important**: NextSignal produces probabilistic scenarios, not guaranteed predictions. All outputs are labeled with confidence levels, evidence sources, and invalidation conditions.
+The North Eastern Region (NER) of India accounts for over 50% of the country's landslide vulnerabilities due to fragile Himalayan geology, steep slopes, high seismic activity (Zones IV and V), and extreme monsoon precipitation. This project delivers an explainable, real-time early warning and decision-support system to empower State Disaster Management Authorities (SDMAs), NDRF, District Magistrates, and vulnerable citizens.
 
 ---
 
-## Built On
+## 🚀 Key Features
 
-NextSignal is built on the **[World Monitor](https://github.com/koala73/worldmonitor)** open-source infrastructure — a real-time global intelligence dashboard by **[Elie Habib](https://github.com/koala73)**.
+### 1. Explainable Composite Landslide Risk Scoring Engine
+The system calculates a continuous susceptibility score (0 to 100) per district using weighted geotechnical and meteorological parameters:
+$$\text{Composite Score} = W_s \cdot S_{\text{slope}} + W_r \cdot S_{\text{rainfall}} + W_m \cdot S_{\text{soil}} + W_e \cdot S_{\text{seismic}} + W_h \cdot S_{\text{historical}}$$
 
-**License**: AGPL-3.0-only  
-**Original author**: Elie Habib — Copyright © 2024-2026. All rights reserved.  
-**Original source**: https://github.com/koala73/worldmonitor
+- **Slope Angle & Terrain Ruggedness ($W_s = 0.25$)**: Topographical gradient analysis (>35° critical).
+- **Precipitation Intensity & Antecedent Wetness ($W_r = 0.30$)**: 24h burst intensity (50%), 72h antecedent accumulation (35%), and next 24h IMD/Open-Meteo forecast (15%).
+- **Root-Zone Soil Moisture Saturation ($W_m = 0.20$)**: NASA POWER root-zone wetness index.
+- **Seismic Activity & Ground Shake Factor ($W_e = 0.15$)**: USGS real-time earthquakes in the Himalayan/NER bounding box (`21.5°-29.5°N, 88.0°-97.5°E`) with distance-magnitude attenuation.
+- **Historical Event Density ($W_h = 0.10$)**: Clustering against historical disaster records from the NASA Global Landslide Catalog (COOLR) and Geological Survey of India (GSI).
 
-All AGPL-3.0 obligations apply. Modified source code is available in this repository.
+### 2. 100% Free, Keyless Live Data Ingestion
+- **Open-Meteo API**: Live hourly/daily precipitation, humidity, and temperature without API keys.
+- **USGS Seismic Hazards API**: Automated 72h earthquake ingestion across the Eastern Himalayas.
+- **NASA POWER API**: Agroclimatology root-zone soil wetness data.
+- **NASA COOLR Catalog**: Integrated database of historical landslide disasters in Northeast India.
+- **CartoDB Dark Matter / OpenStreetMap**: Lightweight, high-performance 2D mapping tiles via Leaflet.
+
+### 3. Dual Persona Architecture
+- **Authority / Analyst HUD**:
+  - Full factor breakdown radar and contribution bars.
+  - Live sensor telemetry (24h/72h rainfall, root-zone wetness, seismic shake factor).
+  - DEOC contact directory and population exposure metrics.
+  - Printable official **District Landslide Situation Report (PDF)**.
+- **Citizen Safety Portal (English & हिन्दी)**:
+  - High-contrast, low-bandwidth emergency status (SAFE / WATCH / DANGER).
+  - Plain-language Do's and Don'ts for hillside residents.
+  - 1-Tap Emergency Speed Dial for **NDRF (1078)**, **SDMA (1070)**, **National Emergency (112)**, and **Ambulance (108)**.
+
+### 4. Local AI Disaster Advisory Engine (Ollama Integration)
+- Ingests real-time multi-sensor telemetry to generate concise, professional situational reports and civil defense directives.
+- Supports local quantized LLMs (`gemma:2b`, `llama3.2:3b`, `phi3:mini`) with instant deterministic rule-engine fallback.
+
+### 5. Resilient Offline Demo Simulator (Live Presentation Safety)
+- 1-click toggle between live API feeds and 3 pre-configured demo scenarios:
+  1. **Monsoon Deluge Crisis**: High-intensity cloudbursts in Dima Hasao, Mangan, East Khasi Hills, and Noney.
+  2. **Severe Seismic Trigger (Himalayan M5.8)**: Recent tectonic epicenter near Bomdila/Tawang triggering steep-slope shear alerts.
+  3. **Normal Baseline**: Safe terrain conditions across all 8 NER states.
 
 ---
 
-## Quick Start
+## 🛠️ Quick Start & Local Run
 
+### Prerequisites
+- **Node.js**: v20 or higher
+- **npm**: v9 or higher
+
+### Installation & Launch
 ```bash
-git clone <this-repo>
-cd nextsignal
-npm install --ignore-scripts
+# 1. Navigate to project root
+cd NextSignal-SIH26001
+
+# 2. Install dependencies
+npm install
+
+# 3. Start local development server
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). The application runs without environment variables, with graceful degradation for data sources that require API keys.
+The application will be running at **`http://localhost:3001/`** (or `http://localhost:5173/`).
 
 ---
 
-## Tech Stack
+## 🗺️ Monitored NER States & Key Districts
 
-| Category | Technologies |
-|----------|-------------|
-| **Frontend** | Vanilla TypeScript, Vite, globe.gl + Three.js, deck.gl + MapLibre GL |
-| **Desktop** | Tauri 2 (Rust) with Node.js sidecar |
-| **AI/ML** | Groq / OpenRouter / Anthropic (Claude) / Ollama, Transformers.js (browser-side ONNX) |
-| **API Contracts** | Protocol Buffers + sebuf HTTP annotations |
-| **Deployment** | Vercel Edge Functions, Railway relay, Tauri, PWA |
-| **Caching** | Redis (Upstash), 4-layer cache hierarchy, CDN, service worker |
-| **Auth** | Clerk.js, API key validation, Convex entitlements |
-
----
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local`. Key variables:
-
-| Variable | Purpose |
-|---------|---------|
-| `UPSTASH_REDIS_REST_URL` + `TOKEN` | Redis cache (required for production) |
-| `GROQ_API_KEY` | AI summarization + scenario generation |
-| `OPENROUTER_API_KEY` | AI fallback |
-| `FINNHUB_API_KEY` | Stock market data |
-| `COINGECKO_API_KEY` | Crypto data |
-
-See `.env.example` for the complete list of 100+ configuration options.
+| State | Key Monitored Districts | High-Risk Corridors |
+|---|---|---|
+| **Assam** | Dima Hasao, Karbi Anglong, Kamrup Metro, Cachar | Haflong Railway, Guwahati Hills |
+| **Meghalaya** | East Khasi Hills, SW Khasi Hills, Ri-Bhoi, West Garo Hills | Cherrapunji, Mawsynram, NH-6 |
+| **Arunachal Pradesh** | Papum Pare, Tawang, West Kameng, East Siang, Dibang Valley | Bhalukpong-Bomdila, Trans-Arunachal Hwy |
+| **Nagaland** | Kohima, Mokokchung, Phek | Dzükou Valley, NH-29 Paglapahar |
+| **Manipur** | Noney, Kangpokpi, Tamenglong | Tupul Railway Zone, NH-2 Lifeline |
+| **Mizoram** | Aizawl, Lunglei, Champhai | Hunthar Slope, Melthum Corridor |
+| **Tripura** | Dhalai, North Tripura | Ambassa-Dharmanagar Ridge |
+| **Sikkim** | Mangan, Gangtok, Namchi, Gyalshing | Chungthang, Teesta Valley NH-10 |
 
 ---
 
-## Development
+## 🏛️ Sponsoring Ministry & Hackathon Details
 
-```bash
-npm run dev              # Start dev server (all variants)
-npm run dev:finance      # Finance variant
-npm run typecheck        # TypeScript check
-npm run lint             # Biome lint
-```
-
-Note: `npm install` (without `--ignore-scripts`) requires the full environment (inventory facts, blog-site install). Use `--ignore-scripts` for local development.
-
----
-
-## Documentation
-
-| Document | Description |
-|---------|-------------|
-| [Architecture Audit](docs/NEXTSIGNAL_ARCHITECTURE_AUDIT.md) | Full audit of the World Monitor infrastructure |
-| [Product Specification](docs/NEXTSIGNAL_PRODUCT_SPEC.md) | NextSignal product design and feature spec |
-| [Data Architecture](docs/NEXTSIGNAL_DATA_ARCHITECTURE.md) | Data flow, provider interfaces, caching |
-| [AI Architecture](docs/NEXTSIGNAL_AI_ARCHITECTURE.md) | AI service layer, validation, explainability |
-| [Roadmap](docs/NEXTSIGNAL_ROADMAP.md) | Implementation stages and status |
-
----
-
-## Data Sources
-
-NextSignal aggregates from the following upstream sources (preserved from World Monitor infrastructure):
-
-- **Conflict/Geopolitical**: ACLED, UCDP, GDELT, CII v8
-- **Markets**: Finnhub, Yahoo Finance, CoinGecko
-- **Economic**: FRED, IMF, World Bank, FAO
-- **Aviation**: OpenSky Network, Wingbits (ADS-B), GPSJAM
-- **Maritime**: AIS relay, dark vessel detection
-- **Natural Disasters**: NASA EONET, NASA FIRMS, seismology feeds
-- **News**: 500+ curated RSS feeds, Telegram intel, X intel
-- **AI**: Groq, OpenRouter, Anthropic Claude, local Ollama
-
----
-
-## Security
-
-- API keys never exposed in frontend code
-- Environment variables for all secrets
-- Content Security Policy enforced (3 sources in sync)
-- Rate limiting on all API endpoints (Upstash)
-- Input validation with Zod schemas
-- AI output validated before display
-
-See [SECURITY.md](SECURITY.md) for responsible disclosure guidelines.
-
----
-
-## License
-
-**AGPL-3.0-only** — Commercial use permitted when AGPL copyleft and source-availability obligations are met.
-
-| Use Case | Allowed? |
-|----------|----------|
-| Personal / research / educational | Yes, under AGPL-3.0 |
-| Self-hosted instance | Yes, under AGPL-3.0 |
-| Fork and modify | Yes, share source under AGPL-3.0 when required |
-| Commercial use / SaaS | Yes, under AGPL-3.0 when you comply with AGPL obligations |
-| Private-source proprietary use | Separate commercial license needed |
-
-See [LICENSE](LICENSE) for the full text.
-
----
-
-## Attribution
-
-NextSignal is a product transformation of **World Monitor**.
-
-**Original Work**: World Monitor  
-**Original Author**: Elie Habib — https://github.com/koala73  
-**Original Repository**: https://github.com/koala73/worldmonitor  
-**License**: AGPL-3.0-only  
-**Copyright**: © 2024-2026 Elie Habib. All rights reserved.
-
-This product modification is made in compliance with AGPL-3.0 terms.
-The original source code and all modifications are available in this repository.
+- **Ministry**: Ministry of Development of North Eastern Region (MDoNER), Government of India
+- **Problem Statement ID**: SIH26001
+- **Team**: NextSignal SIH Team
