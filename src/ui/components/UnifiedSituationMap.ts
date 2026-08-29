@@ -23,7 +23,6 @@ export class UnifiedSituationMap {
   private quakes: UsgsEarthquake[] = [];
   private showCoolr = true;
   private showSeismic = true;
-  private showHighways = true;
   private showShelters = true;
 
   constructor(containerId: string, onSelectDistrict: (districtId: string) => void) {
@@ -39,66 +38,82 @@ export class UnifiedSituationMap {
 
   private render() {
     this.container.innerHTML = `
-      <div style="display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; background: #030712;">
+      <div style="display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; background: #030712; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         
-        <!-- Header Bar Matching NextSignal Screenshot 1 & 2 -->
-        <div style="background: #090d16; border-bottom: 1px solid #1e293b; padding: 6px 14px; display: flex; justify-content: space-between; align-items: center; z-index: 500; min-height: 38px;">
-          <!-- Left: Title -->
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 13px; font-weight: 900; color: #38bdf8; letter-spacing: 1px; text-transform: uppercase;">
-              MDoNER NER SITUATION
-            </span>
-            <span style="background: rgba(2,132,199,0.2); color: #38bdf8; border: 1px solid #0284c7; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px;">
-              WEBGL
-            </span>
+        <!-- Header Bar Matching NextSignal Sentinel Operations Console -->
+        <div style="background: #070b14; border-bottom: 1px solid #1e293b; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; z-index: 500; height: 44px; min-height: 44px; box-sizing: border-box;">
+          
+          <!-- Left: Official NextSignal Radar Globe Logo & Situation Title -->
+          <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+            <div style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;">
+              <svg viewBox="0 0 64 64" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" style="width: 100%; height: 100%;">
+                <circle cx="32" cy="32" r="28" stroke="#0284c7" opacity="0.6"/>
+                <ellipse cx="32" cy="32" rx="5" ry="28" stroke="#0284c7" opacity="0.4"/>
+                <ellipse cx="32" cy="32" rx="14" ry="28" stroke="#0284c7" opacity="0.4"/>
+                <ellipse cx="32" cy="32" rx="22" ry="28" stroke="#0284c7" opacity="0.4"/>
+                <ellipse cx="32" cy="32" rx="28" ry="5" stroke="#0284c7" opacity="0.4"/>
+                <ellipse cx="32" cy="32" rx="28" ry="14" stroke="#0284c7" opacity="0.4"/>
+                <path d="M 6 32 L 20 32 L 24 24 L 30 40 L 36 22 L 42 38 L 46 32 L 56 32" stroke="#38bdf8" stroke-width="2.6"/>
+                <circle cx="57" cy="32" r="2.2" fill="#38bdf8" stroke="none"/>
+              </svg>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 13px; font-weight: 900; color: #38bdf8; letter-spacing: 0.8px; text-transform: uppercase;">
+                NEXTSIGNAL SITUATION
+              </span>
+              <span style="background: rgba(2,132,199,0.2); color: #38bdf8; border: 1px solid rgba(2,132,199,0.4); font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px;">
+                WEBGL
+              </span>
+            </div>
           </div>
 
           <!-- Center: Live UTC Clock -->
-          <div id="unified-map-utc-clock" style="font-family: monospace; font-size: 11px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px;">
+          <div id="unified-map-utc-clock" style="font-family: monospace; font-size: 11px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px; text-align: center; flex-shrink: 0;">
             ${new Date().toUTCString().toUpperCase()}
           </div>
 
-          <!-- Right: Earth View Dropdown, 2D/3D Mode Switcher & Controls -->
-          <div style="display: flex; align-items: center; gap: 8px;">
+          <!-- Right: Earth View Dropdown, Highway Navigator & 2D/3D Mode Switcher -->
+          <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
             
-            <!-- Earth View & Remote Sensing API Dropdown -->
-            <div style="display: flex; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 4px; padding: 2px 6px;">
-              <span style="font-size: 9px; color: #94a3b8; margin-right: 4px;">Layer:</span>
-              <select id="sel-earth-remote-sensing" style="background: transparent; color: #f8fafc; border: none; font-size: 10px; font-weight: bold; outline: none; cursor: pointer;">
-                <option value="dark" selected>🌙 Dark Tactical Ops</option>
-                <option value="satellite">🛰️ 4K Satellite Imagery</option>
-                <option value="thermal">🔥 Live Thermal Earth Temp (NASA MODIS)</option>
-                <option value="clouds">☁️ Live Satellite Clouds (NASA VIIRS)</option>
-                <option value="radar">🌧️ Live Weather Doppler Radar</option>
-                <option value="topo">🏔️ Topo Relief</option>
-                <option value="opentopo">🌲 OpenTopo Contours</option>
+            <!-- Dark Styled Earth View Dropdown (Fixed White Background) -->
+            <div style="display: flex; align-items: center; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px;">
+              <span style="font-size: 10px; color: #94a3b8; margin-right: 4px;">Layer:</span>
+              <select id="sel-earth-remote-sensing" style="background: #0f172a; color: #f8fafc; border: none; font-size: 11px; font-weight: 600; outline: none; cursor: pointer; padding: 2px 0;">
+                <option value="dark" style="background: #0f172a; color: #f8fafc;" selected>🌙 Dark Tactical Ops</option>
+                <option value="satellite" style="background: #0f172a; color: #f8fafc;">🛰️ 4K Satellite Imagery</option>
+                <option value="thermal" style="background: #0f172a; color: #f8fafc;">🔥 Live Thermal Earth Temp</option>
+                <option value="clouds" style="background: #0f172a; color: #f8fafc;">☁️ Live Satellite Clouds</option>
+                <option value="radar" style="background: #0f172a; color: #f8fafc;">🌧️ Live Weather Doppler Radar</option>
+                <option value="topo" style="background: #0f172a; color: #f8fafc;">🏔️ Topo Relief</option>
+                <option value="opentopo" style="background: #0f172a; color: #f8fafc;">🌲 OpenTopo Contours</option>
               </select>
             </div>
 
             <!-- Route Navigator Button -->
-            <button id="btn-open-route-nav" style="background: #1e293b; color: #38bdf8; border: 1px solid #0284c7; border-radius: 4px; padding: 3px 8px; font-size: 10px; font-weight: 800; cursor: pointer;" title="Open Highway Waypoint Navigator">
-              🧭 Highway Routes
+            <button id="btn-open-route-nav" style="background: #0f172a; color: #38bdf8; border: 1px solid #0284c7; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Open Highway Waypoint Navigator">
+              <span>🧭</span>
+              <span>Highway Routes</span>
             </button>
 
-            <!-- Mode Switcher [ 2D | 3D ] Matching NextSignal Screenshot -->
-            <div style="display: flex; background: #1e293b; border: 1px solid #334155; border-radius: 4px; overflow: hidden;">
-              <button id="btn-switch-2d" style="padding: 3px 10px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white;">
+            <!-- Mode Switcher [ 2D | 3D ] With Generous Width -->
+            <div style="display: flex; background: #0f172a; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
+              <button id="btn-switch-2d" style="padding: 4px 12px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
                 2D
               </button>
-              <button id="btn-switch-3d" style="padding: 3px 10px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white;">
+              <button id="btn-switch-3d" style="padding: 4px 12px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
                 3D
               </button>
             </div>
 
             <!-- Fullscreen Button -->
-            <button id="btn-unified-fullscreen" style="background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 3px 7px; font-size: 11px; cursor: pointer;" title="Toggle Fullscreen">
+            <button id="btn-unified-fullscreen" style="background: #0f172a; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer;" title="Toggle Fullscreen">
               ⛶
             </button>
           </div>
         </div>
 
-        <!-- Floating Live Earth Telemetry Badge (Compact, non-intrusive) -->
-        <div id="floating-earth-telemetry-badge" style="position: absolute; top: 46px; left: 12px; z-index: 450; background: rgba(9, 13, 22, 0.88); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 10px; font-size: 10px; color: #f8fafc; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+        <!-- Floating Live Earth Telemetry Badge -->
+        <div id="floating-earth-telemetry-badge" style="position: absolute; top: 52px; left: 14px; z-index: 450; background: rgba(9, 13, 22, 0.90); backdrop-filter: blur(10px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 5px 12px; font-size: 10px; color: #f8fafc; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 4px;">
             <span style="color: #38bdf8;">💨 Wind:</span>
             <strong id="badge-wind-val">18 km/h SW</strong>
@@ -115,12 +130,12 @@ export class UnifiedSituationMap {
           </div>
         </div>
 
-        <!-- Map Viewports -->
-        <div style="flex: 1; width: 100%; height: calc(100% - 38px); position: relative; overflow: hidden;">
-          <!-- 2D Leaflet Tactical Map (Zero Watermark / No API Key) -->
+        <!-- Map Viewports (100% Height) -->
+        <div style="flex: 1; width: 100%; height: calc(100% - 44px); position: relative; overflow: hidden;">
+          <!-- 2D Leaflet Tactical Map -->
           <div id="viewport-2d-map" style="width: 100%; height: 100%; display: ${this.mode === '2d' ? 'block' : 'none'};"></div>
 
-          <!-- 3D Globe.gl Tactical Globe (Centered on Northeast India) -->
+          <!-- 3D Globe.gl Tactical Globe -->
           <div id="viewport-3d-globe" style="width: 100%; height: 100%; display: ${this.mode === '3d' ? 'block' : 'none'}; position: absolute; inset: 0;"></div>
         </div>
       </div>
@@ -155,12 +170,7 @@ export class UnifiedSituationMap {
       }
     });
 
-    this.map2d = new LandslideMap(
-      'viewport-2d-map',
-      (id) => this.onSelectDistrict(id),
-      (routeId) => this.navModal?.open(routeId)
-    );
-
+    this.map2d = new LandslideMap('viewport-2d-map', (id) => this.onSelectDistrict(id));
     this.globe3d = new TacticalGlobe3D('viewport-3d-globe', (id) => this.onSelectDistrict(id));
 
     // Bind Controls
@@ -192,7 +202,6 @@ export class UnifiedSituationMap {
     const selRemote = document.getElementById('sel-earth-remote-sensing') as HTMLSelectElement;
     selRemote?.addEventListener('change', () => {
       const val = selRemote.value;
-      // Reset satellite overlay layers
       ['thermal_anomalies', 'viirs_truecolor', 'clouds_ir', 'weather_radar'].forEach(l => {
         this.map2d?.setSatelliteLayer(l, false);
       });
@@ -264,7 +273,6 @@ export class UnifiedSituationMap {
     this.map2d?.renderDistricts(this.districts, this.riskMap, this.selectedDistrictId);
     this.map2d?.renderSeismicEvents(this.quakes, this.showSeismic);
     this.map2d?.renderCoolrLandslides(this.showCoolr);
-    this.map2d?.renderHighwayCorridors(this.showHighways);
     this.map2d?.renderSafeShelters(this.showShelters);
 
     this.globe3d?.renderSeismicQuakes(this.quakes, this.showSeismic);

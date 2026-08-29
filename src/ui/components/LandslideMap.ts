@@ -3,8 +3,8 @@ import 'leaflet/dist/leaflet.css';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
-import { NER_HIGHWAY_ROUTES } from '../../services/landslide/highway-navigation';
 import { NER_SAFE_SHELTERS } from '../../services/landslide/safe-shelters';
+import { NER_RIVER_GAUGES } from '../../services/landslide/river-gauges';
 
 export class LandslideMap {
   private map: L.Map | null = null;
@@ -15,23 +15,20 @@ export class LandslideMap {
   private districtLayer: L.LayerGroup | null = null;
   private coolrLayer: L.LayerGroup | null = null;
   private seismicLayer: L.LayerGroup | null = null;
-  private highwayLayer: L.LayerGroup | null = null;
   private shelterLayer: L.LayerGroup | null = null;
+  private gaugeLayer: L.LayerGroup | null = null;
 
   // Remote Sensing Satellite & Earth Observation Layers
   private satLayers: Record<string, L.TileLayer> = {};
 
   private onSelectDistrict: (districtId: string) => void;
-  private onOpenHighwayNav?: (routeId: string) => void;
   private lang: AppLanguage = 'en';
 
   constructor(
     containerId: string,
-    onSelectDistrict: (districtId: string) => void,
-    onOpenHighwayNav?: (routeId: string) => void
+    onSelectDistrict: (districtId: string) => void
   ) {
     this.onSelectDistrict = onSelectDistrict;
-    this.onOpenHighwayNav = onOpenHighwayNav;
     this.initMap(containerId);
   }
 
@@ -50,11 +47,12 @@ export class LandslideMap {
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-    // 1. Dark Operations Basemap: 100% Free, NO API KEY REQUIRED, ZERO WATERMARK (Esri Dark Gray Base + Reference Labels)
+    // 1. Tactical Deep Black Operations Basemap (Esri Dark Gray Canvas - Pure Dark)
     const darkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri &bull; DeLorme, HERE, USGS',
+      attribution: '&copy; NextSignal &bull; Esri Tactical Basemap',
       maxNativeZoom: 16,
       maxZoom: 20,
+      className: 'tactical-dark-tiles',
     });
     const darkLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 16,
@@ -64,7 +62,7 @@ export class LandslideMap {
 
     // 2. 4K Ultra-Clarity Satellite Basemap
     const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri, Maxar, Earthstar Geographics, USDA, USGS',
+      attribution: '&copy; Esri, Maxar, Earthstar Geographics',
       maxNativeZoom: 18,
       maxZoom: 20,
     });
@@ -72,7 +70,7 @@ export class LandslideMap {
 
     // 3. Topographic Relief Basemap
     const topoLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri &mdash; National Geographic, DeLorme, HERE, USGS',
+      attribution: '&copy; Esri &mdash; National Geographic, USGS',
       maxNativeZoom: 18,
       maxZoom: 20,
     });
@@ -80,7 +78,7 @@ export class LandslideMap {
 
     // 4. OpenTopo Contours Basemap
     const openTopoLayer = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> | &copy; OSM contributors',
+      attribution: '&copy; OpenTopoMap | OSM contributors',
       maxNativeZoom: 17,
       maxZoom: 19,
     });
@@ -93,23 +91,23 @@ export class LandslideMap {
       opentopo: openTopoGroup,
     };
 
-    // Default to Dark Mode
+    // Default to Tactical Pitch-Black Mode
     this.currentBaseLayer = darkGroup;
     this.currentBaseLayer.addTo(this.map);
 
-    // Live Earth Remote Sensing Layers (NASA EOSDIS GIBS + RainViewer + Open-Meteo)
+    // Live Earth Remote Sensing Layers (NASA IMERG Doppler + MODIS Thermal + VIIRS Clouds)
     this.satLayers = {
       thermal_anomalies: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', {
-        opacity: 0.75,
+        opacity: 0.80,
         maxNativeZoom: 7,
         maxZoom: 19,
-        attribution: '&copy; NASA MODIS Real-Time Land Surface Thermal Heat Gradient',
+        attribution: '&copy; NASA MODIS Real-Time Land Surface Thermal Radiance',
       }),
       viirs_truecolor: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
         opacity: 0.85,
         maxNativeZoom: 9,
         maxZoom: 19,
-        attribution: '&copy; NASA EOSDIS VIIRS TrueColor Satellite',
+        attribution: '&copy; NASA EOSDIS VIIRS Satellite',
       }),
       clouds_ir: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Cloud_Top_Height_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
         opacity: 0.70,
@@ -117,22 +115,22 @@ export class LandslideMap {
         maxZoom: 19,
         attribution: '&copy; NASA EOSDIS Infrared Cloud Tops',
       }),
-      weather_radar: L.tileLayer('https://tilecache.rainviewer.com/v2/radar/nowcast_0/512/{z}/{x}/{y}/2/1_1.png', {
-        opacity: 0.75,
-        maxNativeZoom: 12,
+      weather_radar: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+        opacity: 0.80,
+        maxNativeZoom: 6,
         maxZoom: 19,
-        attribution: '&copy; RainViewer Real-Time Precipitation Doppler Radar',
+        attribution: '&copy; NASA GPM / IMERG Live Precipitation Doppler Radar',
       }),
     };
 
-    this.highwayLayer = L.layerGroup().addTo(this.map);
     this.shelterLayer = L.layerGroup().addTo(this.map);
+    this.gaugeLayer = L.layerGroup().addTo(this.map);
     this.coolrLayer = L.layerGroup().addTo(this.map);
     this.seismicLayer = L.layerGroup().addTo(this.map);
     this.districtLayer = L.layerGroup().addTo(this.map);
 
-    this.renderHighwayCorridors(true);
     this.renderSafeShelters(true);
+    this.renderRiverGauges(true);
   }
 
   public setSatelliteLayer(layerId: string, enabled: boolean) {
@@ -147,48 +145,31 @@ export class LandslideMap {
     }
   }
 
-  public renderHighwayCorridors(show: boolean) {
-    if (!this.highwayLayer) return;
-    this.highwayLayer.clearLayers();
+  public renderRiverGauges(show: boolean) {
+    if (!this.gaugeLayer) return;
+    this.gaugeLayer.clearLayers();
     if (!show) return;
 
-    for (const h of NER_HIGHWAY_ROUTES) {
-      const color =
-        h.overallVulnerability === 'CRITICAL'
-          ? '#ef4444'
-          : h.overallVulnerability === 'HIGH'
-          ? '#f97316'
-          : '#eab308';
-
-      const polyline = L.polyline(h.coordinates, {
-        color: color,
-        weight: 3.5,
-        opacity: 0.9,
+    for (const g of NER_RIVER_GAUGES) {
+      const isHighRisk = g.glofRisk === 'HIGH';
+      const marker = L.circleMarker([g.lat, g.lon], {
+        radius: isHighRisk ? 7 : 5,
+        color: isHighRisk ? '#ef4444' : '#38bdf8',
+        weight: 2,
+        fillColor: isHighRisk ? '#dc2626' : '#0284c7',
+        fillOpacity: 0.9,
       });
 
-      const tooltipContent = `
-        <div style="font-family: system-ui, sans-serif; font-size: 11px; line-height: 1.4; color: #fff; min-width: 170px;">
-          <div style="font-weight: bold; font-size: 12px; color: ${color};">🛣️ ${h.name}</div>
-          <div style="color: #cbd5e1; font-size: 10px; margin-top: 2px;">📍 ${h.origin} ➔ 🏁 ${h.destination}</div>
-          <div style="margin-top: 4px; display: flex; justify-content: space-between;">
-            <span>Pass Status:</span>
-            <strong style="color: ${h.currentPassStatus === 'RESTRICTED' ? '#ef4444' : '#f97316'};">${h.currentPassStatus}</strong>
-          </div>
-          <div style="font-size: 10px; color: #38bdf8; margin-top: 4px; font-weight: bold;">
-            👉 Click to Open Google Maps Waypoint Navigation
-          </div>
+      marker.bindTooltip(`
+        <div style="font-family: system-ui, sans-serif; font-size: 11px; color: #fff; min-width: 150px;">
+          <strong style="color: #38bdf8;">🌊 ${g.stationName}</strong><br/>
+          <span style="color: #cbd5e1;">River: ${g.riverName}</span><br/>
+          <span>Current Level: <strong>${g.currentLevelM}m</strong> (${g.trend === 'RISING' ? '▲ Rising' : '▬ Steady'})</span><br/>
+          <span style="color: ${isHighRisk ? '#ef4444' : '#34d399'}; font-weight: bold;">GLOF / Flash Flood Risk: ${g.glofRisk}</span>
         </div>
-      `;
+      `, { direction: 'top', offset: [0, -6] });
 
-      polyline.bindTooltip(tooltipContent, { sticky: true, className: 'landslide-custom-tooltip' });
-      
-      polyline.on('click', () => {
-        if (this.onOpenHighwayNav) {
-          this.onOpenHighwayNav(h.id);
-        }
-      });
-
-      polyline.addTo(this.highwayLayer);
+      marker.addTo(this.gaugeLayer);
     }
   }
 
