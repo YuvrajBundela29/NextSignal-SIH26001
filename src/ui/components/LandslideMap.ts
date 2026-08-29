@@ -47,16 +47,17 @@ export class LandslideMap {
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-    // 1. Tactical Deep Black Operations Basemap (Esri Dark Gray Canvas - Pure Dark)
+    // 1. Tactical Pitch-Black Operations Basemap (Deep pure black #000000 with crisp borders & terrain)
     const darkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; NextSignal &bull; Esri Tactical Basemap',
+      attribution: '&copy; NextSignal Defense Console',
       maxNativeZoom: 16,
       maxZoom: 20,
-      className: 'tactical-dark-tiles',
+      className: 'pitch-black-map-tiles',
     });
     const darkLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 16,
       maxZoom: 20,
+      className: 'pitch-black-map-labels',
     });
     const darkGroup = L.layerGroup([darkBase, darkLabels]);
 
@@ -91,7 +92,7 @@ export class LandslideMap {
       opentopo: openTopoGroup,
     };
 
-    // Default to Tactical Pitch-Black Mode
+    // Default to Pitch-Black Tactical Mode
     this.currentBaseLayer = darkGroup;
     this.currentBaseLayer.addTo(this.map);
 

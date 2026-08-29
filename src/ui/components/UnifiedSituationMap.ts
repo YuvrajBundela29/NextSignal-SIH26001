@@ -38,82 +38,61 @@ export class UnifiedSituationMap {
 
   private render() {
     this.container.innerHTML = `
-      <div style="display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; background: #030712; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div style="display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; background: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         
-        <!-- Header Bar Matching NextSignal Sentinel Operations Console -->
-        <div style="background: #070b14; border-bottom: 1px solid #1e293b; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; z-index: 500; height: 44px; min-height: 44px; box-sizing: border-box;">
+        <!-- Clean, Spacious Sub-Header Bar (No Overlapping Text) -->
+        <div style="background: #050811; border-bottom: 1px solid #1e293b; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; z-index: 500; height: 42px; min-height: 42px; box-sizing: border-box; width: 100%;">
           
-          <!-- Left: Official NextSignal Radar Globe Logo & Situation Title -->
-          <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
-            <div style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;">
-              <svg viewBox="0 0 64 64" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" style="width: 100%; height: 100%;">
-                <circle cx="32" cy="32" r="28" stroke="#0284c7" opacity="0.6"/>
-                <ellipse cx="32" cy="32" rx="5" ry="28" stroke="#0284c7" opacity="0.4"/>
-                <ellipse cx="32" cy="32" rx="14" ry="28" stroke="#0284c7" opacity="0.4"/>
-                <ellipse cx="32" cy="32" rx="22" ry="28" stroke="#0284c7" opacity="0.4"/>
-                <ellipse cx="32" cy="32" rx="28" ry="5" stroke="#0284c7" opacity="0.4"/>
-                <ellipse cx="32" cy="32" rx="28" ry="14" stroke="#0284c7" opacity="0.4"/>
-                <path d="M 6 32 L 20 32 L 24 24 L 30 40 L 36 22 L 42 38 L 46 32 L 56 32" stroke="#38bdf8" stroke-width="2.6"/>
-                <circle cx="57" cy="32" r="2.2" fill="#38bdf8" stroke="none"/>
-              </svg>
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="font-size: 13px; font-weight: 900; color: #38bdf8; letter-spacing: 0.8px; text-transform: uppercase;">
-                NEXTSIGNAL SITUATION
-              </span>
-              <span style="background: rgba(2,132,199,0.2); color: #38bdf8; border: 1px solid rgba(2,132,199,0.4); font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px;">
-                WEBGL
-              </span>
+          <!-- Left: Live UTC Clock -->
+          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+            <div style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></div>
+            <div id="unified-map-utc-clock" style="font-family: monospace; font-size: 11px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px;">
+              ${new Date().toUTCString().toUpperCase()}
             </div>
           </div>
 
-          <!-- Center: Live UTC Clock -->
-          <div id="unified-map-utc-clock" style="font-family: monospace; font-size: 11px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px; text-align: center; flex-shrink: 0;">
-            ${new Date().toUTCString().toUpperCase()}
+          <!-- Center: Dark Styled Earth View Dropdown -->
+          <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 2px 10px; flex-shrink: 0;">
+            <span style="font-size: 10px; color: #94a3b8; margin-right: 6px; font-weight: 600;">Layer:</span>
+            <select id="sel-earth-remote-sensing" style="background: #0b1120; color: #f8fafc; border: none; font-size: 11px; font-weight: 600; outline: none; cursor: pointer; padding: 2px 0;">
+              <option value="dark" style="background: #0b1120; color: #f8fafc;" selected>🌙 Dark Tactical Ops</option>
+              <option value="satellite" style="background: #0b1120; color: #f8fafc;">🛰️ 4K Satellite Imagery</option>
+              <option value="thermal" style="background: #0b1120; color: #f8fafc;">🔥 Live Thermal Earth Temp</option>
+              <option value="clouds" style="background: #0b1120; color: #f8fafc;">☁️ Live Satellite Clouds</option>
+              <option value="radar" style="background: #0b1120; color: #f8fafc;">🌧️ Live Weather Doppler Radar</option>
+              <option value="topo" style="background: #0b1120; color: #f8fafc;">🏔️ Topo Relief</option>
+              <option value="opentopo" style="background: #0b1120; color: #f8fafc;">🌲 OpenTopo Contours</option>
+            </select>
           </div>
 
-          <!-- Right: Earth View Dropdown, Highway Navigator & 2D/3D Mode Switcher -->
+          <!-- Right: Highway Routes Button, 2D/3D Mode Switcher & Fullscreen -->
           <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
             
-            <!-- Dark Styled Earth View Dropdown (Fixed White Background) -->
-            <div style="display: flex; align-items: center; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px;">
-              <span style="font-size: 10px; color: #94a3b8; margin-right: 4px;">Layer:</span>
-              <select id="sel-earth-remote-sensing" style="background: #0f172a; color: #f8fafc; border: none; font-size: 11px; font-weight: 600; outline: none; cursor: pointer; padding: 2px 0;">
-                <option value="dark" style="background: #0f172a; color: #f8fafc;" selected>🌙 Dark Tactical Ops</option>
-                <option value="satellite" style="background: #0f172a; color: #f8fafc;">🛰️ 4K Satellite Imagery</option>
-                <option value="thermal" style="background: #0f172a; color: #f8fafc;">🔥 Live Thermal Earth Temp</option>
-                <option value="clouds" style="background: #0f172a; color: #f8fafc;">☁️ Live Satellite Clouds</option>
-                <option value="radar" style="background: #0f172a; color: #f8fafc;">🌧️ Live Weather Doppler Radar</option>
-                <option value="topo" style="background: #0f172a; color: #f8fafc;">🏔️ Topo Relief</option>
-                <option value="opentopo" style="background: #0f172a; color: #f8fafc;">🌲 OpenTopo Contours</option>
-              </select>
-            </div>
-
             <!-- Route Navigator Button -->
-            <button id="btn-open-route-nav" style="background: #0f172a; color: #38bdf8; border: 1px solid #0284c7; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Open Highway Waypoint Navigator">
+            <button id="btn-open-route-nav" style="background: #0b1120; color: #38bdf8; border: 1px solid #0284c7; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Open Highway Waypoint Navigator">
               <span>🧭</span>
               <span>Highway Routes</span>
             </button>
 
-            <!-- Mode Switcher [ 2D | 3D ] With Generous Width -->
-            <div style="display: flex; background: #0f172a; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
-              <button id="btn-switch-2d" style="padding: 4px 12px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
+            <!-- Mode Switcher [ 2D | 3D ] With Wide Touch Area -->
+            <div style="display: flex; background: #0b1120; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
+              <button id="btn-switch-2d" style="padding: 4px 14px; min-width: 44px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
                 2D
               </button>
-              <button id="btn-switch-3d" style="padding: 4px 12px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
+              <button id="btn-switch-3d" style="padding: 4px 14px; min-width: 44px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
                 3D
               </button>
             </div>
 
             <!-- Fullscreen Button -->
-            <button id="btn-unified-fullscreen" style="background: #0f172a; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer;" title="Toggle Fullscreen">
+            <button id="btn-unified-fullscreen" style="background: #0b1120; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer;" title="Toggle Fullscreen">
               ⛶
             </button>
           </div>
         </div>
 
         <!-- Floating Live Earth Telemetry Badge -->
-        <div id="floating-earth-telemetry-badge" style="position: absolute; top: 52px; left: 14px; z-index: 450; background: rgba(9, 13, 22, 0.90); backdrop-filter: blur(10px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 5px 12px; font-size: 10px; color: #f8fafc; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+        <div id="floating-earth-telemetry-badge" style="position: absolute; top: 50px; left: 14px; z-index: 450; background: rgba(5, 8, 17, 0.92); backdrop-filter: blur(10px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 5px 12px; font-size: 10px; color: #f8fafc; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.8);">
           <div style="display: flex; align-items: center; gap: 4px;">
             <span style="color: #38bdf8;">💨 Wind:</span>
             <strong id="badge-wind-val">18 km/h SW</strong>
@@ -131,11 +110,11 @@ export class UnifiedSituationMap {
         </div>
 
         <!-- Map Viewports (100% Height) -->
-        <div style="flex: 1; width: 100%; height: calc(100% - 44px); position: relative; overflow: hidden;">
-          <!-- 2D Leaflet Tactical Map -->
+        <div style="flex: 1; width: 100%; height: calc(100% - 42px); position: relative; overflow: hidden; background: #000000;">
+          <!-- 2D Leaflet Tactical Map (Pitch Black) -->
           <div id="viewport-2d-map" style="width: 100%; height: 100%; display: ${this.mode === '2d' ? 'block' : 'none'};"></div>
 
-          <!-- 3D Globe.gl Tactical Globe -->
+          <!-- 3D Globe.gl Tactical Globe (Centered on Screen) -->
           <div id="viewport-3d-globe" style="width: 100%; height: 100%; display: ${this.mode === '3d' ? 'block' : 'none'}; position: absolute; inset: 0;"></div>
         </div>
       </div>

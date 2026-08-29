@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,11 +6,11 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <!-- Primary Meta Tags -->
-    <title>MDoNER Landslide Risk & Early Warning Intelligence (SIH26001)</title>
-    <meta name="title" content="MDoNER Landslide Risk & Early Warning Intelligence (SIH26001)" />
-    <meta name="description" content="AI-Based Early Warning and Landslide Risk Monitoring System in North Eastern Region (NER), India. Sponsoring Ministry: Ministry of Development of North Eastern Region (MDoNER). Theme: Disaster Management." />
-    <meta name="author" content="NextSignal SIH Team" />
-    <link rel="icon" type="image/png" href="/favico/favicon-32x32.png" />
+    <title>NextSignal — AI-Powered Geohazard & Early Warning System</title>
+    <meta name="title" content="NextSignal — AI-Powered Geohazard & Early Warning System" />
+    <meta name="description" content="AI-Powered Landslide & Geohazard Intelligence Dashboard &bull; Northeast Region India" />
+    <meta name="author" content="NextSignal Team" />
+    <link rel="icon" type="image/jpeg" href="/favico/nextsignal-icon.jpg" />
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
@@ -21,22 +21,34 @@
         padding: 0;
         width: 100vw;
         height: 100vh;
-        background: #030712;
+        background: #000000;
         color: #f8fafc;
         overflow: hidden;
       }
       #app {
         width: 100%;
         height: 100%;
+        background: #000000;
+      }
+
+      /* Pitch-Black Tactical Map Tiles */
+      .pitch-black-map-tiles {
+        filter: brightness(0.65) contrast(2.4) invert(100%) hue-rotate(180deg) saturate(0) !important;
+      }
+      .pitch-black-map-labels {
+        filter: brightness(1.3) contrast(1.6) !important;
+      }
+      .leaflet-container {
+        background: #000000 !important;
       }
     </style>
   </head>
   <body>
     <div id="app">
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: system-ui, sans-serif;">
-        <div style="font-size: 40px; margin-bottom: 12px; animation: pulse-dot-anim 1.5s infinite;">⛰️</div>
-        <div style="font-size: 18px; font-weight: bold; color: #f8fafc; margin-bottom: 6px;">NextSignal SIH26001</div>
-        <div style="font-size: 13px; color: #94a3b8;">Initializing MDoNER Landslide Risk Intelligence Platform...</div>
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: system-ui, sans-serif; background: #000000;">
+        <img src="/nextsignal-logo.jpg" style="width: 48px; height: 48px; border-radius: 8px; margin-bottom: 14px; box-shadow: 0 0 20px rgba(56,189,248,0.5);" alt="NextSignal" />
+        <div style="font-size: 18px; font-weight: 900; color: #f8fafc; margin-bottom: 6px; letter-spacing: 1px;">NEXTSIGNAL</div>
+        <div style="font-size: 12px; color: #38bdf8;">Initializing Geohazard & Early Warning Intelligence Console...</div>
       </div>
     </div>
 
