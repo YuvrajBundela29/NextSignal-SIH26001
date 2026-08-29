@@ -3,8 +3,9 @@ import 'leaflet/dist/leaflet.css';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
-import { NER_HIGHWAY_CORRIDORS, type HighwayCorridor } from '../../services/landslide/highway-corridors';
-import { NER_SAFE_SHELTERS, type SafeShelter } from '../../services/landslide/safe-shelters';
+import { NER_HIGHWAY_CORRIDORS } from '../../services/landslide/highway-corridors';
+import { NER_SAFE_SHELTERS } from '../../services/landslide/safe-shelters';
+import { NER_STATES_GEOJSON, type StateGeoMetadata } from '../../services/landslide/state-boundaries';
 
 export class LandslideMap {
   private map: L.Map | null = null;
@@ -13,6 +14,7 @@ export class LandslideMap {
   
   // Overlays
   private districtLayer: L.LayerGroup | null = null;
+  private polygonLayer: L.GeoJSON | null = null;
   private coolrLayer: L.LayerGroup | null = null;
   private seismicLayer: L.LayerGroup | null = null;
   private highwayLayer: L.LayerGroup | null = null;
@@ -36,14 +38,21 @@ export class LandslideMap {
     this.map = L.map(containerId, {
       center: [26.0, 92.9],
       zoom: 7,
-      minZoom: 5,
+      minZoom: 4,
       maxZoom: 19,
       zoomControl: false,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-    // 4K Ultra-Clarity Basemaps (Clean, Professional, Zero Watermark)
+    // 1. Dark Operations Basemap (Matching NextSignal Screenshot 1)
+    const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &bull; &copy; OpenStreetMap contributors',
+      maxNativeZoom: 19,
+      maxZoom: 20,
+    });
+
+    // 2. 4K Satellite Imagery (Matching NextSignal Screenshot 2)
     const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri, Maxar, Earthstar Geographics, USDA, USGS',
       maxNativeZoom: 18,
@@ -62,24 +71,18 @@ export class LandslideMap {
       maxZoom: 19,
     });
 
-    const darkLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      className: 'dark-mode-tiles',
-      maxNativeZoom: 19,
-      maxZoom: 19,
-    });
-
     this.baseLayers = {
+      dark: darkLayer,
       satellite: satLayer,
       topo: topoLayer,
       opentopo: openTopoLayer,
-      dark: darkLayer,
     };
 
-    this.currentBaseLayer = satLayer;
+    // Default to Dark Mode Map (matching NextSignal Screenshot 1)
+    this.currentBaseLayer = darkLayer;
     this.currentBaseLayer.addTo(this.map);
 
-    // Specialized Earth Remote Sensing Layers
+    // Satellite Remote Sensing Overlays
     this.satLayers = {
       viirs_truecolor: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
         opacity: 0.85,
@@ -107,14 +110,76 @@ export class LandslideMap {
       }),
     };
 
-    this.districtLayer = L.layerGroup().addTo(this.map);
-    this.coolrLayer = L.layerGroup().addTo(this.map);
-    this.seismicLayer = L.layerGroup().addTo(this.map);
+    // State Polygons (Translucent red & amber fills matching NextSignal Screenshot 1)
+    this.initRiskPolygons();
+
     this.highwayLayer = L.layerGroup().addTo(this.map);
     this.shelterLayer = L.layerGroup().addTo(this.map);
+    this.coolrLayer = L.layerGroup().addTo(this.map);
+    this.seismicLayer = L.layerGroup().addTo(this.map);
+    this.districtLayer = L.layerGroup().addTo(this.map);
 
     this.renderHighwayCorridors(true);
     this.renderSafeShelters(true);
+  }
+
+  private initRiskPolygons() {
+    if (!this.map) return;
+
+    this.polygonLayer = L.geoJSON(NER_STATES_GEOJSON as any, {
+      style: (feature) => {
+        const p: StateGeoMetadata = feature?.properties;
+        const color = p?.color || '#ef4444';
+        return {
+          color: color,
+          weight: 1.5,
+          opacity: 0.85,
+          fillColor: color,
+          fillOpacity: 0.15,
+        };
+      },
+      onEachFeature: (feature, layer) => {
+        const p: StateGeoMetadata = feature.properties;
+        const tooltipContent = `
+          <div style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); border: 1px solid ${p.color}; border-radius: 8px; padding: 10px 14px; color: #ffffff; font-family: system-ui, sans-serif; box-shadow: 0 6px 20px rgba(0,0,0,0.7); min-width: 170px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 4px; margin-bottom: 6px;">
+              <span style="font-size: 13px; font-weight: 800; color: ${p.color};">${p.state}</span>
+              <span style="font-size: 10px; color: #94a3b8;">${p.nameHi}</span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.45; color: #cbd5e1;">
+              <div>Capital: <strong style="color: #fff;">${p.capital}</strong></div>
+              <div>Monitored Districts: <strong style="color: #fff;">${p.districtsCount} High-Risk</strong></div>
+              <div>Elevation Range: <strong style="color: #38bdf8;">${p.elevationRange}</strong></div>
+              <div>Arterial Lifeline: <strong style="color: #fbbf24;">${p.primaryHighway}</strong></div>
+            </div>
+          </div>
+        `;
+
+        layer.bindTooltip(tooltipContent, { sticky: true, className: 'landslide-custom-tooltip' });
+
+        layer.on('mouseover', () => {
+          (layer as L.Path).setStyle({
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 0.32,
+          });
+        });
+
+        layer.on('mouseout', () => {
+          (layer as L.Path).setStyle({
+            weight: 1.5,
+            opacity: 0.85,
+            fillOpacity: 0.15,
+          });
+        });
+
+        layer.on('click', () => {
+          if (this.map && (layer as any).getBounds) {
+            this.map.fitBounds((layer as any).getBounds(), { padding: [40, 40] });
+          }
+        });
+      },
+    }).addTo(this.map);
   }
 
   public setSatelliteLayer(layerId: string, enabled: boolean) {
@@ -144,13 +209,14 @@ export class LandslideMap {
 
       const polyline = L.polyline(h.coordinates, {
         color: color,
-        weight: 3.5,
+        weight: 3,
         opacity: 0.9,
+        dashArray: '6, 4',
       });
 
       const tooltipContent = `
         <div style="font-family: system-ui, sans-serif; font-size: 11px; line-height: 1.4; color: #fff; min-width: 170px;">
-          <div style="font-weight: bold; font-size: 12px; color: ${color};">${h.name}</div>
+          <div style="font-weight: bold; font-size: 12px; color: ${color};">🛣️ ${h.name}</div>
           <div style="color: #cbd5e1; font-size: 10px; margin-top: 2px;">${h.route}</div>
           <div style="margin-top: 4px; display: flex; justify-content: space-between;">
             <span>Status:</span>
@@ -176,7 +242,7 @@ export class LandslideMap {
       const marker = L.circleMarker([s.lat, s.lon], {
         radius: 6,
         color: '#10b981',
-        weight: 2,
+        weight: 1.5,
         fillColor: '#059669',
         fillOpacity: 0.9,
       });
@@ -194,7 +260,7 @@ export class LandslideMap {
     }
   }
 
-  public setBaseMap(type: 'satellite' | 'topo' | 'opentopo' | 'dark') {
+  public setBaseMap(type: 'dark' | 'satellite' | 'topo' | 'opentopo') {
     if (!this.map || !this.baseLayers[type]) return;
     if (this.currentBaseLayer) {
       this.map.removeLayer(this.currentBaseLayer);
@@ -239,27 +305,29 @@ export class LandslideMap {
           : '#22c55e';
 
       const isSelected = d.id === selectedDistrictId;
-      const radius = isSelected ? 16 : level === 'CRITICAL' ? 14 : level === 'HIGH' ? 12 : 9;
+      const radius = isSelected ? 12 : level === 'CRITICAL' ? 10 : level === 'HIGH' ? 8 : 6;
 
+      // Outer glowing pulse ring matching Screenshot 1
       if (level === 'CRITICAL' || level === 'HIGH') {
         const pulseCircle = L.circleMarker([d.lat, d.lon], {
-          radius: radius + 8,
+          radius: radius + 6,
           color: color,
-          weight: 2,
-          opacity: 0.7,
+          weight: 1.5,
+          opacity: 0.6,
           fillColor: color,
-          fillOpacity: 0.25,
+          fillOpacity: 0.2,
           className: 'landslide-pulse-marker',
         });
         pulseCircle.addTo(this.districtLayer);
       }
 
+      // Core Tactical Circle Marker
       const marker = L.circleMarker([d.lat, d.lon], {
         radius,
         color: isSelected ? '#ffffff' : color,
-        weight: isSelected ? 3 : 2,
+        weight: isSelected ? 2.5 : 1.5,
         fillColor: color,
-        fillOpacity: 0.92,
+        fillOpacity: 0.95,
       });
 
       const label = this.getDistrictDisplayName(d);
@@ -296,7 +364,7 @@ export class LandslideMap {
 
     for (const event of NASA_COOLR_NER_EVENTS) {
       const marker = L.circleMarker([event.lat, event.lon], {
-        radius: 6,
+        radius: 5,
         color: '#dc2626',
         weight: 1.5,
         fillColor: '#b91c1c',
@@ -321,13 +389,13 @@ export class LandslideMap {
     if (!show || !quakes) return;
 
     for (const q of quakes) {
-      const radius = Math.max(5, q.mag * 3);
+      const radius = Math.max(5, q.mag * 2.8);
       const marker = L.circleMarker([q.lat, q.lon], {
         radius,
         color: '#38bdf8',
         weight: 1.5,
         fillColor: '#0284c7',
-        fillOpacity: 0.55,
+        fillOpacity: 0.65,
       });
 
       marker.bindTooltip(`
