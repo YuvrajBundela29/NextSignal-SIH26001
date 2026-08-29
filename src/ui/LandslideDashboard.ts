@@ -24,6 +24,7 @@ import { generateDistrictAiAdvisory, type AiAdvisoryResponse } from '../services
 import { NASA_COOLR_NER_EVENTS } from '../services/landslide/coolr-dataset';
 import { NER_HIGHWAY_ROUTES } from '../services/landslide/highway-navigation';
 import { NER_SAFE_SHELTERS } from '../services/landslide/safe-shelters';
+import { openPrintableSitRepPdf } from '../services/landslide/sitrep-pdf';
 import { UnifiedSituationMap } from './components/UnifiedSituationMap';
 import { DistrictHud } from './components/DistrictHud';
 import { CitizenView } from './components/CitizenView';
@@ -87,7 +88,7 @@ export class LandslideDashboard {
 
   private renderSkeleton() {
     this.container.innerHTML = `
-      <div id="landslide-app-root" style="display: flex; flex-direction: column; height: 100vh; width: 100vw; background: #000000; color: #f8fafc; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div id="landslide-app-root" style="display: flex; flex-direction: column; height: 100vh; width: 100vw; background: #090d16; color: #f8fafc; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         
         <!-- Top App Header -->
         <header style="background: #050811; border-bottom: 1px solid #1e293b; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; height: 50px; min-height: 50px; box-sizing: border-box;">
@@ -130,7 +131,7 @@ export class LandslideDashboard {
             </div>
           </div>
 
-          <!-- Controls: Feed, View Switcher & Language -->
+          <!-- Controls: Feed, Download PDF Report, View Switcher & Language -->
           <div style="display: flex; align-items: center; gap: 8px;">
             <!-- Telemetry Data Mode Selector -->
             <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px;">
@@ -142,6 +143,12 @@ export class LandslideDashboard {
                 <option value="normal_baseline" style="background: #0b1120; color: #38bdf8;" ${this.isOfflineDemo && this.currentScenario === 'normal_baseline' ? 'selected' : ''}>☀️ Demo (Normal Baseline)</option>
               </select>
             </div>
+
+            <!-- Download PDF Situation Report Button -->
+            <button id="btn-download-sitrep" style="background: #0b1120; color: #38bdf8; border: 1px solid #0284c7; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s ease;" title="Download Beautiful PDF Situation Report">
+              <span>📄</span>
+              <span>Download PDF Report</span>
+            </button>
 
             <!-- View Switcher (Authority vs Citizen) -->
             <div style="display: flex; background: #0b1120; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
@@ -174,7 +181,7 @@ export class LandslideDashboard {
         <div id="alert-ticker-container"></div>
 
         <!-- Main Workspace Area -->
-        <div id="main-workspace-container" style="flex: 1; display: flex; position: relative; overflow: hidden; background: #000000;">
+        <div id="main-workspace-container" style="flex: 1; display: flex; position: relative; overflow: hidden; background: #090d16;">
           <!-- AUTHORITY VIEW: Left Sidebar + Center 100% Height Map + Right Multifunction HUD -->
           <div id="authority-workspace" style="display: flex; width: 100%; height: 100%;">
             
@@ -197,8 +204,8 @@ export class LandslideDashboard {
               <div id="district-list-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;"></div>
             </aside>
 
-            <!-- Center View: 100% Height Pitch-Black Tactical Situation Map -->
-            <main style="flex: 1; position: relative; display: flex; flex-direction: column; background: #000000; overflow: hidden;">
+            <!-- Center View: 100% Height Tactical Situation Map (Matches Reference Screenshot) -->
+            <main style="flex: 1; position: relative; display: flex; flex-direction: column; background: #090d16; overflow: hidden;">
               <div id="unified-situation-map-container" style="width: 100%; height: 100%; position: relative;"></div>
             </main>
 
@@ -271,7 +278,7 @@ export class LandslideDashboard {
           </div>
 
           <!-- CITIZEN VIEW OVERLAY -->
-          <div id="citizen-workspace" style="display: none; width: 100%; height: 100%; overflow-y: auto; background: #000000;"></div>
+          <div id="citizen-workspace" style="display: none; width: 100%; height: 100%; overflow-y: auto; background: #090d16;"></div>
         </div>
       </div>
     `;
@@ -480,6 +487,11 @@ export class LandslideDashboard {
         const id = target.getAttribute('data-id');
         if (id) void this.selectDistrict(id);
       }
+    });
+
+    // Download PDF Situation Report Button Event
+    document.getElementById('btn-download-sitrep')?.addEventListener('click', () => {
+      openPrintableSitRepPdf(this.riskMap, this.weatherMap, this.soilMap, this.seismicMap, this.selectedDistrictId);
     });
 
     // Authority vs Citizen View
