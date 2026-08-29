@@ -1,5 +1,7 @@
 import { LandslideMap } from './LandslideMap';
 import { TacticalGlobe3D } from './TacticalGlobe3D';
+import { HighwayNavigationModal } from './HighwayNavigationModal';
+import { fetchLiveSatelliteWindTelemetry, type LiveWindTelemetry } from '../../services/landslide/satellite-streams';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 
@@ -7,10 +9,12 @@ export class UnifiedSituationMap {
   private container: HTMLElement;
   private map2d: LandslideMap | null = null;
   private globe3d: TacticalGlobe3D | null = null;
+  private navModal: HighwayNavigationModal | null = null;
   private mode: '2d' | '3d' = '2d';
   private onSelectDistrict: (districtId: string) => void;
   private lang: AppLanguage = 'en';
   private clockTimer: ReturnType<typeof setInterval> | null = null;
+  private liveTelemetry: LiveWindTelemetry | null = null;
 
   // Cached state
   private districts: DistrictProfile[] = [];
@@ -38,7 +42,7 @@ export class UnifiedSituationMap {
       <div style="display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; background: #030712;">
         
         <!-- Header Bar Matching NextSignal Screenshot 1 & 2 -->
-        <div style="background: #090d16; border-bottom: 1px solid #1e293b; padding: 6px 14px; display: flex; justify-content: space-between; align-items: center; z-index: 500; min-height: 36px;">
+        <div style="background: #090d16; border-bottom: 1px solid #1e293b; padding: 6px 14px; display: flex; justify-content: space-between; align-items: center; z-index: 500; min-height: 38px;">
           <!-- Left: Title -->
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 13px; font-weight: 900; color: #38bdf8; letter-spacing: 1px; text-transform: uppercase;">
@@ -54,42 +58,70 @@ export class UnifiedSituationMap {
             ${new Date().toUTCString().toUpperCase()}
           </div>
 
-          <!-- Right: 2D/3D Mode Switcher & Controls -->
+          <!-- Right: Earth View Dropdown, 2D/3D Mode Switcher & Controls -->
           <div style="display: flex; align-items: center; gap: 8px;">
-            <!-- Basemap Selector (for 2D) -->
-            <div id="unified-basemap-wrap" style="display: ${this.mode === '2d' ? 'flex' : 'none'}; align-items: center; gap: 4px;">
-              <select id="sel-unified-basemap" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 2px 6px; font-size: 10px; outline: none; cursor: pointer;">
-                <option value="dark" selected>🌙 Dark Operations</option>
-                <option value="satellite">🛰️ 4K Satellite</option>
+            
+            <!-- Earth View & Remote Sensing API Dropdown -->
+            <div style="display: flex; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 4px; padding: 2px 6px;">
+              <span style="font-size: 9px; color: #94a3b8; margin-right: 4px;">Layer:</span>
+              <select id="sel-earth-remote-sensing" style="background: transparent; color: #f8fafc; border: none; font-size: 10px; font-weight: bold; outline: none; cursor: pointer;">
+                <option value="dark" selected>🌙 Dark Tactical Ops</option>
+                <option value="satellite">🛰️ 4K Satellite Imagery</option>
+                <option value="thermal">🔥 Live Thermal Earth Temp (NASA MODIS)</option>
+                <option value="clouds">☁️ Live Satellite Clouds (NASA VIIRS)</option>
+                <option value="radar">🌧️ Live Weather Doppler Radar</option>
                 <option value="topo">🏔️ Topo Relief</option>
-                <option value="opentopo">🌲 OpenTopo</option>
+                <option value="opentopo">🌲 OpenTopo Contours</option>
               </select>
             </div>
 
+            <!-- Route Navigator Button -->
+            <button id="btn-open-route-nav" style="background: #1e293b; color: #38bdf8; border: 1px solid #0284c7; border-radius: 4px; padding: 3px 8px; font-size: 10px; font-weight: 800; cursor: pointer;" title="Open Highway Waypoint Navigator">
+              🧭 Highway Routes
+            </button>
+
             <!-- Mode Switcher [ 2D | 3D ] Matching NextSignal Screenshot -->
             <div style="display: flex; background: #1e293b; border: 1px solid #334155; border-radius: 4px; overflow: hidden;">
-              <button id="btn-switch-2d" style="padding: 2px 10px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white;">
+              <button id="btn-switch-2d" style="padding: 3px 10px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white;">
                 2D
               </button>
-              <button id="btn-switch-3d" style="padding: 2px 10px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white;">
+              <button id="btn-switch-3d" style="padding: 3px 10px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white;">
                 3D
               </button>
             </div>
 
-            <!-- Expand / Fullscreen Button -->
-            <button id="btn-unified-fullscreen" style="background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer;" title="Toggle Fullscreen">
+            <!-- Fullscreen Button -->
+            <button id="btn-unified-fullscreen" style="background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 3px 7px; font-size: 11px; cursor: pointer;" title="Toggle Fullscreen">
               ⛶
             </button>
           </div>
         </div>
 
+        <!-- Floating Live Earth Telemetry Badge (Compact, non-intrusive) -->
+        <div id="floating-earth-telemetry-badge" style="position: absolute; top: 46px; left: 12px; z-index: 450; background: rgba(9, 13, 22, 0.88); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 10px; font-size: 10px; color: #f8fafc; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="color: #38bdf8;">💨 Wind:</span>
+            <strong id="badge-wind-val">18 km/h SW</strong>
+          </div>
+          <div style="width: 1px; height: 12px; background: #334155;"></div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="color: #f97316;">🔥 Thermal:</span>
+            <strong id="badge-thermal-val">24.2°C</strong>
+          </div>
+          <div style="width: 1px; height: 12px; background: #334155;"></div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="color: #c084fc;">☁️ Cloud:</span>
+            <strong id="badge-cloud-val">82%</strong>
+          </div>
+        </div>
+
         <!-- Map Viewports -->
-        <div style="flex: 1; width: 100%; height: calc(100% - 36px); position: relative; overflow: hidden;">
-          <!-- 2D Leaflet Tactical Map -->
+        <div style="flex: 1; width: 100%; height: calc(100% - 38px); position: relative; overflow: hidden;">
+          <!-- 2D Leaflet Tactical Map (Zero Watermark / No API Key) -->
           <div id="viewport-2d-map" style="width: 100%; height: 100%; display: ${this.mode === '2d' ? 'block' : 'none'};"></div>
 
-          <!-- 3D Globe.gl Tactical Globe -->
-          <div id="viewport-3d-globe" style="width: 100%; height: 100%; display: ${this.mode === '3d' ? 'block' : 'none'}; position: relative;"></div>
+          <!-- 3D Globe.gl Tactical Globe (Centered on Northeast India) -->
+          <div id="viewport-3d-globe" style="width: 100%; height: 100%; display: ${this.mode === '3d' ? 'block' : 'none'}; position: absolute; inset: 0;"></div>
         </div>
       </div>
     `;
@@ -115,7 +147,20 @@ export class UnifiedSituationMap {
   }
 
   private initMaps() {
-    this.map2d = new LandslideMap('viewport-2d-map', (id) => this.onSelectDistrict(id));
+    this.navModal = new HighwayNavigationModal((lat, lon, zoom) => {
+      if (this.mode === '2d') {
+        this.map2d?.flyToDistrict(lat, lon, zoom);
+      } else {
+        this.globe3d?.orientToCoordinates(lat, lon, 0.6);
+      }
+    });
+
+    this.map2d = new LandslideMap(
+      'viewport-2d-map',
+      (id) => this.onSelectDistrict(id),
+      (routeId) => this.navModal?.open(routeId)
+    );
+
     this.globe3d = new TacticalGlobe3D('viewport-3d-globe', (id) => this.onSelectDistrict(id));
 
     // Bind Controls
@@ -123,7 +168,6 @@ export class UnifiedSituationMap {
     const btn3d = document.getElementById('btn-switch-3d');
     const view2d = document.getElementById('viewport-2d-map');
     const view3d = document.getElementById('viewport-3d-globe');
-    const basemapWrap = document.getElementById('unified-basemap-wrap');
 
     btn2d?.addEventListener('click', () => {
       this.mode = '2d';
@@ -131,7 +175,6 @@ export class UnifiedSituationMap {
       if (btn3d) btn3d.style.background = 'transparent';
       if (view2d) view2d.style.display = 'block';
       if (view3d) view3d.style.display = 'none';
-      if (basemapWrap) basemapWrap.style.display = 'flex';
       this.syncData();
     });
 
@@ -141,15 +184,39 @@ export class UnifiedSituationMap {
       btn3d.style.background = '#10b981';
       if (view2d) view2d.style.display = 'none';
       if (view3d) view3d.style.display = 'block';
-      if (basemapWrap) basemapWrap.style.display = 'none';
+      this.globe3d?.resize();
       this.syncData();
     });
 
-    const selBasemap = document.getElementById('sel-unified-basemap') as HTMLSelectElement;
-    selBasemap?.addEventListener('change', () => {
-      this.map2d?.setBaseMap(selBasemap.value as any);
+    // Remote Sensing Dropdown
+    const selRemote = document.getElementById('sel-earth-remote-sensing') as HTMLSelectElement;
+    selRemote?.addEventListener('change', () => {
+      const val = selRemote.value;
+      // Reset satellite overlay layers
+      ['thermal_anomalies', 'viirs_truecolor', 'clouds_ir', 'weather_radar'].forEach(l => {
+        this.map2d?.setSatelliteLayer(l, false);
+      });
+
+      if (val === 'dark' || val === 'satellite' || val === 'topo' || val === 'opentopo') {
+        this.map2d?.setBaseMap(val as any);
+      } else if (val === 'thermal') {
+        this.map2d?.setBaseMap('dark');
+        this.map2d?.setSatelliteLayer('thermal_anomalies', true);
+      } else if (val === 'clouds') {
+        this.map2d?.setBaseMap('satellite');
+        this.map2d?.setSatelliteLayer('clouds_ir', true);
+      } else if (val === 'radar') {
+        this.map2d?.setBaseMap('dark');
+        this.map2d?.setSatelliteLayer('weather_radar', true);
+      }
     });
 
+    // Highway Navigation Modal Trigger
+    document.getElementById('btn-open-route-nav')?.addEventListener('click', () => {
+      this.navModal?.open();
+    });
+
+    // Fullscreen Toggle
     const btnFullscreen = document.getElementById('btn-unified-fullscreen');
     btnFullscreen?.addEventListener('click', () => {
       if (!document.fullscreenElement) {
@@ -160,8 +227,17 @@ export class UnifiedSituationMap {
     });
   }
 
-  public setSatelliteLayer(layerId: string, enabled: boolean) {
-    this.map2d?.setSatelliteLayer(layerId, enabled);
+  public async updateTelemetryForDistrict(d: DistrictProfile) {
+    this.liveTelemetry = await fetchLiveSatelliteWindTelemetry(d.lat, d.lon);
+    if (this.liveTelemetry) {
+      const windEl = document.getElementById('badge-wind-val');
+      const thermalEl = document.getElementById('badge-thermal-val');
+      const cloudEl = document.getElementById('badge-cloud-val');
+
+      if (windEl) windEl.textContent = `${this.liveTelemetry.speedKmh} km/h ${this.liveTelemetry.directionCardinal}`;
+      if (thermalEl) thermalEl.textContent = `${this.liveTelemetry.thermalSurfaceTempC}°C`;
+      if (cloudEl) cloudEl.textContent = `${this.liveTelemetry.cloudCoverTotalPct}%`;
+    }
   }
 
   public setLanguage(lang: AppLanguage) {
@@ -205,6 +281,11 @@ export class UnifiedSituationMap {
       this.globe3d?.orientToCoordinates(district.lat, district.lon, 0.7);
       this.globe3d?.renderDistricts(this.districts, this.riskMap, this.selectedDistrictId);
     }
+    void this.updateTelemetryForDistrict(district);
+  }
+
+  public openHighwayNavigator(routeId?: string) {
+    this.navModal?.open(routeId);
   }
 
   public destroy() {

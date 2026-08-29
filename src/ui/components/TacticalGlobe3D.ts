@@ -3,8 +3,7 @@ import type { GlobeInstance } from 'globe.gl';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
-import { NER_STATES_GEOJSON, type StateGeoMetadata } from '../../services/landslide/state-boundaries';
-import { NER_HIGHWAY_CORRIDORS } from '../../services/landslide/highway-corridors';
+import { NER_HIGHWAY_ROUTES } from '../../services/landslide/highway-navigation';
 import { NER_SAFE_SHELTERS } from '../../services/landslide/safe-shelters';
 
 export interface GlobeTacticalMarker {
@@ -30,12 +29,12 @@ export class TacticalGlobe3D {
   private onSelectDistrict: (districtId: string) => void;
   private lang: AppLanguage = 'en';
   private markersData: GlobeTacticalMarker[] = [];
-  private hoveredPolygon: any = null;
   private quakesData: UsgsEarthquake[] = [];
   private showCoolr = true;
   private showSeismic = true;
   private showShelters = true;
   private showHighways = true;
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor(containerId: string, onSelectDistrict: (districtId: string) => void) {
     const el = document.getElementById(containerId);
@@ -47,6 +46,9 @@ export class TacticalGlobe3D {
   }
 
   private initGlobe() {
+    const width = this.container.clientWidth || window.innerWidth;
+    const height = this.container.clientHeight || window.innerHeight;
+
     // Create Globe with photorealistic Earth texture & Fresnel atmosphere matching NextSignal Sentinel
     this.globe = new (Globe as any)(this.container, { animateIn: true })
       .globeImageUrl('/textures/earth-blue-marble.jpg')
@@ -55,6 +57,8 @@ export class TacticalGlobe3D {
       .showAtmosphere(true)
       .atmosphereColor('#4466cc')
       .atmosphereAltitude(0.24)
+      .width(width)
+      .height(height)
       .enablePointerInteraction(true);
 
     const controls = this.globe.controls();
@@ -67,65 +71,37 @@ export class TacticalGlobe3D {
       controls.maxDistance = 550;
     }
 
-    // Initial viewpoint: Center on South Asia / Northeast India
-    this.globe.pointOfView({ lat: 26.0, lng: 92.9, altitude: 1.4 }, 1500);
-
-    // Setup Polygons (Translucent red/amber fills with neon borders matching NextSignal screenshot)
-    this.initPolygons();
+    // Centered squarely on Northeast India (Lat 26.0N, Lon 92.8E)
+    this.globe.pointOfView({ lat: 26.0, lng: 92.8, altitude: 1.5 }, 1200);
 
     // Setup Paths for Highway passes
     this.initPaths();
 
     // Setup HTML Tactical Markers (Triangles, circles, anchors, quakes, shelters)
     this.initMarkersLayer();
+
+    // Handle auto-resize so the globe is always perfectly centered
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.globe && this.container) {
+        const w = this.container.clientWidth;
+        const h = this.container.clientHeight;
+        if (w > 0 && h > 0) {
+          this.globe.width(w).height(h);
+        }
+      }
+    });
+    this.resizeObserver.observe(this.container);
   }
 
-  private initPolygons() {
-    if (!this.globe) return;
-
-    this.globe
-      .polygonsData(NER_STATES_GEOJSON.features)
-      .polygonGeoJsonGeometry((f: any) => f.geometry)
-      .polygonCapColor((f: any) => {
-        if (f === this.hoveredPolygon) return 'rgba(239, 68, 68, 0.45)';
-        // Red translucent tint for Northeast India risk zones (matching NextSignal screenshot)
-        return 'rgba(220, 38, 38, 0.22)';
-      })
-      .polygonSideColor(() => 'rgba(239, 68, 68, 0.6)')
-      .polygonStrokeColor((f: any) => f === this.hoveredPolygon ? '#ffffff' : '#ef4444')
-      .polygonAltitude((f: any) => (f === this.hoveredPolygon ? 0.015 : 0.006))
-      .polygonLabel((f: any) => {
-        const p: StateGeoMetadata = f.properties;
-        return `
-          <div style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid #ef4444; border-radius: 8px; padding: 10px 14px; color: #ffffff; font-family: system-ui, sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,0.8); min-width: 180px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 4px; margin-bottom: 6px;">
-              <span style="font-size: 14px; font-weight: 800; color: #ef4444;">${p.state}</span>
-              <span style="font-size: 11px; color: #94a3b8;">${p.nameHi}</span>
-            </div>
-            <div style="font-size: 11px; line-height: 1.5; color: #cbd5e1;">
-              <div>Capital: <strong style="color: #fff;">${p.capital}</strong></div>
-              <div>Monitored High-Risk Districts: <strong style="color: #ef4444;">${p.districtsCount} Districts</strong></div>
-              <div>Elevation Range: <strong style="color: #38bdf8;">${p.elevationRange}</strong></div>
-              <div>Arterial Lifeline: <strong style="color: #fbbf24;">${p.primaryHighway}</strong></div>
-            </div>
-          </div>
-        `;
-      })
-      .onPolygonHover((f: any) => {
-        this.hoveredPolygon = f;
-        this.globe?.polygonAltitude((d: any) => (d === f ? 0.015 : 0.006));
-        this.globe?.polygonCapColor((d: any) =>
-          d === f ? 'rgba(239, 68, 68, 0.45)' : 'rgba(220, 38, 38, 0.22)'
-        );
-      })
-      .onPolygonClick((f: any) => {
-        const coords = f.geometry.coordinates[0];
-        if (coords && coords.length > 0) {
-          const midLng = coords.reduce((sum: number, c: number[]) => sum + c[0], 0) / coords.length;
-          const midLat = coords.reduce((sum: number, c: number[]) => sum + c[1], 0) / coords.length;
-          this.orientToCoordinates(midLat, midLng, 0.7);
-        }
-      });
+  public resize() {
+    if (this.globe && this.container) {
+      const w = this.container.clientWidth;
+      const h = this.container.clientHeight;
+      if (w > 0 && h > 0) {
+        this.globe.width(w).height(h);
+        this.globe.pointOfView({ lat: 26.0, lng: 92.8, altitude: 1.5 }, 0);
+      }
+    }
   }
 
   private initPaths() {
@@ -136,11 +112,11 @@ export class TacticalGlobe3D {
       return;
     }
 
-    const paths = NER_HIGHWAY_CORRIDORS.map(h => ({
+    const paths = NER_HIGHWAY_ROUTES.map(h => ({
       name: h.name,
-      status: h.currentStatus,
+      status: h.currentPassStatus,
       coords: h.coordinates.map(c => [c[1], c[0]]), // [lng, lat]
-      color: h.vulnerabilityLevel === 'CRITICAL' ? 'rgba(239, 68, 68, 0.85)' : 'rgba(249, 115, 22, 0.85)',
+      color: h.overallVulnerability === 'CRITICAL' ? 'rgba(239, 68, 68, 0.85)' : 'rgba(249, 115, 22, 0.85)',
     }));
 
     this.globe
@@ -149,7 +125,7 @@ export class TacticalGlobe3D {
       .pathPointLat((p: number[]) => p[1])
       .pathPointLng((p: number[]) => p[0])
       .pathColor('color')
-      .pathStroke(1.2)
+      .pathStroke(1.4)
       .pathDashLength(0.8)
       .pathDashGap(0.2)
       .pathDashAnimateTime(3000)
@@ -322,6 +298,7 @@ export class TacticalGlobe3D {
   }
 
   public destroy() {
+    this.resizeObserver?.disconnect();
     if (this.globe) {
       this.globe._destructor?.();
       this.container.innerHTML = '';

@@ -22,10 +22,9 @@ import {
 import { alertsManager } from '../services/landslide/alerts-manager';
 import { generateDistrictAiAdvisory, type AiAdvisoryResponse } from '../services/landslide/ollama-advisory';
 import { NASA_COOLR_NER_EVENTS } from '../services/landslide/coolr-dataset';
-import { NER_HIGHWAY_CORRIDORS } from '../services/landslide/highway-corridors';
+import { NER_HIGHWAY_ROUTES } from '../services/landslide/highway-navigation';
 import { NER_SAFE_SHELTERS } from '../services/landslide/safe-shelters';
 import { UnifiedSituationMap } from './components/UnifiedSituationMap';
-import { SatelliteIntelligenceDrawer } from './components/SatelliteIntelligenceDrawer';
 import { DistrictHud } from './components/DistrictHud';
 import { CitizenView } from './components/CitizenView';
 import { AiTerminal } from './components/AiTerminal';
@@ -41,7 +40,6 @@ export class LandslideDashboard {
   private selectedDistrictId = 'as_dima_hasao';
   private selectedStateFilter: 'ALL' | NerState = 'ALL';
   private searchQuery = '';
-  private showSatDrawer = true;
 
   // Telemetry caches
   private riskMap = new Map<string, RiskScoreBreakdown>();
@@ -53,7 +51,6 @@ export class LandslideDashboard {
 
   // UI Components
   private situationMapComp: UnifiedSituationMap | null = null;
-  private satDrawerComp: SatelliteIntelligenceDrawer | null = null;
   private hudComp: DistrictHud | null = null;
   private citizenComp: CitizenView | null = null;
   private aiTerminalComp: AiTerminal | null = null;
@@ -95,19 +92,19 @@ export class LandslideDashboard {
       <div id="landslide-app-root" style="display: flex; flex-direction: column; height: 100vh; width: 100vw; background: #030712; color: #f8fafc; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
         
         <!-- Top App Header -->
-        <header style="background: #090d16; border-bottom: 1px solid #1e293b; padding: 6px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; min-height: 52px;">
+        <header style="background: #090d16; border-bottom: 1px solid #1e293b; padding: 6px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; min-height: 50px;">
           <!-- Branding -->
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 32px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, #0284c7, #0369a1); display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 0 12px rgba(2,132,199,0.5);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 30px; height: 30px; border-radius: 6px; background: linear-gradient(135deg, #0284c7, #0369a1); display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 0 12px rgba(2,132,199,0.5);">
               ⛰️
             </div>
             <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
                 <span style="font-size: 14px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px;">
                   NextSignal SIH26001
                 </span>
-                <span style="background: #1e293b; color: #38bdf8; border: 1px solid #0284c744; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">
-                  MDoNER &bull; Disaster Management
+                <span style="background: #1e293b; color: #38bdf8; border: 1px solid #0284c744; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px;">
+                  MDoNER Disaster Management
                 </span>
               </div>
               <div style="font-size: 10px; color: #94a3b8;">
@@ -186,10 +183,11 @@ export class LandslideDashboard {
 
         <!-- Main Workspace Area -->
         <div id="main-workspace-container" style="flex: 1; display: flex; position: relative; overflow: hidden;">
-          <!-- AUTHORITY VIEW: Left Sidebar + Center Map & Satellite Drawer + Right Multifunction HUD -->
+          <!-- AUTHORITY VIEW: Left Sidebar + Center 100% Height Unified Map + Right Multifunction HUD -->
           <div id="authority-workspace" style="display: flex; width: 100%; height: 100%;">
+            
             <!-- Left Sidebar: Regional District Explorer -->
-            <aside style="width: 300px; background: #090d16; border-right: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
+            <aside style="width: 280px; background: #090d16; border-right: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
               <!-- Search & Filter Bar -->
               <div style="padding: 8px 10px; border-bottom: 1px solid #1e293b; display: flex; flex-direction: column; gap: 6px;">
                 <input id="input-search-district" type="text" placeholder="Search District or State..." style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 4px; padding: 5px 8px; font-size: 11px; outline: none; box-sizing: border-box;" />
@@ -207,17 +205,13 @@ export class LandslideDashboard {
               <div id="district-list-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;"></div>
             </aside>
 
-            <!-- Center View: Unified Situation Map & Satellite Intelligence Section -->
+            <!-- Center View: 100% Height Unified Situation Map (2D Tactical Map + Centered 3D Digital Twin Globe) -->
             <main style="flex: 1; position: relative; display: flex; flex-direction: column; background: #030712; overflow: hidden;">
-              <!-- Unified Situation Map (2D Tactical Map + 3D Digital Twin Globe Matching NextSignal Screenshots) -->
-              <div id="unified-situation-map-container" style="flex: 1; width: 100%; height: 100%; position: relative;"></div>
-
-              <!-- Satellite & Earth Observation Intelligence Section Drawer (Collapsible) -->
-              <div id="satellite-drawer-container" style="padding: 6px 10px; z-index: 400; display: ${this.showSatDrawer ? 'block' : 'none'}; max-height: 220px; overflow-y: auto;"></div>
+              <div id="unified-situation-map-container" style="width: 100%; height: 100%; position: relative;"></div>
             </main>
 
             <!-- Right Sidebar: Multifunction Telemetry & Emergency Hub -->
-            <aside style="width: 380px; background: #090d16; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
+            <aside style="width: 360px; background: #090d16; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
               <!-- Tab Bar (4 Essential Views) -->
               <div style="display: flex; background: #0f172a; border-bottom: 1px solid #1e293b; font-size: 10px;">
                 <button id="tab-btn-hud" style="flex: 1; padding: 8px 4px; font-weight: 700; cursor: pointer; border: none; background: #090d16; color: #38bdf8; border-bottom: 2px solid #38bdf8;">
@@ -237,25 +231,25 @@ export class LandslideDashboard {
               <!-- Tab Contents -->
               <div id="hud-tab-content" style="flex: 1; overflow-y: auto; padding: 10px; display: block;"></div>
               
-              <!-- Highways Tab -->
+              <!-- Highways Tab (Click opens Google Maps Highway Navigator) -->
               <div id="highways-tab-content" style="flex: 1; overflow-y: auto; padding: 10px; display: none; flex-direction: column; gap: 8px;">
-                <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase;">
-                  🛣️ Arterial Highway Choke-Point Status
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase;">
+                    🛣️ Arterial Highway Corridors
+                  </div>
+                  <span style="font-size: 9px; color: #94a3b8;">Google Maps Nav</span>
                 </div>
-                ${NER_HIGHWAY_CORRIDORS.map(h => `
-                  <div style="background: #1e293b; border-radius: 6px; padding: 8px; border-left: 3px solid ${h.vulnerabilityLevel === 'CRITICAL' ? '#ef4444' : '#f97316'};">
+                ${NER_HIGHWAY_ROUTES.map(h => `
+                  <div class="hwy-corridor-item" data-id="${h.id}" style="background: #1e293b; border-radius: 6px; padding: 8px; border-left: 3px solid ${h.overallVulnerability === 'CRITICAL' ? '#ef4444' : '#f97316'}; cursor: pointer; transition: background 0.15s ease;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                       <strong style="color: #ffffff; font-size: 11px;">${h.name}</strong>
-                      <span style="background: ${h.currentStatus === 'RESTRICTED' ? '#ef4444' : '#f97316'}; color: white; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 3px;">
-                        ${h.currentStatus}
+                      <span style="background: ${h.currentPassStatus === 'RESTRICTED' ? '#ef4444' : '#f97316'}; color: white; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 3px;">
+                        ${h.currentPassStatus}
                       </span>
                     </div>
-                    <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">${h.route}</div>
-                    <div style="font-size: 9px; color: #cbd5e1; margin-top: 3px;">
-                      Active Choke Points: <strong>${h.vulnerableChokePoints.join(', ')}</strong>
-                    </div>
-                    <div style="font-size: 9px; color: #38bdf8; margin-top: 3px;">
-                      Nearest PWD Depot: ${h.nearestPwdDepot} (${h.pwdEmergencyContact})
+                    <div style="font-size: 9px; color: #cbd5e1; margin-top: 2px;">📍 ${h.origin} ➔ 🏁 ${h.destination}</div>
+                    <div style="font-size: 9px; color: #38bdf8; margin-top: 4px; font-weight: bold;">
+                      👉 Click for Step-by-Step Waypoints
                     </div>
                   </div>
                 `).join('')}
@@ -322,16 +316,15 @@ export class LandslideDashboard {
               </div>
 
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                <strong style="color: #fbbf24; font-size: 13px;">3. Multi-Sensor Satellite Intelligence Hub:</strong><br/>
-                &bull; <strong>Visible RGB TrueColor (NASA VIIRS)</strong>: High-resolution daily satellite view.<br/>
-                &bull; <strong>Thermal Infrared Surface Hotspots (NASA MODIS)</strong>: Land surface temperature radiance.<br/>
-                &bull; <strong>Wind Vectors & Cloud Fraction (Open-Meteo)</strong>: Real-time wind speed, gusts, and cloud cover.<br/>
-                &bull; <strong>Live RainViewer Weather Radar</strong>: Real-time animated Doppler precipitation tracking.
+                <strong style="color: #fbbf24; font-size: 13px;">3. Multi-Sensor Satellite Intelligence:</strong><br/>
+                &bull; <strong>Thermal Land Surface Temp (NASA MODIS)</strong>: Land surface temperature radiance.<br/>
+                &bull; <strong>Live Wind Movement & Gusts (Open-Meteo)</strong>: Real-time wind speed, gusts, and cloud cover.<br/>
+                &bull; <strong>Live RainViewer Weather Doppler Radar</strong>: Real-time animated Doppler precipitation tracking.
               </div>
 
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #a855f7;">
-                <strong style="color: #c084fc; font-size: 13px;">4. Multi-Tier AI Decision Support & Arterial Highway Monitoring:</strong><br/>
-                Monitors NH-6, NH-29, NH-10, NH-13, and NH-27 choke-points with automated NDRF/SDRF mobilization orders.
+                <strong style="color: #c084fc; font-size: 13px;">4. Google Maps Style Arterial Highway Navigation:</strong><br/>
+                Turn-by-turn waypoint navigation with choke-points along NH-6, NH-29, and NH-10.
               </div>
             </div>
           </div>
@@ -343,10 +336,6 @@ export class LandslideDashboard {
   private initComponents() {
     this.situationMapComp = new UnifiedSituationMap('unified-situation-map-container', (districtId) => {
       void this.selectDistrict(districtId);
-    });
-
-    this.satDrawerComp = new SatelliteIntelligenceDrawer('satellite-drawer-container', (layerId, enabled) => {
-      this.situationMapComp?.setSatelliteLayer(layerId, enabled);
     });
 
     this.hudComp = new DistrictHud('hud-tab-content');
@@ -487,8 +476,8 @@ export class LandslideDashboard {
             : '#22c55e';
 
         return `
-        <div class="district-list-item ${isSelected ? 'selected' : ''}" data-id="${d.id}" style="padding: 8px 10px; border-bottom: 1px solid #1e293b; cursor: pointer; background: ${isSelected ? '#1e293b' : 'transparent'}; transition: background 0.15s ease;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; pointer-events: none;">
+        <div class="district-list-item ${isSelected ? 'selected' : ''}" data-id="${d.id}" style="padding: 7px 10px; border-bottom: 1px solid #1e293b; cursor: pointer; background: ${isSelected ? '#1e293b' : 'transparent'}; transition: background 0.15s ease;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; pointer-events: none;">
             <div style="font-weight: 700; font-size: 12px; color: ${isSelected ? '#38bdf8' : '#f1f5f9'};">
               ${this.getDistrictDisplayName(d)}
             </div>
@@ -512,8 +501,6 @@ export class LandslideDashboard {
     if (!district) return;
 
     this.situationMapComp?.flyToDistrict(district);
-    void this.satDrawerComp?.updateDistrict(district);
-
     this.renderDistrictList();
     await this.updateActiveDistrictViews();
   }
@@ -699,6 +686,17 @@ export class LandslideDashboard {
         tabBtnAi.style.color = '#38bdf8';
         tabBtnAi.style.borderBottom = '2px solid #38bdf8';
         aiContent.style.display = 'flex';
+      }
+    });
+
+    // Highway Corridor Item clicks -> Open Highway Navigator
+    hwyContent?.addEventListener('click', (e) => {
+      const target = (e.target as HTMLElement).closest('.hwy-corridor-item');
+      if (target) {
+        const id = target.getAttribute('data-id');
+        if (id) {
+          this.situationMapComp?.openHighwayNavigator(id);
+        }
       }
     });
   }

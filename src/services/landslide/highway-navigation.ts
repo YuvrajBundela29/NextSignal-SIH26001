@@ -1,0 +1,287 @@
+export interface HighwayStep {
+  stepNumber: number;
+  locationName: string;
+  chainageKm: number;
+  elevationM: number;
+  status: 'CLEAR' | 'CAUTION' | 'RESTRICTED' | 'BLOCKED';
+  hazardType: string;
+  rainfallMm: number;
+  instruction: string;
+  lat: number;
+  lon: number;
+}
+
+export interface HighwayNavigationRoute {
+  id: string;
+  code: string;
+  name: string;
+  origin: string;
+  destination: string;
+  totalDistanceKm: number;
+  typicalDuration: string;
+  currentPassStatus: 'OPEN' | 'ADVISORY' | 'RESTRICTED' | 'BLOCKED';
+  overallVulnerability: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  weatherSummary: string;
+  managingAuthority: string;
+  emergencyControlRoom: string;
+  steps: HighwayStep[];
+  coordinates: [number, number][];
+}
+
+export const NER_HIGHWAY_ROUTES: HighwayNavigationRoute[] = [
+  {
+    id: 'nh_6',
+    code: 'NH-6',
+    name: 'NH-6 (Shillong - Jowai - Ratacherra - Silchar Arterial)',
+    origin: 'Shillong (Meghalaya)',
+    destination: 'Silchar (Barak Valley, Assam)',
+    totalDistanceKm: 218,
+    typicalDuration: '5 hrs 45 mins',
+    currentPassStatus: 'RESTRICTED',
+    overallVulnerability: 'CRITICAL',
+    weatherSummary: 'Heavy Monsoonal Rain & Escarpment Saturated',
+    managingAuthority: 'NHAI & Meghalaya PWD (Roads)',
+    emergencyControlRoom: '03655-230224 / 1077',
+    steps: [
+      {
+        stepNumber: 1,
+        locationName: 'Shillong Bypass Junction (Umsning)',
+        chainageKm: 0,
+        elevationM: 1520,
+        status: 'CLEAR',
+        hazardType: 'None',
+        rainfallMm: 12.4,
+        instruction: 'Depart Shillong towards Jowai via NH-6 4-lane section. Pavement in good condition.',
+        lat: 25.5788,
+        lon: 91.8933,
+      },
+      {
+        stepNumber: 2,
+        locationName: 'Jowai Pass & Mukhla Slopes',
+        chainageKm: 64,
+        elevationM: 1380,
+        status: 'CAUTION',
+        hazardType: 'Minor Debris Washout',
+        rainfallMm: 24.8,
+        instruction: 'Caution: Surface water runoff across carriageway. Maintain speed under 35 km/h.',
+        lat: 25.4480,
+        lon: 92.2040,
+      },
+      {
+        stepNumber: 3,
+        locationName: 'Khliehriat & Lumshnong Escarpment',
+        chainageKm: 112,
+        elevationM: 1150,
+        status: 'RESTRICTED',
+        hazardType: 'Active Slope Slump & Sinking Zone',
+        rainfallMm: 38.6,
+        instruction: 'Single-lane movement enforced by Traffic Police due to ongoing slope stabilization.',
+        lat: 25.3520,
+        lon: 92.3710,
+      },
+      {
+        stepNumber: 4,
+        locationName: 'Sonapur Tunnel & Cut-Slopes',
+        chainageKm: 148,
+        elevationM: 820,
+        status: 'RESTRICTED',
+        hazardType: 'Flash Mudflow Risk & Tunnel Approach Silt',
+        rainfallMm: 45.2,
+        instruction: 'SDRF & PWD heavy earthmovers positioned. Avoid halting on tunnel approach road.',
+        lat: 25.1050,
+        lon: 92.4820,
+      },
+      {
+        stepNumber: 5,
+        locationName: 'Ratacherra Border Checkpoint (Meghalaya-Assam)',
+        chainageKm: 182,
+        elevationM: 340,
+        status: 'CAUTION',
+        hazardType: 'Heavy Freight Queue & Wet Surface',
+        rainfallMm: 31.0,
+        instruction: 'Slow freight movement towards Cachar Plains. Proceed with dipped headlights.',
+        lat: 24.9540,
+        lon: 92.5830,
+      },
+      {
+        stepNumber: 6,
+        locationName: 'Silchar City (Destination)',
+        chainageKm: 218,
+        elevationM: 35,
+        status: 'CLEAR',
+        hazardType: 'Valley Terminal',
+        rainfallMm: 18.2,
+        instruction: 'Arrive Silchar. Connectivity open to Mizoram (NH-306) and Tripura (NH-8).',
+        lat: 24.8333,
+        lon: 92.7789,
+      },
+    ],
+    coordinates: [
+      [25.5788, 91.8933],
+      [25.5020, 92.0510],
+      [25.4480, 92.2040],
+      [25.3520, 92.3710],
+      [25.2100, 92.4150],
+      [25.1050, 92.4820],
+      [24.9540, 92.5830],
+      [24.8333, 92.7789],
+    ],
+  },
+  {
+    id: 'nh_29',
+    code: 'NH-29',
+    name: 'NH-29 (Dimapur - Kohima - Senapati - Imphal Mountain Pass)',
+    origin: 'Dimapur (Nagaland Plains)',
+    destination: 'Imphal (Manipur Valley)',
+    totalDistanceKm: 210,
+    typicalDuration: '6 hrs 15 mins',
+    currentPassStatus: 'ADVISORY',
+    overallVulnerability: 'CRITICAL',
+    weatherSummary: 'Intermittent Mountain Rains & Foggy Passes',
+    managingAuthority: 'Border Roads Organisation (BRO Project Sewak) & NHIDCL',
+    emergencyControlRoom: '0370-2241258 / 112',
+    steps: [
+      {
+        stepNumber: 1,
+        locationName: 'Dimapur Junction',
+        chainageKm: 0,
+        elevationM: 195,
+        status: 'CLEAR',
+        hazardType: 'Plains Terminal',
+        rainfallMm: 8.5,
+        instruction: 'Start from Dimapur bypass. Dual-lane highway up to Chumukedima gate.',
+        lat: 25.9060,
+        lon: 93.7270,
+      },
+      {
+        stepNumber: 2,
+        locationName: 'Chumukedima Rockfall & Sinking Zone',
+        chainageKm: 18,
+        elevationM: 420,
+        status: 'CAUTION',
+        hazardType: 'Overhanging Rockfall Prone Cliff',
+        rainfallMm: 16.2,
+        instruction: 'Active rock-shed corridor. Do not stop vehicles along the rock-netting stretch.',
+        lat: 25.7510,
+        lon: 93.8520,
+      },
+      {
+        stepNumber: 3,
+        locationName: 'Phesama Ridge (Kohima South)',
+        chainageKm: 76,
+        elevationM: 1480,
+        status: 'RESTRICTED',
+        hazardType: 'Chronic Land Subsidence',
+        rainfallMm: 29.4,
+        instruction: 'BRO dozers on standby. Pavement uneven; heavy commercial vehicles staggered.',
+        lat: 25.6420,
+        lon: 94.1050,
+      },
+      {
+        stepNumber: 4,
+        locationName: 'Mao Gate & Senapati Mountain Pass',
+        chainageKm: 124,
+        elevationM: 1750,
+        status: 'CAUTION',
+        hazardType: 'High-Altitude Fog & Wet Mud',
+        rainfallMm: 22.0,
+        instruction: 'Dense fog reducing visibility under 30m. Engage hazard lights on descent.',
+        lat: 25.5010,
+        lon: 94.1250,
+      },
+      {
+        stepNumber: 5,
+        locationName: 'Imphal Valley (Destination)',
+        chainageKm: 210,
+        elevationM: 786,
+        status: 'CLEAR',
+        hazardType: 'Valley Terminal',
+        rainfallMm: 11.0,
+        instruction: 'Arrive Imphal city. Safe transit completed.',
+        lat: 24.8170,
+        lon: 93.9368,
+      },
+    ],
+    coordinates: [
+      [25.9060, 93.7270],
+      [25.7510, 93.8520],
+      [25.6790, 94.1120],
+      [25.6420, 94.1050],
+      [25.5010, 94.1250],
+      [25.2630, 94.0210],
+      [24.8170, 93.9368],
+    ],
+  },
+  {
+    id: 'nh_10',
+    code: 'NH-10',
+    name: 'NH-10 (Sevoke - Teesta - Singtam - Gangtok Lifeline)',
+    origin: 'Sevoke / Siliguri (West Bengal)',
+    destination: 'Gangtok (Sikkim State Capital)',
+    totalDistanceKm: 114,
+    typicalDuration: '4 hrs 00 mins',
+    currentPassStatus: 'RESTRICTED',
+    overallVulnerability: 'HIGH',
+    weatherSummary: 'Teesta River Basin Surging & Wet Silt',
+    managingAuthority: 'BRO Project Swastik & Sikkim PWD',
+    emergencyControlRoom: '03592-234120 / 1070',
+    steps: [
+      {
+        stepNumber: 1,
+        locationName: 'Sevoke Coronation Bridge Junction',
+        chainageKm: 0,
+        elevationM: 160,
+        status: 'CLEAR',
+        hazardType: 'Entry Gorge',
+        rainfallMm: 15.0,
+        instruction: 'Enter Teesta river valley gorge heading north towards Kalimpong/Sikkim.',
+        lat: 26.8820,
+        lon: 88.4710,
+      },
+      {
+        stepNumber: 2,
+        locationName: '29th Mile / Likuvir Rockslide Point',
+        chainageKm: 38,
+        elevationM: 320,
+        status: 'RESTRICTED',
+        hazardType: 'Active River Bank Erosion & Slump',
+        rainfallMm: 36.5,
+        instruction: 'One-way regulated passage due to Teesta river erosion of highway embankment.',
+        lat: 27.0540,
+        lon: 88.4310,
+      },
+      {
+        stepNumber: 3,
+        locationName: 'Rangpo Inter-State Border Checkpost',
+        chainageKm: 72,
+        elevationM: 350,
+        status: 'CLEAR',
+        hazardType: 'Border Toll',
+        rainfallMm: 21.0,
+        instruction: 'Checkpost clearance. Road broadens to dual-lane towards Singtam.',
+        lat: 27.1780,
+        lon: 88.5290,
+      },
+      {
+        stepNumber: 4,
+        locationName: 'Gangtok Capital (Destination)',
+        chainageKm: 114,
+        elevationM: 1650,
+        status: 'CLEAR',
+        hazardType: 'High Altitude City',
+        rainfallMm: 14.2,
+        instruction: 'Arrive Gangtok. Forward connectivity to Mangan & North Sikkim open.',
+        lat: 27.3314,
+        lon: 88.6138,
+      },
+    ],
+    coordinates: [
+      [26.8820, 88.4710],
+      [27.0540, 88.4310],
+      [27.1520, 88.5020],
+      [27.1780, 88.5290],
+      [27.2340, 88.5010],
+      [27.3314, 88.6138],
+    ],
+  },
+];
