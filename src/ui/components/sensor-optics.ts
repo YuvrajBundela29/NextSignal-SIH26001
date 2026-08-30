@@ -1,4 +1,4 @@
-export type SensorOpticMode = 'natural' | 'flir' | 'nvg' | 'crt' | 'noir' | 'arctic';
+﻿export type SensorOpticMode = 'natural' | 'flir' | 'nvg' | 'crt' | 'noir' | 'arctic';
 
 export interface SensorOpticDefinition {
   id: SensorOpticMode;
@@ -13,23 +13,23 @@ export const SENSOR_OPTICS: Record<SensorOpticMode, SensorOpticDefinition> = {
   natural: {
     id: 'natural',
     name: 'Natural RGB',
-    badge: '🛰️ VIS',
+    badge: 'OPTICAL VIS',
     description: 'High-definition natural optical spectrum',
     filterCss: 'none',
     overlayClass: '',
   },
   flir: {
     id: 'flir',
-    name: 'Ironbow FLIR (Thermal)',
-    badge: '🔥 FLIR',
-    description: 'Thermal infrared heat gradient for slope saturation & surface temperature',
+    name: 'FLIR Thermal',
+    badge: 'THERMAL FLIR',
+    description: 'Thermal infrared heat gradient for slope saturation and surface temperature',
     filterCss: 'contrast(180%) brightness(110%) hue-rotate(280deg) saturate(250%)',
     overlayClass: 'optic-flir-active',
   },
   nvg: {
     id: 'nvg',
     name: 'Night Vision (NVG)',
-    badge: '🟢 NVG',
+    badge: 'NIGHT VISION',
     description: 'High-gain tactical night vision with luminous emerald amplification',
     filterCss: 'brightness(130%) contrast(170%) saturate(150%) hue-rotate(85deg) sepia(100%)',
     overlayClass: 'optic-nvg-active',
@@ -37,7 +37,7 @@ export const SENSOR_OPTICS: Record<SensorOpticMode, SensorOpticDefinition> = {
   crt: {
     id: 'crt',
     name: 'CRT Tactical Scanline',
-    badge: '📟 CRT',
+    badge: 'CRT TERMINAL',
     description: 'Cathode-ray tactical terminal with green phosphor scanlines',
     filterCss: 'brightness(120%) contrast(190%) hue-rotate(75deg) sepia(90%)',
     overlayClass: 'optic-crt-active',
@@ -45,16 +45,16 @@ export const SENSOR_OPTICS: Record<SensorOpticMode, SensorOpticDefinition> = {
   noir: {
     id: 'noir',
     name: 'Recon Noir (High-Contrast)',
-    badge: '🌑 NOIR',
-    description: 'Monochrome shadow mapping for rock fracture & fault line detection',
+    badge: 'NOIR SHADOW',
+    description: 'Monochrome shadow mapping for rock fracture and fault line detection',
     filterCss: 'grayscale(100%) contrast(220%) brightness(90%)',
     overlayClass: 'optic-noir-active',
   },
   arctic: {
     id: 'arctic',
-    name: 'Arctic / Rock Scar',
-    badge: '❄️ ALBEDO',
-    description: 'High-albedo spectral filter for fresh landslide debris & scar identification',
+    name: 'Rock Scar / Albedo',
+    badge: 'ALBEDO SCAR',
+    description: 'High-albedo spectral filter for fresh landslide debris and scar identification',
     filterCss: 'contrast(160%) brightness(140%) hue-rotate(180deg) saturate(120%)',
     overlayClass: 'optic-arctic-active',
   },
@@ -100,8 +100,6 @@ export class SensorOpticsManager {
     const def = SENSOR_OPTICS[this.currentMode];
     this.targetElements.forEach(el => {
       el.style.filter = def.filterCss;
-      
-      // Update data attribute for shader overlay styling
       el.setAttribute('data-sensor-optic', this.currentMode);
     });
 
@@ -114,7 +112,6 @@ export class SensorOpticsManager {
 
   private bindKeyboardShortcuts() {
     window.addEventListener('keydown', (e) => {
-      // Don't trigger if user is typing in an input or textarea
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
         return;
       }
@@ -135,7 +132,6 @@ export class SensorOpticsManager {
     const style = document.createElement('style');
     style.id = 'sensor-optics-style';
     style.textContent = `
-      /* CRT Scanline Overlay Animation */
       [data-sensor-optic="crt"]::after {
         content: " ";
         position: absolute;
@@ -146,7 +142,6 @@ export class SensorOpticsManager {
         z-index: 100;
       }
 
-      /* NVG Grain & Luminous Glow */
       [data-sensor-optic="nvg"]::after {
         content: " ";
         position: absolute;
@@ -156,7 +151,6 @@ export class SensorOpticsManager {
         z-index: 100;
       }
 
-      /* FLIR Thermal Vignette */
       [data-sensor-optic="flir"]::after {
         content: " ";
         position: absolute;

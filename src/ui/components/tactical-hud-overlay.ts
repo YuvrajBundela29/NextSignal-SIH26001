@@ -1,10 +1,10 @@
-import type { DistrictProfile, RiskScoreBreakdown } from '../../services/landslide/types';
+﻿import type { DistrictProfile, RiskScoreBreakdown } from '../../services/landslide/types';
 import { sensorOpticsManager } from './sensor-optics';
 
 export class TacticalHudOverlay {
   private container: HTMLElement;
   private isHudVisible = true;
-  private isDetectionMeshVisible = true;
+  private isDetectionMeshVisible = false;
   private activeDistrict: DistrictProfile | null = null;
   private activeRisk: RiskScoreBreakdown | null = null;
 
@@ -24,7 +24,7 @@ export class TacticalHudOverlay {
       justify-content: space-between;
       padding: 10px;
       box-sizing: border-box;
-      font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
     `;
     parent.appendChild(this.container);
 
@@ -62,7 +62,6 @@ export class TacticalHudOverlay {
     const slopeEl = document.getElementById('hud-tel-slope');
     const targetEl = document.getElementById('hud-target-name');
     const riskBadgeEl = document.getElementById('hud-target-risk');
-    const aiIntelEl = document.getElementById('hud-ai-intel-summary');
 
     if (latEl) latEl.textContent = `${district.lat.toFixed(4)}°N`;
     if (lonEl) lonEl.textContent = `${district.lon.toFixed(4)}°E`;
@@ -74,14 +73,6 @@ export class TacticalHudOverlay {
       riskBadgeEl.textContent = `${risk.compositeScore}/100 [${risk.level}]`;
       riskBadgeEl.style.color = risk.level === 'CRITICAL' ? '#ef4444' : risk.level === 'HIGH' ? '#f97316' : '#22c55e';
     }
-
-    if (aiIntelEl) {
-      aiIntelEl.textContent = risk.level === 'CRITICAL'
-        ? `CRITICAL STABILITY FAILURE IMMINENT // TRIGGER: ${risk.dominantTrigger.toUpperCase()}`
-        : risk.level === 'HIGH'
-        ? `HIGH SUSCEPTIBILITY DETECTED // MONITOR ANTECEDENT DELUGE`
-        : `NOMINAL SLOPE EQUILIBRIUM // MONITORING TELEMETRY`;
-    }
   }
 
   private updateVisibility() {
@@ -91,7 +82,6 @@ export class TacticalHudOverlay {
     if (hudGroup) hudGroup.style.display = this.isHudVisible ? 'block' : 'none';
     if (meshGroup) meshGroup.style.display = this.isDetectionMeshVisible ? 'block' : 'none';
 
-    // Update buttons
     const btnHud = document.getElementById('btn-toggle-hud');
     const btnDet = document.getElementById('btn-toggle-detection');
     if (btnHud) btnHud.style.background = this.isHudVisible ? '#0284c7' : '#0f172a';
@@ -100,17 +90,16 @@ export class TacticalHudOverlay {
 
   private render() {
     this.container.innerHTML = `
-      <!-- Top Tactical HUD Bar (Cleanly Placed on Top Left & Top Right) -->
       <div id="hud-elements-group" style="display: ${this.isHudVisible ? 'block' : 'none'}; width: 100%;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           
-          <!-- Top Left: Targeting Lock & Reticle Status -->
-          <div style="background: rgba(3, 7, 18, 0.90); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 6px 12px; font-size: 10px; color: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
+          <!-- Top Left: District Target Card -->
+          <div style="background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 6px 12px; font-size: 10px; color: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
-              <span style="color: #ef4444; animation: pulse-red 1s infinite;">⦿ TARGET LOCK:</span>
-              <strong id="hud-target-name" style="color: #38bdf8;">DIMA HASAO [ASSAM]</strong>
-              <span id="hud-target-risk" style="background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4); padding: 0 4px; border-radius: 3px; font-weight: bold;">
-                54/100 [MODERATE]
+              <span style="font-weight: 700; color: #38bdf8; font-size: 9px; text-transform: uppercase;">MONITORED TARGET:</span>
+              <strong id="hud-target-name" style="color: #ffffff;">DIMA HASAO [ASSAM]</strong>
+              <span id="hud-target-risk" style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 9px;">
+                52/100 [MODERATE]
               </span>
             </div>
             <div style="display: flex; gap: 12px; color: #94a3b8; font-size: 9px;">
@@ -121,65 +110,33 @@ export class TacticalHudOverlay {
             </div>
           </div>
 
-          <!-- Top Right: Sensor Optic Badge & Heading Compass -->
-          <div style="background: rgba(3, 7, 18, 0.90); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 6px 12px; font-size: 10px; color: #f8fafc; text-align: right;">
-            <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
-              <span style="color: #94a3b8;">SENSOR OPTIC:</span>
-              <span id="hud-optic-mode-badge" style="background: #0284c7; color: white; padding: 1px 6px; border-radius: 3px; font-weight: bold;">
-                🛰️ VIS
+          <!-- Top Right: Sensor Optic Badge -->
+          <div style="background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 6px 12px; font-size: 10px; color: #f8fafc; text-align: right;">
+            <div style="display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
+              <span style="color: #94a3b8; font-size: 9px;">SENSOR:</span>
+              <span id="hud-optic-mode-badge" style="background: #0284c7; color: white; padding: 1px 6px; border-radius: 4px; font-weight: bold; font-size: 9px;">
+                OPTICAL VIS
               </span>
             </div>
             <div style="font-size: 9px; color: #38bdf8; margin-top: 2px;">
-              COMPASS: <strong>038° NNE</strong> &bull; FOV: <strong>60°</strong>
+              BEARING: <strong>038° NNE</strong> &bull; FOV: <strong>60°</strong>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Center Screen: Tactical Crosshairs & Targeting Brackets -->
+      <!-- Center Screen: Targeting Mesh (Off by default, toggleable via Target button) -->
       <div id="detection-mesh-group" style="position: absolute; inset: 0; pointer-events: none; display: ${this.isDetectionMeshVisible ? 'block' : 'none'};">
-        
-        <!-- Center Targeting Reticle -->
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; pointer-events: none; opacity: 0.6;">
-          <div style="position: absolute; top: 0; left: 0; width: 14px; height: 14px; border-top: 2px solid #38bdf8; border-left: 2px solid #38bdf8;"></div>
-          <div style="position: absolute; top: 0; right: 0; width: 14px; height: 14px; border-top: 2px solid #38bdf8; border-right: 2px solid #38bdf8;"></div>
-          <div style="position: absolute; bottom: 0; left: 0; width: 14px; height: 14px; border-bottom: 2px solid #38bdf8; border-left: 2px solid #38bdf8;"></div>
-          <div style="position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; border-bottom: 2px solid #38bdf8; border-right: 2px solid #38bdf8;"></div>
-          <div style="position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; background: #38bdf8; border-radius: 50%; transform: translate(-50%, -50%);"></div>
-        </div>
-
-        <!-- Corner Viewport Brackets -->
-        <div style="position: absolute; top: 12px; left: 12px; width: 24px; height: 24px; border-top: 2px solid rgba(56,189,248,0.4); border-left: 2px solid rgba(56,189,248,0.4);"></div>
-        <div style="position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-top: 2px solid rgba(56,189,248,0.4); border-right: 2px solid rgba(56,189,248,0.4);"></div>
-        <div style="position: absolute; bottom: 12px; left: 12px; width: 24px; height: 24px; border-bottom: 2px solid rgba(56,189,248,0.4); border-left: 2px solid rgba(56,189,248,0.4);"></div>
-        <div style="position: absolute; bottom: 12px; right: 12px; width: 24px; height: 24px; border-bottom: 2px solid rgba(56,189,248,0.4); border-right: 2px solid rgba(56,189,248,0.4);"></div>
-      </div>
-
-      <!-- Bottom Tactical AI Intel Summary & Hotkey Reference (Positioned on the Right to avoid Map Legend) -->
-      <div style="width: 100%; display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px;">
-        <div style="background: rgba(3, 7, 18, 0.90); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 4px 10px; font-size: 9px; color: #f8fafc; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
-          <span style="color: #38bdf8; font-weight: bold;">🛰️ GEOINT AI:</span>
-          <span id="hud-ai-intel-summary" style="color: #cbd5e1;">MONITORING 28 MOUNTAIN CORRIDORS &bull; SATELLITE TELEMETRY SYNCHRONIZED</span>
-        </div>
-
-        <div style="background: rgba(3, 7, 18, 0.90); backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 8px; color: #94a3b8;">
-          HOTKEYS: <strong>[1-6]</strong> Optics &bull; <strong>[H]</strong> HUD &bull; <strong>[D]</strong> Detection
-        </div>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 50%;"></div>
       </div>
     `;
   }
 
   private bindKeyboardShortcuts() {
     window.addEventListener('keydown', (e) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
-        return;
-      }
-
-      if (e.key === 'h' || e.key === 'H') {
-        this.toggleHud();
-      } else if (e.key === 'd' || e.key === 'D') {
-        this.toggleDetectionMesh();
-      }
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (e.key === 'h' || e.key === 'H') this.toggleHud();
+      if (e.key === 'd' || e.key === 'D') this.toggleDetectionMesh();
     });
   }
 }

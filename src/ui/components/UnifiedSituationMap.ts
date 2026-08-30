@@ -53,121 +53,117 @@ export class UnifiedSituationMap {
 
   private render() {
     this.container.innerHTML = `
-      <div style="display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; background: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div style="display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; background: #000000; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         
-        <!-- Fully Responsive Command Toolbar (Guaranteed Zero Cut-Offs & Immediate 2D/3D Access) -->
+        <!-- GIS Command Toolbar (100% Clean Symbols) -->
         <div style="background: #050811; border-bottom: 1px solid #1e293b; padding: 4px 8px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; z-index: 500; min-height: 38px; box-sizing: border-box; width: 100%; gap: 6px;">
           
-          <!-- Left Wing: [ 2D | 3D Mode Switcher (ALWAYS FIRST & UNCLIPPED) ] + UTC Clock + Telemetry -->
+          <!-- Left: 2D/3D Mode Switcher + UTC Clock + Telemetry -->
           <div style="display: flex; align-items: center; gap: 6px;">
             
-            <!-- Mode Switcher [ 2D | 3D ] Prominently Placed at the Start -->
-            <div style="display: flex; background: #0b1120; border: 1.5px solid #10b981; border-radius: 5px; overflow: hidden; box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);">
-              <button id="btn-switch-2d" style="padding: 3px 10px; font-size: 10px; font-weight: 900; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;" title="Switch to 2D High-Performance Tactical Map">
+            <!-- Mode Switcher -->
+            <div style="display: flex; background: #0b1120; border: 1.5px solid #10b981; border-radius: 5px; overflow: hidden; box-shadow: 0 0 8px rgba(16, 185, 129, 0.25);">
+              <button id="btn-switch-2d" style="padding: 3px 10px; font-size: 10px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;" title="Switch to 2D High-Performance Tactical Map">
                 2D MAP
               </button>
-              <button id="btn-switch-3d" style="padding: 3px 10px; font-size: 10px; font-weight: 900; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;" title="Switch to 3D Photorealistic Geospatial Globe">
+              <button id="btn-switch-3d" style="padding: 3px 10px; font-size: 10px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;" title="Switch to 3D Geospatial Earth Globe">
                 3D GLOBE
               </button>
             </div>
 
             <!-- Live Clock -->
-            <div style="display: flex; align-items: center; gap: 4px; background: #0b1120; border: 1px solid #1e293b; border-radius: 4px; padding: 2px 6px;">
+            <div style="display: flex; align-items: center; gap: 5px; background: #0b1120; border: 1px solid #1e293b; border-radius: 4px; padding: 2px 7px;">
               <div style="width: 5px; height: 5px; border-radius: 50%; background: #10b981; box-shadow: 0 0 5px #10b981;"></div>
               <div id="unified-map-utc-clock" style="font-family: monospace; font-size: 9.5px; font-weight: 700; color: #38bdf8;">
                 ${new Date().toUTCString().slice(17, 25)} UTC
               </div>
             </div>
 
-            <!-- Live Telemetry Mini-Pill -->
-            <div style="display: flex; align-items: center; gap: 5px; background: #0b1120; border: 1px solid #1e293b; border-radius: 4px; padding: 2px 6px; font-size: 9px; color: #cbd5e1;">
-              <span>💨 <strong id="badge-wind-val" style="color: #38bdf8;">18k</strong></span>
+            <!-- Telemetry Values -->
+            <div style="display: flex; align-items: center; gap: 6px; background: #0b1120; border: 1px solid #1e293b; border-radius: 4px; padding: 2px 7px; font-size: 9px; color: #cbd5e1;">
+              <span>Wind: <strong id="badge-wind-val" style="color: #38bdf8;">18 km/h</strong></span>
               <span style="color: #334155;">|</span>
-              <span>🌡️ <strong id="badge-thermal-val" style="color: #f97316;">24°C</strong></span>
+              <span>Surface: <strong id="badge-thermal-val" style="color: #f97316;">24.0°C</strong></span>
               <span style="color: #334155;">|</span>
-              <span>☁️ <strong id="badge-cloud-val" style="color: #c084fc;">82%</strong></span>
+              <span>Cloud: <strong id="badge-cloud-val" style="color: #c084fc;">82%</strong></span>
             </div>
           </div>
 
-          <!-- Center Wing: Optics & Remote Sensing Selectors -->
-          <div style="display: flex; align-items: center; gap: 5px;">
+          <!-- Center: Optics & Remote Sensing Layer Dropdowns -->
+          <div style="display: flex; align-items: center; gap: 6px;">
             
             <!-- Sensor Optics Switcher -->
-            <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #0284c7; border-radius: 4px; padding: 2px 5px;">
-              <span style="font-size: 9px; color: #38bdf8; margin-right: 3px; font-weight: bold;">🎨 Optic:</span>
+            <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #0284c7; border-radius: 4px; padding: 2px 6px;">
+              <span style="font-size: 9px; color: #38bdf8; margin-right: 4px; font-weight: 700;">Optic:</span>
               <select id="sel-sensor-optics" style="background: #0b1120; color: #f8fafc; border: none; font-size: 9.5px; font-weight: 700; outline: none; cursor: pointer;">
                 <option value="natural" selected>Natural RGB [1]</option>
                 <option value="flir">FLIR Thermal [2]</option>
                 <option value="nvg">Night Vision [3]</option>
                 <option value="crt">CRT Scanline [4]</option>
                 <option value="noir">Recon Noir [5]</option>
-                <option value="arctic">Arctic Scar [6]</option>
+                <option value="arctic">Rock Scar [6]</option>
               </select>
             </div>
 
-            <!-- Remote Sensing Layer Selector -->
-            <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 4px; padding: 2px 5px;">
-              <span style="font-size: 9px; color: #94a3b8; margin-right: 3px; font-weight: 600;">Layer:</span>
+            <!-- Remote Sensing Layer Selector (Works in 2D and 3D) -->
+            <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 4px; padding: 2px 6px;">
+              <span style="font-size: 9px; color: #94a3b8; margin-right: 4px; font-weight: 600;">Layer:</span>
               <select id="sel-earth-remote-sensing" style="background: #0b1120; color: #f8fafc; border: none; font-size: 9.5px; font-weight: 600; outline: none; cursor: pointer;">
-                <option value="dark" selected>🌑 Dark Tactical Ops</option>
-                <option value="satellite">🛰️ 4K Satellite Imagery</option>
-                <option value="thermal">🌡️ Live Thermal Earth Temp</option>
-                <option value="clouds">☁️ Live Satellite Clouds</option>
-                <option value="radar">📡 Doppler Weather Radar</option>
-                <option value="topo">⛰️ Topo Relief</option>
-                <option value="opentopo">🗺️ OpenTopo Contours</option>
+                <option value="satellite" selected>4K Satellite Imagery</option>
+                <option value="dark">Dark Tactical Base</option>
+                <option value="thermal">Live Land Surface Temp (LST)</option>
+                <option value="clouds">Live Satellite Clouds (IR)</option>
+                <option value="radar">Doppler Weather Radar</option>
+                <option value="topo">Topographic Relief</option>
+                <option value="opentopo">Mountain Contours</option>
               </select>
             </div>
           </div>
 
-          <!-- Right Wing: Action Tools with Compact High-Tech Buttons -->
+          <!-- Right: Command Tools -->
           <div style="display: flex; align-items: center; gap: 4px;">
             
-            <!-- Cinematic Tour Button -->
-            <button id="btn-cinematic-tour" style="background: #0b1120; color: #f59e0b; border: 1px solid #d97706; border-radius: 4px; padding: 3px 6px; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 2px;" title="Start Cinematic Strategic Corridor Inspection Tour">
-              <span>🎥</span>
+            <!-- Corridor Tour -->
+            <button id="btn-cinematic-tour" style="background: #0b1120; color: #f59e0b; border: 1px solid #d97706; border-radius: 4px; padding: 3px 8px; font-size: 9px; font-weight: 700; cursor: pointer;" title="Strategic Corridor Inspection Tour">
               <span id="label-tour-status">Tour</span>
             </button>
 
-            <!-- Geodetic Rangefinder Button -->
-            <button id="btn-rangefinder-tool" style="background: #0b1120; color: #c084fc; border: 1px solid #7c3aed; border-radius: 4px; padding: 3px 6px; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 2px;" title="Geodetic Rangefinder & Rescue ETA">
-              <span>📏</span>
-              <span>Range</span>
+            <!-- Geodetic Rangefinder -->
+            <button id="btn-rangefinder-tool" style="background: #0b1120; color: #c084fc; border: 1px solid #7c3aed; border-radius: 4px; padding: 3px 8px; font-size: 9px; font-weight: 700; cursor: pointer;" title="Geodetic Rangefinder & Rescue ETA">
+              Range
             </button>
 
-            <!-- Tactical Voice Button -->
-            <button id="btn-tactical-voice" style="background: #0b1120; color: #38bdf8; border: 1px solid #0284c7; border-radius: 4px; padding: 3px 6px; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 2px;" title="Speak or Type Tactical Directives">
-              <span>🎙️</span>
-              <span>Voice</span>
+            <!-- Tactical Voice Directives -->
+            <button id="btn-tactical-voice" style="background: #0b1120; color: #38bdf8; border: 1px solid #0284c7; border-radius: 4px; padding: 3px 8px; font-size: 9px; font-weight: 700; cursor: pointer;" title="Voice Directives Console">
+              Voice
             </button>
 
             <!-- Military HUD Toggle -->
-            <button id="btn-toggle-hud" style="background: #0284c7; color: #ffffff; border: 1px solid #38bdf8; border-radius: 4px; padding: 3px 6px; font-size: 9px; font-weight: 700; cursor: pointer;" title="Toggle Military HUD (Key H)">
+            <button id="btn-toggle-hud" style="background: #0284c7; color: #ffffff; border: 1px solid #38bdf8; border-radius: 4px; padding: 3px 8px; font-size: 9px; font-weight: 700; cursor: pointer;" title="Toggle HUD Overlay [H]">
               HUD [H]
             </button>
 
             <!-- Target Detection Mesh Toggle -->
-            <button id="btn-toggle-detection" style="background: #0284c7; color: #ffffff; border: 1px solid #38bdf8; border-radius: 4px; padding: 3px 6px; font-size: 9px; font-weight: 700; cursor: pointer;" title="Toggle Target Detection Brackets (Key D)">
+            <button id="btn-toggle-detection" style="background: #0f172a; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 3px 8px; font-size: 9px; font-weight: 700; cursor: pointer;" title="Toggle Target Brackets [D]">
               Target [D]
             </button>
 
             <!-- Highways Button -->
-            <button id="btn-open-route-nav" style="background: #0b1120; color: #38bdf8; border: 1px solid #334155; border-radius: 4px; padding: 3px 6px; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 2px;" title="Highway Corridor Navigator">
-              <span>🧭</span>
-              <span>Routes</span>
+            <button id="btn-open-route-nav" style="background: #0b1120; color: #38bdf8; border: 1px solid #334155; border-radius: 4px; padding: 3px 8px; font-size: 9px; font-weight: 700; cursor: pointer;" title="Highway Route Navigator">
+              Routes
             </button>
 
             <!-- Fullscreen Button -->
-            <button id="btn-unified-fullscreen" style="background: #0b1120; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 3px 5px; font-size: 9px; cursor: pointer;" title="Toggle Fullscreen">
-              ⛶
+            <button id="btn-unified-fullscreen" style="background: #0b1120; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 3px 7px; font-size: 9px; cursor: pointer;" title="Toggle Fullscreen">
+              [ ]
             </button>
           </div>
         </div>
 
-        <!-- Cinematic Tour Active Banner (Hidden by Default) -->
+        <!-- Tour Active Banner -->
         <div id="tour-active-banner" style="display: none; position: absolute; top: 46px; left: 50%; transform: translateX(-50%); z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #f59e0b; border-radius: 8px; padding: 6px 16px; color: #f8fafc; text-align: center; box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); max-width: 600px;">
           <div style="font-size: 10px; font-weight: 800; color: #f59e0b; letter-spacing: 1px; margin-bottom: 2px;">
-            🎥 CINEMATIC CORRIDOR INSPECTION TOUR ACTIVE
+            STR°EGIC CORRIDOR INSPECTION TOUR ACTIVE
           </div>
           <div id="tour-waypoint-title" style="font-size: 12px; font-weight: bold; color: #ffffff;">
             North Sikkim (Chungthang & Mangan)
@@ -176,16 +172,16 @@ export class UnifiedSituationMap {
             Active moraine dam monitoring along Teesta Basin Stage-III following glacial lake outburst surges.
           </div>
           <div style="margin-top: 5px; display: flex; justify-content: center; gap: 8px;">
-            <button id="btn-tour-prev" style="background: #1e293b; color: white; border: 1px solid #475569; border-radius: 4px; padding: 2px 8px; font-size: 9px; cursor: pointer;">◀ Prev</button>
-            <button id="btn-tour-next" style="background: #1e293b; color: white; border: 1px solid #475569; border-radius: 4px; padding: 2px 8px; font-size: 9px; cursor: pointer;">Next ▶</button>
-            <button id="btn-tour-stop" style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 2px 8px; font-size: 9px; font-weight: bold; cursor: pointer;">Stop Tour ✕</button>
+            <button id="btn-tour-prev" style="background: #1e293b; color: white; border: 1px solid #475569; border-radius: 4px; padding: 2px 8px; font-size: 9px; cursor: pointer;">Prev</button>
+            <button id="btn-tour-next" style="background: #1e293b; color: white; border: 1px solid #475569; border-radius: 4px; padding: 2px 8px; font-size: 9px; cursor: pointer;">Next</button>
+            <button id="btn-tour-stop" style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 2px 8px; font-size: 9px; font-weight: bold; cursor: pointer;">Stop Tour</button>
           </div>
         </div>
 
-        <!-- Rangefinder Modal / Overlay (Hidden by default) -->
+        <!-- Rangefinder Modal -->
         <div id="rangefinder-overlay-card" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #a855f7; border-radius: 8px; padding: 10px 16px; color: #f8fafc; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); min-width: 420px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 11px; font-weight: bold; color: #c084fc;">📏 GEODETIC RANGEFINDER & RESCUE ETA</span>
+            <span style="font-size: 11px; font-weight: bold; color: #c084fc;">GEODETIC RANGEFINDER & RESCUE ETA</span>
             <button id="btn-close-rangefinder" style="background: transparent; color: #94a3b8; border: none; font-size: 14px; cursor: pointer;">✕</button>
           </div>
           <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -200,7 +196,7 @@ export class UnifiedSituationMap {
           </div>
           <div id="rf-results-box" style="background: #090d16; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: 10px; display: flex; justify-content: space-between;">
             <div>
-              <div style="color: #94a3b8;">GEODETIC DISTANCE:</div>
+              <div style="color: #94a3b8;">GEODETIC DIST°CE:</div>
               <strong id="rf-res-dist" style="color: #38bdf8; font-size: 13px;">-- km</strong>
             </div>
             <div>
@@ -218,32 +214,28 @@ export class UnifiedSituationMap {
           </div>
         </div>
 
-        <!-- Tactical Voice & Directives Modal (Hidden by default) -->
-        <div id="voice-command-overlay-card" style="display: none; position: absolute; top: 46px; right: 20px; z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #0284c7; border-radius: 8px; padding: 10px 14px; color: #f8fafc; box-shadow: 0 0 20px rgba(2, 132, 199, 0.4); width: 340px;">
+        <!-- Voice Command Modal -->
+        <div id="voice-command-overlay-card" style="display: none; position: absolute; top: 50px; right: 20px; z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #0284c7; border-radius: 8px; padding: 10px 16px; color: #f8fafc; box-shadow: 0 0 20px rgba(2, 132, 199, 0.4); width: 380px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 11px; font-weight: bold; color: #38bdf8;">🎙️ TACTICAL VOICE & DIRECTIVES CONSOLE</span>
+            <span style="font-size: 11px; font-weight: bold; color: #38bdf8;">TACTICAL VOICE DIRECTIVES CONSOLE</span>
             <button id="btn-close-voice" style="background: transparent; color: #94a3b8; border: none; font-size: 14px; cursor: pointer;">✕</button>
           </div>
           <div style="margin-bottom: 8px; display: flex; gap: 6px;">
             <button id="btn-voice-mic-trigger" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-              <span>🎤</span>
               <span id="voice-mic-label">Speak Directive</span>
             </button>
             <input id="input-voice-text" type="text" placeholder="Or type e.g. 'Switch to FLIR', 'Inspect Sikkim'..." style="flex: 1; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; color: #f8fafc; font-size: 10px; outline: none;" />
             <button id="btn-voice-send" style="background: #0284c7; color: white; border: none; border-radius: 6px; padding: 4px 8px; font-size: 10px; font-weight: bold; cursor: pointer;">Run</button>
           </div>
           <div id="voice-response-log" style="background: #090d16; border: 1px solid #334155; border-radius: 6px; padding: 6px 8px; font-family: monospace; font-size: 9px; color: #38bdf8; min-height: 38px;">
-            Awaiting voice or typed command... Try: "Switch to FLIR", "Inspect Sikkim", "Toggle HUD", "Start tour", "Download report".
+            Awaiting directive... Try: "Switch to FLIR", "Inspect Sikkim", "Toggle HUD", "Start tour", "Download report".
           </div>
         </div>
 
-        <!-- Map Viewports & Tactical HUD Container (100% Height) -->
+        <!-- Viewports Stage -->
         <div id="viewport-stage-container" style="flex: 1; width: 100%; height: 100%; position: relative; overflow: hidden; background: #000000;">
-          <!-- 2D Leaflet Tactical Map (Pitch Black) -->
-          <div id="viewport-2d-map" style="width: 100%; height: 100%; display: ${this.mode === '2d' ? 'block' : 'none'};"></div>
-
-          <!-- 3D Globe.gl Tactical Globe (Centered on Screen) -->
-          <div id="viewport-3d-globe" style="width: 100%; height: 100%; display: ${this.mode === '3d' ? 'block' : 'none'}; position: absolute; inset: 0;"></div>
+          <div id="viewport-2d-map" style="width: 100%; height: 100%; display: ${this.mode === '2d' ? 'block' : 'none'}; position: relative; overflow: hidden;"></div>
+          <div id="viewport-3d-globe" style="width: 100%; height: 100%; display: ${this.mode === '3d' ? 'block' : 'none'}; position: absolute; inset: 0; overflow: hidden;"></div>
         </div>
       </div>
     `;
@@ -280,34 +272,36 @@ export class UnifiedSituationMap {
     if (view2d) sensorOpticsManager.registerTarget(view2d);
     if (view3d) sensorOpticsManager.registerTarget(view3d);
 
-    // Initialize Military Tactical HUD Overlay
+    // Initialize Tactical HUD Overlay
     this.hudOverlay = new TacticalHudOverlay('viewport-stage-container');
 
     // Initialize Dynamic Map Legend Bar
     this.legendBar = new MapLegendBar('viewport-stage-container');
-    this.legendBar.setLegend('dark');
+    this.legendBar.setLegend('satellite');
 
-    // Bind Sensor Optics Dropdown
+    // Bind Sensor Optics Dropdown (Updates both 2D and 3D)
     const selOptics = document.getElementById('sel-sensor-optics') as HTMLSelectElement;
     selOptics?.addEventListener('change', () => {
       const mode = selOptics.value as SensorOpticMode;
       sensorOpticsManager.setMode(mode);
+      this.globe3d?.setOptic(mode);
       if (mode !== 'natural') {
         this.legendBar?.setLegend(mode as LegendType);
       } else {
         const selRemote = document.getElementById('sel-earth-remote-sensing') as HTMLSelectElement;
-        this.legendBar?.setLegend((selRemote?.value as LegendType) || 'dark');
+        this.legendBar?.setLegend((selRemote?.value as LegendType) || 'satellite');
       }
     });
 
     // Update Dropdown on Keyboard Shortcut Switch (1-6)
     sensorOpticsManager.onModeChange((mode) => {
       if (selOptics) selOptics.value = mode;
+      this.globe3d?.setOptic(mode);
       if (mode !== 'natural') {
         this.legendBar?.setLegend(mode as LegendType);
       } else {
         const selRemote = document.getElementById('sel-earth-remote-sensing') as HTMLSelectElement;
-        this.legendBar?.setLegend((selRemote?.value as LegendType) || 'dark');
+        this.legendBar?.setLegend((selRemote?.value as LegendType) || 'satellite');
       }
     });
 
@@ -348,10 +342,15 @@ export class UnifiedSituationMap {
       this.syncData();
     });
 
-    // Remote Sensing Dropdown
+    // Remote Sensing Dropdown (Updates both 2D and 3D)
     const selRemote = document.getElementById('sel-earth-remote-sensing') as HTMLSelectElement;
     selRemote?.addEventListener('change', () => {
       const val = selRemote.value;
+      
+      // Update 3D Globe Layer texture
+      this.globe3d?.setLayer(val);
+
+      // Update 2D Map Layer
       ['thermal_anomalies', 'viirs_truecolor', 'clouds_ir', 'weather_radar'].forEach(l => {
         this.map2d?.setSatelliteLayer(l, false);
       });
@@ -377,13 +376,9 @@ export class UnifiedSituationMap {
       this.navModal?.open();
     });
 
-    // Cinematic Corridor Tour Binds
+    // Binds
     this.bindCinematicTourEvents();
-
-    // Rangefinder Binds
     this.bindRangefinderEvents();
-
-    // Voice & Directives Console Binds
     this.bindVoiceConsoleEvents();
 
     // Fullscreen Toggle
@@ -518,11 +513,26 @@ export class UnifiedSituationMap {
       if (log) log.textContent = `[COMMAND RECEIVED]: ${cmd.actionSummary}`;
 
       switch (cmd.intent) {
-        case 'OPTICS_FLIR': sensorOpticsManager.setMode('flir'); break;
-        case 'OPTICS_NVG': sensorOpticsManager.setMode('nvg'); break;
-        case 'OPTICS_CRT': sensorOpticsManager.setMode('crt'); break;
-        case 'OPTICS_NOIR': sensorOpticsManager.setMode('noir'); break;
-        case 'OPTICS_NATURAL': sensorOpticsManager.setMode('natural'); break;
+        case 'OPTICS_FLIR':
+          sensorOpticsManager.setMode('flir');
+          this.globe3d?.setOptic('flir');
+          break;
+        case 'OPTICS_NVG':
+          sensorOpticsManager.setMode('nvg');
+          this.globe3d?.setOptic('nvg');
+          break;
+        case 'OPTICS_CRT':
+          sensorOpticsManager.setMode('crt');
+          this.globe3d?.setOptic('crt');
+          break;
+        case 'OPTICS_NOIR':
+          sensorOpticsManager.setMode('noir');
+          this.globe3d?.setOptic('noir');
+          break;
+        case 'OPTICS_NATURAL':
+          sensorOpticsManager.setMode('natural');
+          this.globe3d?.setOptic('natural');
+          break;
         case 'TOGGLE_HUD': this.hudOverlay?.toggleHud(); break;
         case 'TOGGLE_DETECTION': this.hudOverlay?.toggleDetectionMesh(); break;
         case 'CINEMATIC_TOUR': document.getElementById('btn-cinematic-tour')?.click(); break;
@@ -584,7 +594,7 @@ export class UnifiedSituationMap {
       const thermalEl = document.getElementById('badge-thermal-val');
       const cloudEl = document.getElementById('badge-cloud-val');
 
-      if (windEl) windEl.textContent = `${this.liveTelemetry.speedKmh}k`;
+      if (windEl) windEl.textContent = `${this.liveTelemetry.speedKmh} km/h`;
       if (thermalEl) thermalEl.textContent = `${this.liveTelemetry.thermalSurfaceTempC}°C`;
       if (cloudEl) cloudEl.textContent = `${this.liveTelemetry.cloudCoverTotalPct}%`;
     }

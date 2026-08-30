@@ -168,7 +168,7 @@ export class LandslideDashboard {
                 <option value="hi" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'hi' ? 'selected' : ''}>हिन्दी (Hindi)</option>
                 <option value="as" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'as' ? 'selected' : ''}>অসমীয়া (Assamese)</option>
                 <option value="bn" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'bn' ? 'selected' : ''}>বাংলা (Bengali)</option>
-                <option value="mni" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'mni' ? 'selected' : ''}>ꯃꯤꯇꯩꯂꯣꯟ (Manipuri)</option>
+                <option value="mni" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'mni' ? 'selected' : ''}>মৈতৈলোন্ (Manipuri)</option>
                 <option value="lus" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'lus' ? 'selected' : ''}>Mizo ṭawng (Mizo)</option>
                 <option value="kha" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'kha' ? 'selected' : ''}>Ka Ktien Khasi (Khasi)</option>
                 <option value="ne" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'ne' ? 'selected' : ''}>नेपाली (Nepali)</option>

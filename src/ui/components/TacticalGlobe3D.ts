@@ -2,24 +2,18 @@ import Globe from 'globe.gl';
 import type { GlobeInstance } from 'globe.gl';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
-import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
-import { NER_HIGHWAY_ROUTES } from '../../services/landslide/highway-navigation';
-import { NER_SAFE_SHELTERS } from '../../services/landslide/safe-shelters';
+import { sensorOpticsManager, type SensorOpticMode } from './sensor-optics';
 
 export interface GlobeTacticalMarker {
   id: string;
   lat: number;
   lng: number;
-  type: 'district' | 'quake' | 'coolr' | 'shelter' | 'river_gauge';
+  type: 'district' | 'quake' | 'coolr' | 'shelter';
   name: string;
   state?: string;
   score?: number;
   level?: string;
-  rainfall24?: number;
-  elevationM?: number;
-  details?: string;
   color: string;
-  iconSvg: string;
   isSelected?: boolean;
 }
 
@@ -32,16 +26,14 @@ export class TacticalGlobe3D {
   private quakesData: UsgsEarthquake[] = [];
   private showCoolr = true;
   private showSeismic = true;
-  private showShelters = true;
-  private showHighways = true;
   private resizeObserver: ResizeObserver | null = null;
+  private currentLayer: string = 'satellite';
 
   constructor(containerId: string, onSelectDistrict: (districtId: string) => void) {
     const el = document.getElementById(containerId);
     if (!el) throw new Error(`Element #${containerId} not found`);
     this.container = el;
     this.onSelectDistrict = onSelectDistrict;
-
     this.initGlobe();
   }
 
@@ -49,14 +41,14 @@ export class TacticalGlobe3D {
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
 
-    // Create Globe with photorealistic Earth texture & Fresnel atmosphere matching God's Eye View
+    // Photorealistic Blue Marble Earth - flat on surface with zero 3D building/cone extrusions
     this.globe = new (Globe as any)(this.container, { animateIn: true })
-      .globeImageUrl('/textures/earth-blue-marble.jpg')
-      .bumpImageUrl('/textures/earth-topo-bathy.jpg')
-      .backgroundImageUrl('')
+      .globeImageUrl('https://unpkg.com/three-globe@2.27.2/example/img/earth-blue-marble.jpg')
+      .bumpImageUrl('https://unpkg.com/three-globe@2.27.2/example/img/earth-topology.png')
+      .backgroundImageUrl('https://unpkg.com/three-globe@2.27.2/example/img/night-sky.png')
       .showAtmosphere(true)
       .atmosphereColor('#38bdf8')
-      .atmosphereAltitude(0.22)
+      .atmosphereAltitude(0.20)
       .width(width)
       .height(height)
       .enablePointerInteraction(true);
@@ -71,97 +63,74 @@ export class TacticalGlobe3D {
       controls.maxDistance = 500;
     }
 
-    // Centered squarely on Northeast India (Lat 26.0N, Lon 92.8E)
-    this.globe.pointOfView({ lat: 26.0, lng: 92.8, altitude: 1.5 }, 1200);
-
-    // Setup 3D Geospatial Arcs & Rings
-    this.init3DTelemetryLayers();
-
-    // Setup HTML Tactical Markers
+    this.globe.pointOfView({ lat: 26.0, lng: 92.8, altitude: 1.4 }, 1200);
     this.initMarkersLayer();
 
-    // Auto-resize handler
     this.resizeObserver = new ResizeObserver(() => {
       if (this.globe && this.container) {
         const w = this.container.clientWidth;
         const h = this.container.clientHeight;
-        if (w > 0 && h > 0) {
-          this.globe.width(w).height(h);
-        }
+        if (w > 0 && h > 0) this.globe.width(w).height(h);
       }
     });
     this.resizeObserver.observe(this.container);
   }
 
-  private init3DTelemetryLayers() {
+  public setLayer(layerId: string) {
     if (!this.globe) return;
+    this.currentLayer = layerId;
+    if (layerId === 'dark') {
+      this.globe.globeImageUrl('https://unpkg.com/three-globe@2.27.2/example/img/earth-night.jpg');
+      this.globe.atmosphereColor('#6366f1');
+    } else if (layerId === 'satellite') {
+      this.globe.globeImageUrl('https://unpkg.com/three-globe@2.27.2/example/img/earth-blue-marble.jpg');
+      this.globe.atmosphereColor('#38bdf8');
+    } else if (layerId === 'thermal') {
+      this.globe.globeImageUrl('https://unpkg.com/three-globe@2.27.2/example/img/earth-day.jpg');
+      this.globe.atmosphereColor('#ef4444');
+    } else if (layerId === 'clouds' || layerId === 'radar') {
+      this.globe.globeImageUrl('https://unpkg.com/three-globe@2.27.2/example/img/earth-water.png');
+      this.globe.atmosphereColor('#38bdf8');
+    } else if (layerId === 'topo' || layerId === 'opentopo') {
+      this.globe.globeImageUrl('https://unpkg.com/three-globe@2.27.2/example/img/earth-topology.png');
+      this.globe.atmosphereColor('#10b981');
+    }
+  }
 
-    // Strategic corridor 3D arc vectors
-    const arcData = [
-      { startLat: 27.3389, startLng: 88.6065, endLat: 27.6042, endLng: 88.6472, color: ['#38bdf8', '#ef4444'], name: 'Teesta Hydro Corridor (Sikkim)' },
-      { startLat: 26.1445, startLng: 91.7362, endLat: 25.1812, endLng: 93.0210, color: ['#38bdf8', '#f97316'], name: 'Guwahati - Haflong Arterial Cut' },
-      { startLat: 24.8170, startLng: 93.9368, endLat: 24.8167, endLng: 93.6333, color: ['#38bdf8', '#ef4444'], name: 'Imphal - Tupul Mountain Rail Link' },
-      { startLat: 25.5788, startLng: 91.8933, endLat: 25.2986, endLng: 91.7306, color: ['#38bdf8', '#f59e0b'], name: 'Shillong - Cherrapunji Escarpment' },
-    ];
-
-    this.globe
-      .arcsData(arcData)
-      .arcColor('color')
-      .arcDashLength(0.4)
-      .arcDashGap(0.2)
-      .arcDashAnimateTime(2000)
-      .arcAltitude(0.12)
-      .arcStroke(1.5);
+  public setOptic(mode: SensorOpticMode) {
+    sensorOpticsManager.setMode(mode);
+    const def = sensorOpticsManager.getDefinition();
+    this.container.style.filter = def.filterCss;
+    this.container.setAttribute('data-sensor-optic', mode);
   }
 
   private initMarkersLayer() {
     if (!this.globe) return;
-
     this.globe
       .htmlElementsData([])
       .htmlLat((d: any) => d.lat)
       .htmlLng((d: any) => d.lng)
-      .htmlAltitude(0.02)
+      .htmlAltitude(0.002)
       .htmlElement((d: any) => {
         const el = document.createElement('div');
         el.className = 'tactical-globe-marker';
-        el.style.cssText = `
-          cursor: pointer;
-          transform: translate(-50%, -50%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          pointer-events: auto;
-          transition: transform 0.15s ease;
-        `;
-
+        el.style.cssText = 'cursor: pointer; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; pointer-events: auto;';
         if (d.type === 'district') {
-          const isCrit = d.level === 'CRITICAL';
-          const isHigh = d.level === 'HIGH';
-          const pulseRing = isCrit || isHigh ? `<div style="position: absolute; inset: -6px; border: 2px solid ${d.color}; border-radius: 50%; animation: pulse-red 1.2s infinite; pointer-events: none;"></div>` : '';
-
           el.innerHTML = `
-            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${d.isSelected ? 26 : 20}px; height: ${d.isSelected ? 26 : 20}px; background: rgba(5,8,17,0.92); border: 2px solid ${d.isSelected ? '#ffffff' : d.color}; border-radius: 50%; box-shadow: 0 0 14px ${d.color};">
-              ${pulseRing}
-              <div style="width: 8px; height: 8px; border-radius: 50%; background: ${d.color};"></div>
+            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${d.isSelected ? 14 : 10}px; height: ${d.isSelected ? 14 : 10}px; background: rgba(5,8,17,0.92); border: 2px solid ${d.isSelected ? '#ffffff' : d.color}; border-radius: 50%; box-shadow: 0 0 6px ${d.color};">
+              <div style="width: 4px; height: 4px; border-radius: 50%; background: ${d.color};"></div>
             </div>
-            <div style="background: rgba(3,7,18,0.85); backdrop-filter: blur(6px); border: 1px solid rgba(56,189,248,0.3); border-radius: 4px; padding: 1px 5px; font-size: 9px; font-weight: bold; color: #fff; margin-top: 3px; white-space: nowrap; pointer-events: none;">
-              ${d.name} <span style="color: ${d.color};">${d.score ? `[${d.score}]` : ''}</span>
+            <div style="background: rgba(15,23,42,0.92); border: 1px solid rgba(56,189,248,0.3); border-radius: 3px; padding: 1px 4px; font-size: 8px; font-weight: 700; color: #fff; margin-top: 1px; white-space: nowrap; pointer-events: none;">
+              ${d.name} <span style="color: ${d.color}; font-weight: 800;">${d.score ? `[${d.score}]` : ''}</span>
             </div>
           `;
-
           el.addEventListener('click', (e) => {
             e.stopPropagation();
             this.onSelectDistrict(d.id);
           });
         } else if (d.type === 'quake') {
-          el.innerHTML = `
-            <div style="width: 14px; height: 14px; border-radius: 50%; background: rgba(56,189,248,0.3); border: 1.5px solid #38bdf8; display: flex; align-items: center; justify-content: center;" title="${d.name}">
-              <div style="width: 6px; height: 6px; border-radius: 50%; background: #38bdf8;"></div>
-            </div>
-          `;
+          el.innerHTML = '<div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(56,189,248,0.4); border: 1px solid #38bdf8;"></div>';
         }
-
         return el;
       });
   }
@@ -171,15 +140,7 @@ export class TacticalGlobe3D {
       const risk = riskMap.get(d.id);
       const score = risk ? risk.compositeScore : 20;
       const level = risk ? risk.level : 'LOW';
-      const color =
-        level === 'CRITICAL'
-          ? '#ef4444'
-          : level === 'HIGH'
-          ? '#f97316'
-          : level === 'MODERATE'
-          ? '#eab308'
-          : '#22c55e';
-
+      const color = level === 'CRITICAL' ? '#ef4444' : level === 'HIGH' ? '#f97316' : level === 'MODERATE' ? '#eab308' : '#22c55e';
       return {
         id: d.id,
         lat: d.lat,
@@ -189,29 +150,23 @@ export class TacticalGlobe3D {
         state: d.state,
         score,
         level,
-        elevationM: d.elevationM,
         color,
-        iconSvg: '',
         isSelected: d.id === selectedDistrictId,
       };
     });
-
     this.markersData = list;
     if (this.globe) {
       this.globe.htmlElementsData(this.markersData);
-
-      // Pulse rings on Critical and High Risk areas
       const ringsData = list
         .filter(m => m.level === 'CRITICAL' || m.level === 'HIGH')
         .map(m => ({
           lat: m.lat,
           lng: m.lng,
-          maxR: m.level === 'CRITICAL' ? 3.5 : 2.5,
-          propagationSpeed: 2,
-          repeatPeriod: 1200,
+          maxR: m.level === 'CRITICAL' ? 0.45 : 0.25,
+          propagationSpeed: 1.0,
+          repeatPeriod: 2200,
           color: m.level === 'CRITICAL' ? '#ef4444' : '#f97316',
         }));
-
       this.globe
         .ringsData(ringsData)
         .ringColor((d: any) => d.color)
@@ -231,18 +186,14 @@ export class TacticalGlobe3D {
   }
 
   public orientToCoordinates(lat: number, lng: number, altitude = 0.8) {
-    if (this.globe) {
-      this.globe.pointOfView({ lat, lng, altitude }, 1400);
-    }
+    if (this.globe) this.globe.pointOfView({ lat, lng, altitude }, 1400);
   }
 
   public resize() {
     if (this.globe && this.container) {
       const w = this.container.clientWidth;
       const h = this.container.clientHeight;
-      if (w > 0 && h > 0) {
-        this.globe.width(w).height(h);
-      }
+      if (w > 0 && h > 0) this.globe.width(w).height(h);
     }
   }
 
@@ -251,8 +202,6 @@ export class TacticalGlobe3D {
   }
 
   public destroy() {
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
+    if (this.resizeObserver) this.resizeObserver.disconnect();
   }
 }

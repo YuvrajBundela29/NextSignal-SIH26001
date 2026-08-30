@@ -1,4 +1,4 @@
-import type { LandslideAlert, AppLanguage } from '../../services/landslide/types';
+﻿import type { LandslideAlert, AppLanguage } from '../../services/landslide/types';
 
 export class AlertTicker {
   private container: HTMLElement;
@@ -35,18 +35,19 @@ export class AlertTicker {
         this.currentIndex = (this.currentIndex + 1) % this.alerts.length;
         this.renderCurrentAlert();
       }
-    }, 12000); // 12 seconds per alert (relaxed, easily readable pace)
+    }, 10000);
   }
 
   private renderCurrentAlert() {
     if (this.alerts.length === 0) {
       this.container.innerHTML = `
-        <div style="background: #0f172a; border-bottom: 1px solid #1e293b; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #94a3b8;">
+        <div style="background: #090d16; border-bottom: 1px solid #1e293b; padding: 4px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #94a3b8;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="color: #22c55e;">🛡️</span>
-            <span>NORTHEAST INDIA TELEMETRY ACTIVE: All 28 monitored NER districts within standard baseline thresholds.</span>
+            <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #22c55e;"></span>
+            <span style="font-weight: 600; color: #e2e8f0;">REGIONAL TELEMETRY STATUS:</span>
+            <span>All 28 monitored North Eastern Region districts are within baseline stability limits.</span>
           </div>
-          <span style="font-size: 10px; color: #64748b;">MDoNER Disaster Early Warning Portal</span>
+          <span style="font-size: 10px; color: #64748b; font-weight: 600;">MDoNER Early Warning System</span>
         </div>
       `;
       return;
@@ -54,46 +55,42 @@ export class AlertTicker {
 
     const a = this.alerts[this.currentIndex] || this.alerts[0];
     const isCrit = a.level === 'CRITICAL';
-    const bg = isCrit ? '#7f1d1d' : '#7c2d12';
-    const border = isCrit ? '#ef4444' : '#f97316';
+    const accentColor = isCrit ? '#ef4444' : '#f59e0b';
+    const badgeBg = isCrit ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)';
     const headline = this.lang === 'hi' ? a.headlineHi : a.headlineEn;
     const details = this.lang === 'hi' ? a.detailsHi : a.detailsEn;
 
     this.container.innerHTML = `
-      <div style="background: ${bg}; border-bottom: 1px solid ${border}; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; color: #ffffff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);">
-        <!-- Left: Badge & Alert Counter -->
+      <div style="background: #090d16; border-bottom: 1px solid #1e293b; padding: 4px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <!-- Left: Status Badge & Counter -->
         <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-          <div style="display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 4px; border: 1px solid ${border}; font-weight: 800; font-size: 10px;">
-            <span class="pulse-dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${isCrit ? '#ef4444' : '#f97316'};"></span>
-            <span>WARNING [${this.currentIndex + 1}/${this.alerts.length}]</span>
-          </div>
-          <span style="background: ${isCrit ? '#ef4444' : '#f97316'}; color: white; font-weight: 800; font-size: 10px; padding: 2px 6px; border-radius: 3px;">
-            ${a.level}
+          <span style="display: flex; align-items: center; gap: 5px; background: ${badgeBg}; color: ${accentColor}; border: 1px solid ${accentColor}40; padding: 1px 7px; border-radius: 4px; font-weight: 800; font-size: 9px; letter-spacing: 0.5px;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: ${accentColor};"></span>
+            ${a.level} ADVISORY [${this.currentIndex + 1}/${this.alerts.length}]
           </span>
         </div>
 
-        <!-- Center: Headline & Details (Clear, Static, Read at user pace) -->
+        <!-- Center: Alert Content -->
         <div style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px;">
-          <strong style="color: #ffffff; font-size: 12px;">${headline}</strong>
-          <span style="color: rgba(255,255,255,0.85); font-size: 11px;">&bull; ${details}</span>
+          <strong style="color: #ffffff; font-size: 11px; font-weight: 700;">${headline}</strong>
+          <span style="color: #94a3b8; font-size: 10.5px;">&bull; ${details}</span>
         </div>
 
-        <!-- Right: Interactive Controls (Prev / Pause / Next / View All) -->
-        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-          <button id="btn-ticker-prev" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;">
-            ◀ Prev
+        <!-- Right: Simple Controls -->
+        <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+          <button id="btn-ticker-prev" style="background: #0f172a; border: 1px solid #1e293b; color: #94a3b8; padding: 2px 7px; border-radius: 3px; font-size: 9px; cursor: pointer; font-weight: 600;">
+            Prev
           </button>
-          <button id="btn-ticker-pause" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;">
-            ${this.isPaused ? '▶ Play' : '⏸ Pause'}
+          <button id="btn-ticker-pause" style="background: #0f172a; border: 1px solid #1e293b; color: #94a3b8; padding: 2px 7px; border-radius: 3px; font-size: 9px; cursor: pointer; font-weight: 600;">
+            ${this.isPaused ? 'Resume' : 'Pause'}
           </button>
-          <button id="btn-ticker-next" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;">
-            Next ▶
+          <button id="btn-ticker-next" style="background: #0f172a; border: 1px solid #1e293b; color: #94a3b8; padding: 2px 7px; border-radius: 3px; font-size: 9px; cursor: pointer; font-weight: 600;">
+            Next
           </button>
         </div>
       </div>
     `;
 
-    // Bind event listeners for prev/next/pause
     document.getElementById('btn-ticker-prev')?.addEventListener('click', () => {
       this.currentIndex = (this.currentIndex - 1 + this.alerts.length) % this.alerts.length;
       this.renderCurrentAlert();

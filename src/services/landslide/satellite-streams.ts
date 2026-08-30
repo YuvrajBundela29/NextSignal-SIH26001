@@ -1,4 +1,4 @@
-// Real-Time Satellite, Wind, Thermal & Cloud Ingestion Service
+﻿// Real-Time Satellite, Wind, Thermal & Cloud Ingestion Service
 
 export interface SatelliteLayerOption {
   id: 'none' | 'viirs_truecolor' | 'clouds_ir' | 'thermal_anomalies' | 'weather_radar';
@@ -14,29 +14,29 @@ export interface SatelliteLayerOption {
 export const SATELLITE_LAYERS: SatelliteLayerOption[] = [
   {
     id: 'viirs_truecolor',
-    name: '🛰️ NASA VIIRS TrueColor Satellite',
+    name: 'NASA VIIRS TrueColor Optical Satellite',
     category: 'Clouds',
     description: 'High-resolution corrected reflectance visible satellite view from NASA Suomi NPP / NOAA-20.',
-    source: 'NASA EOSDIS GIBS (Free & Open Access)',
+    source: 'NASA EOSDIS GIBS',
     resolution: '250m / Real-Time Daily',
     url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
     opacity: 0.85,
   },
   {
     id: 'clouds_ir',
-    name: '☁️ Infrared Satellite Cloud Tops',
+    name: 'Infrared Satellite Cloud Tops & Storm Cells',
     category: 'Clouds',
     description: 'Thermal infrared cloud top brightness temperature detecting deep convective monsoonal cloud clusters.',
     source: 'NASA EOSDIS GIBS',
     resolution: '1km / Real-Time Global',
-    url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Cloud_Top_Height_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png',
+    url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_Cloud_Fraction_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png',
     opacity: 0.75,
   },
   {
     id: 'thermal_anomalies',
-    name: '🌡️ NASA MODIS Land Surface Thermal Temperature',
+    name: 'NASA MODIS Land Surface Thermal Temperature (LST)',
     category: 'Thermal',
-    description: 'Real-time land surface temperature (LST) and infrared thermal radiance mapping soil heat flux.',
+    description: 'Real-time land surface temperature and infrared thermal radiance mapping soil heat flux.',
     source: 'NASA EOSDIS MODIS Terra',
     resolution: '1km / Daily Pass',
     url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png',
@@ -44,13 +44,13 @@ export const SATELLITE_LAYERS: SatelliteLayerOption[] = [
   },
   {
     id: 'weather_radar',
-    name: '📡 NASA IMERG Live Precipitation Doppler Radar',
+    name: 'Live Doppler Precipitation Radar',
     category: 'Radar',
-    description: 'Global Precipitation Measurement (GPM) IMERG precipitation rate detecting flash rainstorms and heavy raincells.',
-    source: 'NASA GPM / RainViewer Radar',
+    description: 'Real-time Doppler precipitation rate detecting flash rainstorms and heavy convective cloudbursts.',
+    source: 'RainViewer Live Radar API',
     resolution: '500m / Live Precipitation',
-    url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png',
-    opacity: 0.80,
+    url: 'https://tilecache.rainviewer.com/v2/radar/0/512/{z}/{x}/{y}/4/1_1.png',
+    opacity: 0.85,
   },
 ];
 
@@ -66,9 +66,9 @@ export async function fetchLiveRainViewerRadarUrl(): Promise<string> {
       }
     }
   } catch (e) {
-    console.warn('[SatelliteStreams] RainViewer API fallback to NASA IMERG:', e);
+    console.warn('[SatelliteStreams] RainViewer API fallback:', e);
   }
-  return 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png';
+  return 'https://tilecache.rainviewer.com/v2/radar/0/512/{z}/{x}/{y}/4/1_1.png';
 }
 
 export interface LiveWindTelemetry {
