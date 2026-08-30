@@ -83,7 +83,7 @@ export class UnifiedSituationMap {
             <div style="display: flex; align-items: center; gap: 6px; background: #0b1120; border: 1px solid #1e293b; border-radius: 4px; padding: 2px 7px; font-size: 9px; color: #cbd5e1;">
               <span>Wind: <strong id="badge-wind-val" style="color: #38bdf8;">18 km/h</strong></span>
               <span style="color: #334155;">|</span>
-              <span>Surface: <strong id="badge-thermal-val" style="color: #f97316;">24.0°C</strong></span>
+              <span>Surface: <strong id="badge-thermal-val" style="color: #f97316;">24.0Â°C</strong></span>
               <span style="color: #334155;">|</span>
               <span>Cloud: <strong id="badge-cloud-val" style="color: #c084fc;">82%</strong></span>
             </div>
@@ -163,7 +163,7 @@ export class UnifiedSituationMap {
         <!-- Tour Active Banner -->
         <div id="tour-active-banner" style="display: none; position: absolute; top: 46px; left: 50%; transform: translateX(-50%); z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #f59e0b; border-radius: 8px; padding: 6px 16px; color: #f8fafc; text-align: center; box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); max-width: 600px;">
           <div style="font-size: 10px; font-weight: 800; color: #f59e0b; letter-spacing: 1px; margin-bottom: 2px;">
-            STR°EGIC CORRIDOR INSPECTION TOUR ACTIVE
+            STRÂ°EGIC CORRIDOR INSPECTION TOUR ACTIVE
           </div>
           <div id="tour-waypoint-title" style="font-size: 12px; font-weight: bold; color: #ffffff;">
             North Sikkim (Chungthang & Mangan)
@@ -182,7 +182,7 @@ export class UnifiedSituationMap {
         <div id="rangefinder-overlay-card" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #a855f7; border-radius: 8px; padding: 10px 16px; color: #f8fafc; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); min-width: 420px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <span style="font-size: 11px; font-weight: bold; color: #c084fc;">GEODETIC RANGEFINDER & RESCUE ETA</span>
-            <button id="btn-close-rangefinder" style="background: transparent; color: #94a3b8; border: none; font-size: 14px; cursor: pointer;">✕</button>
+            <button id="btn-close-rangefinder" style="background: transparent; color: #94a3b8; border: none; font-size: 14px; cursor: pointer;">âœ•</button>
           </div>
           <div style="display: flex; gap: 8px; margin-bottom: 8px;">
             <div style="flex: 1;">
@@ -196,7 +196,7 @@ export class UnifiedSituationMap {
           </div>
           <div id="rf-results-box" style="background: #090d16; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: 10px; display: flex; justify-content: space-between;">
             <div>
-              <div style="color: #94a3b8;">GEODETIC DIST°CE:</div>
+              <div style="color: #94a3b8;">GEODETIC DISTÂ°CE:</div>
               <strong id="rf-res-dist" style="color: #38bdf8; font-size: 13px;">-- km</strong>
             </div>
             <div>
@@ -218,7 +218,7 @@ export class UnifiedSituationMap {
         <div id="voice-command-overlay-card" style="display: none; position: absolute; top: 50px; right: 20px; z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #0284c7; border-radius: 8px; padding: 10px 16px; color: #f8fafc; box-shadow: 0 0 20px rgba(2, 132, 199, 0.4); width: 380px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <span style="font-size: 11px; font-weight: bold; color: #38bdf8;">TACTICAL VOICE DIRECTIVES CONSOLE</span>
-            <button id="btn-close-voice" style="background: transparent; color: #94a3b8; border: none; font-size: 14px; cursor: pointer;">✕</button>
+            <button id="btn-close-voice" style="background: transparent; color: #94a3b8; border: none; font-size: 14px; cursor: pointer;">âœ•</button>
           </div>
           <div style="margin-bottom: 8px; display: flex; gap: 6px;">
             <button id="btn-voice-mic-trigger" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
@@ -264,7 +264,12 @@ export class UnifiedSituationMap {
     });
 
     this.map2d = new LandslideMap('viewport-2d-map', (id) => this.onSelectDistrict(id));
-    this.globe3d = new TacticalGlobe3D('viewport-3d-globe', (id) => this.onSelectDistrict(id));
+        this.globe3d = new TacticalGlobe3D('viewport-3d-globe', (id) => this.onSelectDistrict(id));
+
+    // Ensure map tiles stretch to 100% of the viewport container on initial render
+    setTimeout(() => { this.map2d?.invalidateSize(); }, 150);
+    setTimeout(() => { this.map2d?.invalidateSize(); }, 500);
+    setTimeout(() => { this.map2d?.invalidateSize(); }, 1200);
 
     // Register Viewport Elements with Sensor Optics Manager
     const view2d = document.getElementById('viewport-2d-map');
@@ -485,7 +490,7 @@ export class UnifiedSituationMap {
     const roadEl = document.getElementById('rf-res-road');
 
     if (distEl) distEl.textContent = `${m.distanceKm} km`;
-    if (elevEl) elevEl.textContent = `Δ ${m.elevationDeltaM}m (${m.terrainGradientPct}%)`;
+    if (elevEl) elevEl.textContent = `Î” ${m.elevationDeltaM}m (${m.terrainGradientPct}%)`;
     if (heliEl) heliEl.textContent = `${m.rescueHelicopterEtaMin} min`;
     if (roadEl) roadEl.textContent = `${m.groundRescueEtaMin} min`;
   }
@@ -595,7 +600,7 @@ export class UnifiedSituationMap {
       const cloudEl = document.getElementById('badge-cloud-val');
 
       if (windEl) windEl.textContent = `${this.liveTelemetry.speedKmh} km/h`;
-      if (thermalEl) thermalEl.textContent = `${this.liveTelemetry.thermalSurfaceTempC}°C`;
+      if (thermalEl) thermalEl.textContent = `${this.liveTelemetry.thermalSurfaceTempC}Â°C`;
       if (cloudEl) cloudEl.textContent = `${this.liveTelemetry.cloudCoverTotalPct}%`;
     }
 

@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <!-- Primary Meta Tags -->
-    <title>NextSignal — AI-Powered Scenario Intelligence</title>
-    <meta name="title" content="NextSignal — AI-Powered Scenario Intelligence" />
-    <meta name="description" content="NextSignal analyzes global signals — markets, geopolitics, news, and economic data — to produce probabilistic scenarios about what could happen next. See the signals. Understand the scenarios." />
+    <title>NextSignal â€” AI-Powered Scenario Intelligence</title>
+    <meta name="title" content="NextSignal â€” AI-Powered Scenario Intelligence" />
+    <meta name="description" content="NextSignal analyzes global signals â€” markets, geopolitics, news, and economic data â€” to produce probabilistic scenarios about what could happen next. See the signals. Understand the scenarios." />
     <meta name="keywords" content="AI scenario intelligence, probabilistic scenarios, geopolitical signals, market intelligence, scenario analysis, signal detection, risk scenarios, bull bear base case, global intelligence, market signals, economic signals, OSINT, geopolitical risk" />
     <meta name="author" content="Elie Habib" />
     <meta name="robots" content="index, follow" />
@@ -18,7 +19,7 @@
 
     <!-- Additional Search Discovery -->
     <meta name="application-name" content="NextSignal" />
-    <meta name="subject" content="AI-Powered Scenario Intelligence — Signals, Scenarios, Impact Analysis" />
+    <meta name="subject" content="AI-Powered Scenario Intelligence â€” Signals, Scenarios, Impact Analysis" />
     <meta name="classification" content="AI Scenario Intelligence, Market Intelligence, Geopolitical Risk Analysis" />
     <meta name="coverage" content="Worldwide" />
     <meta name="distribution" content="Global" />
@@ -27,19 +28,19 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://nextsignal.app/dashboard" />
-    <meta property="og:title" content="NextSignal — AI-Powered Scenario Intelligence" />
-    <meta property="og:description" content="NextSignal analyzes global signals — markets, geopolitics, news, and economic data — and produces probabilistic scenarios about what could happen next. See the signals. Understand the scenarios." />
+    <meta property="og:title" content="NextSignal â€” AI-Powered Scenario Intelligence" />
+    <meta property="og:description" content="NextSignal analyzes global signals â€” markets, geopolitics, news, and economic data â€” and produces probabilistic scenarios about what could happen next. See the signals. Understand the scenarios." />
     <meta property="og:image" content="/favico/nextsignal-og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="NextSignal — AI-Powered Scenario Intelligence. See the signals. Understand the scenarios. Prepare for what's next." />
+    <meta property="og:image:alt" content="NextSignal â€” AI-Powered Scenario Intelligence. See the signals. Understand the scenarios. Prepare for what's next." />
     <meta property="og:site_name" content="NextSignal" />
     <meta property="og:locale" content="en_US" />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://nextsignal.app/dashboard" />
-    <meta name="twitter:title" content="NextSignal — AI-Powered Scenario Intelligence" />
+    <meta name="twitter:title" content="NextSignal â€” AI-Powered Scenario Intelligence" />
     <meta name="twitter:description" content="NextSignal analyzes global signals and produces probabilistic scenarios about what could happen next." />
     <meta name="twitter:image" content="/favico/nextsignal-og-image.jpg" />
 
@@ -71,12 +72,12 @@
       "featureList": [
         "AI-powered Bull/Base/Bear scenario generation",
         "Global signal detection and classification",
-        "Market radar — stocks, ETFs, crypto, commodities, FX",
+        "Market radar â€” stocks, ETFs, crypto, commodities, FX",
         "Geopolitical signal monitoring (ACLED, UCDP, CII)",
         "Economic signal tracking (FRED, IMF, World Bank)",
-        "Impact chain visualization (event → affected assets)",
+        "Impact chain visualization (event â†’ affected assets)",
         "Probabilistic scenario evidence tracking",
-        "AI explainability — traceable evidence chains",
+        "AI explainability â€” traceable evidence chains",
         "Watchlist with signal and scenario change tracking",
         "Meaningful alerts on scenario probability changes",
         "500+ curated news sources across 190+ countries",
@@ -110,7 +111,7 @@
       "name": "NextSignal",
       "alternateName": "NextSignal Intelligence",
       "url": "https://nextsignal.app/",
-      "description": "AI-Powered Scenario Intelligence — see the signals, understand the scenarios, prepare for what's next.",
+      "description": "AI-Powered Scenario Intelligence â€” see the signals, understand the scenarios, prepare for what's next.",
       "publisher": {
         "@type": "Organization",
         "name": "NextSignal",
@@ -132,7 +133,7 @@
       Umami Analytics loads from the SPA after first paint/idle (not the document
       head) so a slow/down abacus origin cannot contend with the initial dashboard
       shell. Script src, website id, and the #4183 data-domains workaround now live
-      in src/services/analytics.ts (UMAMI_DOMAINS) — the single source of truth.
+      in src/services/analytics.ts (UMAMI_DOMAINS) â€” the single source of truth.
     -->
 
     <!-- Favicons -->
@@ -241,7 +242,7 @@
       [data-theme="light"] .skeleton-panel-metric span{color:#4b5563}
       [data-theme="light"] .skeleton-line{background:linear-gradient(90deg,rgba(0,0,0,.04) 25%,rgba(0,0,0,.08) 50%,rgba(0,0,0,.04) 75%);background-size:200% 100%;animation:skel-shimmer 1.5s infinite}
 
-      /* ---------- skeleton shell (happy variant — light) ---------- */
+      /* ---------- skeleton shell (happy variant â€” light) ---------- */
       [data-variant="happy"] .skeleton-shell{background:#FAFAF5;font-family:'Nunito',system-ui,sans-serif}
       [data-variant="happy"] .skeleton-header{background:#FFFFFF;border-bottom-color:#DDD9CF}
       [data-variant="happy"] .skeleton-brand{color:#24301f}
@@ -271,7 +272,7 @@
       [data-variant="happy"] .skeleton-panel-metric span{color:#64705d}
       [data-variant="happy"] .skeleton-line{background:linear-gradient(90deg,rgba(107,143,94,.06) 25%,rgba(107,143,94,.12) 50%,rgba(107,143,94,.06) 75%);background-size:200% 100%;animation:skel-shimmer 1.5s infinite}
 
-      /* ---------- skeleton shell (happy variant — dark) ---------- */
+      /* ---------- skeleton shell (happy variant â€” dark) ---------- */
       [data-variant="happy"][data-theme="dark"] .skeleton-shell{background:#1A2332}
       [data-variant="happy"][data-theme="dark"] .skeleton-header{background:#222E3E;border-bottom-color:#344050}
       [data-variant="happy"][data-theme="dark"] .skeleton-brand{color:#F7FAF3}
@@ -320,7 +321,7 @@
         html.wm-map-collapsed .skeleton-map-body{display:none}
         /* #5159 NOTE: do NOT try to pre-paint-collapse the REAL .map-section from
            here. main.css sets its expanded height with !important inside a cascade
-           layer, and for !important declarations LAYERED beats UNLAYERED — the
+           layer, and for !important declarations LAYERED beats UNLAYERED â€” the
            inverse of the normal-declaration rule this critical CSS relies on. The
            real section is instead CREATED with .collapsed already present
            (panel-layout.ts renderLayout template), so the runtime rule applies from
@@ -336,7 +337,7 @@
 
     <!-- Preconnect: critical first-paint origins.
          api.worldmonitor.app: credentialed CORS (runtime.ts defaults
-         credentials: 'include') — must use `use-credentials` so the
+         credentials: 'include') â€” must use `use-credentials` so the
          pre-opened socket lands in the same connection pool as the
          credentialed fetches. Sentry and Clerk are deferred by their
          runtime loaders, so they intentionally do not get head preconnects. -->
@@ -348,11 +349,11 @@
     <!-- Variant/locale fonts are narrowed and loaded after the dashboard paints. -->
   </head>
   <body>
-    <h1 class="app-heading">NextSignal — AI-Powered Scenario Intelligence</h1>
+    <h1 class="app-heading">NextSignal â€” AI-Powered Scenario Intelligence</h1>
     <noscript>
       <main id="dashboard-noscript" class="dashboard-noscript">
         <h2>The live dashboard requires JavaScript</h2>
-        <p>NextSignal’s interactive map, panels, alerts, and live scenario analysis run in the browser.</p>
+        <p>NextSignalâ€™s interactive map, panels, alerts, and live scenario analysis run in the browser.</p>
       </main>
     </noscript>
     <div id="app">
@@ -404,7 +405,7 @@
     </div>
     <aside id="country-deep-dive-panel" class="country-deep-dive" aria-label="Country Intelligence" aria-hidden="true">
       <div class="country-deep-dive-shell">
-        <button id="deep-dive-close" class="panel-close" aria-label="Close">×</button>
+        <button id="deep-dive-close" class="panel-close" aria-label="Close">Ã—</button>
         <div id="deep-dive-content" class="panel-content"></div>
       </div>
     </aside>
