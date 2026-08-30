@@ -1,19 +1,29 @@
 import { LandslideMap } from './LandslideMap';
 import { TacticalGlobe3D } from './TacticalGlobe3D';
 import { HighwayNavigationModal } from './HighwayNavigationModal';
-import { fetchLiveSatelliteWindTelemetry, type LiveWindTelemetry } from '../../services/landslide/satellite-streams';
-import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
+import { TacticalHudOverlay } from './tactical-hud-overlay';
+import { sensorOpticsManager, SENSOR_OPTICS, type SensorOpticMode } from './sensor-optics';
+import { cinematicDirector, type TourWaypoint } from '../../services/landslide/cinematic-director';
+import { SpatialRangefinder, type GeodeticMeasurement } from '../../services/landslide/spatial-rangefinder';
+import { voiceCommandEngine, type TacticalCommandResult } from '../../services/landslide/voice-command-engine';
+import type {
+  DistrictProfile,
+  RiskScoreBreakdown,
+  AppLanguage,
+} from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
+import { fetchLiveSatelliteWindTelemetry, type LiveWindTelemetry } from '../../services/landslide/satellite-streams';
 
 export class UnifiedSituationMap {
   private container: HTMLElement;
+  private mode: '2d' | '3d' = '2d';
   private map2d: LandslideMap | null = null;
   private globe3d: TacticalGlobe3D | null = null;
   private navModal: HighwayNavigationModal | null = null;
-  private mode: '2d' | '3d' = '2d';
+  private hudOverlay: TacticalHudOverlay | null = null;
   private onSelectDistrict: (districtId: string) => void;
   private lang: AppLanguage = 'en';
-  private clockTimer: ReturnType<typeof setInterval> | null = null;
+  private clockTimer: any = null;
   private liveTelemetry: LiveWindTelemetry | null = null;
 
   // Cached state
@@ -24,6 +34,9 @@ export class UnifiedSituationMap {
   private showCoolr = true;
   private showSeismic = true;
   private showShelters = true;
+
+  // Rangefinder state
+  private isRangefinderActive = false;
 
   constructor(containerId: string, onSelectDistrict: (districtId: string) => void) {
     const el = document.getElementById(containerId);
@@ -40,10 +53,10 @@ export class UnifiedSituationMap {
     this.container.innerHTML = `
       <div style="display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; background: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         
-        <!-- Clean, Spacious Sub-Header Bar (No Overlapping Text) -->
-        <div style="background: #050811; border-bottom: 1px solid #1e293b; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; z-index: 500; height: 42px; min-height: 42px; box-sizing: border-box; width: 100%;">
+        <!-- Spacious Sub-Header Bar with God's Eye View Spatial Intelligence Controls -->
+        <div style="background: #050811; border-bottom: 1px solid #1e293b; padding: 0 12px; display: flex; justify-content: space-between; align-items: center; z-index: 500; height: 42px; min-height: 42px; box-sizing: border-box; width: 100%;">
           
-          <!-- Left: Live UTC Clock -->
+          <!-- Left: Live UTC Clock & Active Telemetry Pulse -->
           <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
             <div style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></div>
             <div id="unified-map-utc-clock" style="font-family: monospace; font-size: 11px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px;">
@@ -51,41 +64,86 @@ export class UnifiedSituationMap {
             </div>
           </div>
 
-          <!-- Center: Dark Styled Earth View Dropdown -->
-          <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 2px 10px; flex-shrink: 0;">
-            <span style="font-size: 10px; color: #94a3b8; margin-right: 6px; font-weight: 600;">Layer:</span>
-            <select id="sel-earth-remote-sensing" style="background: #0b1120; color: #f8fafc; border: none; font-size: 11px; font-weight: 600; outline: none; cursor: pointer; padding: 2px 0;">
-              <option value="dark" style="background: #0b1120; color: #f8fafc;" selected>🌙 Dark Tactical Ops</option>
-              <option value="satellite" style="background: #0b1120; color: #f8fafc;">🛰️ 4K Satellite Imagery</option>
-              <option value="thermal" style="background: #0b1120; color: #f8fafc;">🔥 Live Thermal Earth Temp</option>
-              <option value="clouds" style="background: #0b1120; color: #f8fafc;">☁️ Live Satellite Clouds</option>
-              <option value="radar" style="background: #0b1120; color: #f8fafc;">🌧️ Live Weather Doppler Radar</option>
-              <option value="topo" style="background: #0b1120; color: #f8fafc;">🏔️ Topo Relief</option>
-              <option value="opentopo" style="background: #0b1120; color: #f8fafc;">🌲 OpenTopo Contours</option>
-            </select>
+          <!-- Center: Sensor Optics Switcher & Earth Layers -->
+          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+            
+            <!-- Sensor Optics Switcher (FLIR / NVG / CRT / Noir / Natural) -->
+            <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #0284c7; border-radius: 6px; padding: 2px 8px;">
+              <span style="font-size: 10px; color: #38bdf8; margin-right: 4px; font-weight: bold;">🎨 Optic:</span>
+              <select id="sel-sensor-optics" style="background: #0b1120; color: #f8fafc; border: none; font-size: 11px; font-weight: 700; outline: none; cursor: pointer; padding: 2px 0;">
+                <option value="natural" selected>🛰️ Natural RGB [1]</option>
+                <option value="flir">🔥 Ironbow FLIR Thermal [2]</option>
+                <option value="nvg">🟢 Night Vision (NVG) [3]</option>
+                <option value="crt">📟 CRT Scanline [4]</option>
+                <option value="noir">🌑 Recon Noir [5]</option>
+                <option value="arctic">❄️ Arctic / Rock Scar [6]</option>
+              </select>
+            </div>
+
+            <!-- Earth Remote Sensing Layer -->
+            <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px;">
+              <span style="font-size: 10px; color: #94a3b8; margin-right: 4px; font-weight: 600;">Layer:</span>
+              <select id="sel-earth-remote-sensing" style="background: #0b1120; color: #f8fafc; border: none; font-size: 11px; font-weight: 600; outline: none; cursor: pointer; padding: 2px 0;">
+                <option value="dark" selected>🌑 Dark Tactical Ops</option>
+                <option value="satellite">🛰️ 4K Satellite Imagery</option>
+                <option value="thermal">🌡️ Live Thermal Earth Temp</option>
+                <option value="clouds">☁️ Live Satellite Clouds</option>
+                <option value="radar">📡 Live Weather Doppler Radar</option>
+                <option value="topo">⛰️ Topo Relief</option>
+                <option value="opentopo">🗺️ OpenTopo Contours</option>
+              </select>
+            </div>
           </div>
 
-          <!-- Right: Highway Routes Button, 2D/3D Mode Switcher & Fullscreen -->
-          <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+          <!-- Right: God's Eye View Spatial Tools (Tour, Rangefinder, Voice, HUD, Mode, Fullscreen) -->
+          <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
             
+            <!-- Cinematic Corridor Tour Button -->
+            <button id="btn-cinematic-tour" style="background: #0b1120; color: #f59e0b; border: 1px solid #d97706; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Start Cinematic Strategic Corridor Inspection Tour">
+              <span>🎥</span>
+              <span id="label-tour-status">Tour</span>
+            </button>
+
+            <!-- Geodetic Rangefinder Button -->
+            <button id="btn-rangefinder-tool" style="background: #0b1120; color: #a855f7; border: 1px solid #7c3aed; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Geodetic Distance & Rescue ETA Rangefinder">
+              <span>📏</span>
+              <span>Rangefinder</span>
+            </button>
+
+            <!-- Tactical Voice / Text Command Console -->
+            <button id="btn-tactical-voice" style="background: #0b1120; color: #38bdf8; border: 1px solid #0284c7; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Speak or Type Tactical Directives">
+              <span>🎙️</span>
+              <span id="label-voice-status">Voice</span>
+            </button>
+
+            <!-- Military HUD Toggle Button -->
+            <button id="btn-toggle-hud" style="background: #0284c7; color: #ffffff; border: 1px solid #38bdf8; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; cursor: pointer;" title="Toggle Military Tactical HUD (Key H)">
+              🎖️ HUD [H]
+            </button>
+
+            <!-- Target Detection Mesh Toggle Button -->
+            <button id="btn-toggle-detection" style="background: #0284c7; color: #ffffff; border: 1px solid #38bdf8; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; cursor: pointer;" title="Toggle Screen-Space Target Detection Brackets (Key D)">
+              🟩 Target [D]
+            </button>
+
             <!-- Route Navigator Button -->
-            <button id="btn-open-route-nav" style="background: #0b1120; color: #38bdf8; border: 1px solid #0284c7; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Open Highway Waypoint Navigator">
+            <button id="btn-open-route-nav" style="background: #0b1120; color: #38bdf8; border: 1px solid #334155; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 3px;" title="Open Highway Waypoint Navigator">
               <span>🧭</span>
-              <span>Highway Routes</span>
+              <span>Highways</span>
             </button>
 
             <!-- Mode Switcher [ 2D | 3D ] With Wide Touch Area -->
             <div style="display: flex; background: #0b1120; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
-              <button id="btn-switch-2d" style="padding: 4px 14px; min-width: 44px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
+              <button id="btn-switch-2d" style="padding: 3px 10px; font-size: 10px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '2d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
                 2D
               </button>
-              <button id="btn-switch-3d" style="padding: 4px 14px; min-width: 44px; font-size: 11px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
+              <button id="btn-switch-3d" style="padding: 3px 10px; font-size: 10px; font-weight: 800; cursor: pointer; border: none; background: ${this.mode === '3d' ? '#10b981' : 'transparent'}; color: white; transition: background 0.15s ease;">
                 3D
               </button>
             </div>
 
             <!-- Fullscreen Button -->
-            <button id="btn-unified-fullscreen" style="background: #0b1120; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer;" title="Toggle Fullscreen">
+            <button id="btn-unified-fullscreen" style="background: #0b1120; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 3px 6px; font-size: 10px; cursor: pointer;" title="Toggle Fullscreen">
               ⛶
             </button>
           </div>
@@ -99,7 +157,7 @@ export class UnifiedSituationMap {
           </div>
           <div style="width: 1px; height: 12px; background: #334155;"></div>
           <div style="display: flex; align-items: center; gap: 4px;">
-            <span style="color: #f97316;">🔥 Thermal:</span>
+            <span style="color: #f97316;">🌡️ Thermal:</span>
             <strong id="badge-thermal-val">24.2°C</strong>
           </div>
           <div style="width: 1px; height: 12px; background: #334155;"></div>
@@ -109,8 +167,81 @@ export class UnifiedSituationMap {
           </div>
         </div>
 
-        <!-- Map Viewports (100% Height) -->
-        <div style="flex: 1; width: 100%; height: calc(100% - 42px); position: relative; overflow: hidden; background: #000000;">
+        <!-- Cinematic Tour Active Banner (Hidden by Default) -->
+        <div id="tour-active-banner" style="display: none; position: absolute; top: 50px; left: 50%; transform: translateX(-50%); z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #f59e0b; border-radius: 8px; padding: 6px 16px; color: #f8fafc; text-align: center; box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); max-width: 600px;">
+          <div style="font-size: 10px; font-weight: 800; color: #f59e0b; letter-spacing: 1px; margin-bottom: 2px;">
+            🎥 CINEMATIC CORRIDOR INSPECTION TOUR ACTIVE
+          </div>
+          <div id="tour-waypoint-title" style="font-size: 13px; font-weight: bold; color: #ffffff;">
+            North Sikkim (Chungthang & Mangan)
+          </div>
+          <div id="tour-waypoint-briefing" style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+            Active moraine dam monitoring along Teesta Basin Stage-III following glacial lake outburst surges.
+          </div>
+          <div style="margin-top: 6px; display: flex; justify-content: center; gap: 8px;">
+            <button id="btn-tour-prev" style="background: #1e293b; color: white; border: 1px solid #475569; border-radius: 4px; padding: 2px 8px; font-size: 9px; cursor: pointer;">◀ Prev</button>
+            <button id="btn-tour-next" style="background: #1e293b; color: white; border: 1px solid #475569; border-radius: 4px; padding: 2px 8px; font-size: 9px; cursor: pointer;">Next ▶</button>
+            <button id="btn-tour-stop" style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 2px 8px; font-size: 9px; font-weight: bold; cursor: pointer;">Stop Tour ✕</button>
+          </div>
+        </div>
+
+        <!-- Rangefinder Modal / Overlay (Hidden by default) -->
+        <div id="rangefinder-overlay-card" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #a855f7; border-radius: 8px; padding: 10px 16px; color: #f8fafc; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); min-width: 420px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: bold; color: #c084fc;">📏 GEODETIC RANGEFINDER & RESCUE ETA</span>
+            <button id="btn-close-rangefinder" style="background: transparent; color: #94a3b8; border: none; font-size: 14px; cursor: pointer;">✕</button>
+          </div>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <div style="flex: 1;">
+              <span style="font-size: 9px; color: #94a3b8;">ORIGIN:</span>
+              <select id="sel-rf-origin" style="width: 100%; background: #0b1120; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; font-size: 10px; padding: 3px;"></select>
+            </div>
+            <div style="flex: 1;">
+              <span style="font-size: 9px; color: #94a3b8;">DESTINATION:</span>
+              <select id="sel-rf-dest" style="width: 100%; background: #0b1120; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; font-size: 10px; padding: 3px;"></select>
+            </div>
+          </div>
+          <div id="rf-results-box" style="background: #090d16; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: 10px; display: flex; justify-content: space-between;">
+            <div>
+              <div style="color: #94a3b8;">GEODETIC DISTANCE:</div>
+              <strong id="rf-res-dist" style="color: #38bdf8; font-size: 13px;">-- km</strong>
+            </div>
+            <div>
+              <div style="color: #94a3b8;">ELEVATION DELTA:</div>
+              <strong id="rf-res-elev" style="color: #f59e0b; font-size: 13px;">-- m</strong>
+            </div>
+            <div>
+              <div style="color: #94a3b8;">IAF RESCUE CHOPPER:</div>
+              <strong id="rf-res-heli" style="color: #22c55e; font-size: 13px;">-- min</strong>
+            </div>
+            <div>
+              <div style="color: #94a3b8;">GROUND 4x4 QRV:</div>
+              <strong id="rf-res-road" style="color: #e2e8f0; font-size: 13px;">-- min</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tactical Voice & Directives Modal (Hidden by default) -->
+        <div id="voice-command-overlay-card" style="display: none; position: absolute; top: 50px; right: 20px; z-index: 480; background: rgba(15, 23, 42, 0.95); border: 1px solid #0284c7; border-radius: 8px; padding: 10px 14px; color: #f8fafc; box-shadow: 0 0 20px rgba(2, 132, 199, 0.4); width: 340px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: bold; color: #38bdf8;">🎙️ TACTICAL VOICE & DIRECTIVES CONSOLE</span>
+            <button id="btn-close-voice" style="background: transparent; color: #94a3b8; border: none; font-size: 14px; cursor: pointer;">✕</button>
+          </div>
+          <div style="margin-bottom: 8px; display: flex; gap: 6px;">
+            <button id="btn-voice-mic-trigger" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <span>🎤</span>
+              <span id="voice-mic-label">Speak Directive</span>
+            </button>
+            <input id="input-voice-text" type="text" placeholder="Or type e.g. 'Switch to FLIR', 'Inspect Sikkim'..." style="flex: 1; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; color: #f8fafc; font-size: 10px; outline: none;" />
+            <button id="btn-voice-send" style="background: #0284c7; color: white; border: none; border-radius: 6px; padding: 4px 8px; font-size: 10px; font-weight: bold; cursor: pointer;">Run</button>
+          </div>
+          <div id="voice-response-log" style="background: #090d16; border: 1px solid #334155; border-radius: 6px; padding: 6px 8px; font-family: monospace; font-size: 9px; color: #38bdf8; min-height: 38px;">
+            Awaiting voice or typed command... Try: "Switch to FLIR", "Inspect Sikkim", "Toggle HUD", "Start tour", "Download report".
+          </div>
+        </div>
+
+        <!-- Map Viewports & Tactical HUD Container (100% Height) -->
+        <div id="viewport-stage-container" style="flex: 1; width: 100%; height: calc(100% - 42px); position: relative; overflow: hidden; background: #000000;">
           <!-- 2D Leaflet Tactical Map (Pitch Black) -->
           <div id="viewport-2d-map" style="width: 100%; height: 100%; display: ${this.mode === '2d' ? 'block' : 'none'};"></div>
 
@@ -152,11 +283,38 @@ export class UnifiedSituationMap {
     this.map2d = new LandslideMap('viewport-2d-map', (id) => this.onSelectDistrict(id));
     this.globe3d = new TacticalGlobe3D('viewport-3d-globe', (id) => this.onSelectDistrict(id));
 
-    // Bind Controls
-    const btn2d = document.getElementById('btn-switch-2d');
-    const btn3d = document.getElementById('btn-switch-3d');
+    // Register Viewport Elements with Sensor Optics Manager
     const view2d = document.getElementById('viewport-2d-map');
     const view3d = document.getElementById('viewport-3d-globe');
+    if (view2d) sensorOpticsManager.registerTarget(view2d);
+    if (view3d) sensorOpticsManager.registerTarget(view3d);
+
+    // Initialize Military Tactical HUD Overlay
+    this.hudOverlay = new TacticalHudOverlay('viewport-stage-container');
+
+    // Bind Sensor Optics Dropdown
+    const selOptics = document.getElementById('sel-sensor-optics') as HTMLSelectElement;
+    selOptics?.addEventListener('change', () => {
+      sensorOpticsManager.setMode(selOptics.value as SensorOpticMode);
+    });
+
+    // Update Dropdown on Keyboard Shortcut Switch (1-6)
+    sensorOpticsManager.onModeChange((mode) => {
+      if (selOptics) selOptics.value = mode;
+    });
+
+    // Bind HUD and Target Detection Buttons
+    document.getElementById('btn-toggle-hud')?.addEventListener('click', () => {
+      this.hudOverlay?.toggleHud();
+    });
+
+    document.getElementById('btn-toggle-detection')?.addEventListener('click', () => {
+      this.hudOverlay?.toggleDetectionMesh();
+    });
+
+    // Bind 2D / 3D Switchers
+    const btn2d = document.getElementById('btn-switch-2d');
+    const btn3d = document.getElementById('btn-switch-3d');
 
     btn2d?.addEventListener('click', () => {
       this.mode = '2d';
@@ -204,6 +362,15 @@ export class UnifiedSituationMap {
       this.navModal?.open();
     });
 
+    // Cinematic Corridor Tour Binds
+    this.bindCinematicTourEvents();
+
+    // Rangefinder Binds
+    this.bindRangefinderEvents();
+
+    // Voice & Directives Console Binds
+    this.bindVoiceConsoleEvents();
+
     // Fullscreen Toggle
     const btnFullscreen = document.getElementById('btn-unified-fullscreen');
     btnFullscreen?.addEventListener('click', () => {
@@ -211,6 +378,186 @@ export class UnifiedSituationMap {
         void document.documentElement.requestFullscreen();
       } else {
         void document.exitFullscreen();
+      }
+    });
+  }
+
+  private bindCinematicTourEvents() {
+    const btnTour = document.getElementById('btn-cinematic-tour');
+    const banner = document.getElementById('tour-active-banner');
+    const titleEl = document.getElementById('tour-waypoint-title');
+    const briefingEl = document.getElementById('tour-waypoint-briefing');
+
+    const updateWaypointDisplay = (wp: TourWaypoint) => {
+      if (titleEl) titleEl.textContent = `${wp.name} [${wp.state.toUpperCase()}]`;
+      if (briefingEl) briefingEl.textContent = `${wp.briefing} // ${wp.threatMatrix}`;
+
+      if (this.mode === '2d') {
+        this.map2d?.flyToDistrict(wp.lat, wp.lon, wp.zoom);
+      } else {
+        this.globe3d?.orientToCoordinates(wp.lat, wp.lon, 0.7);
+      }
+    };
+
+    btnTour?.addEventListener('click', () => {
+      if (cinematicDirector.isTourActive()) {
+        cinematicDirector.stopTour();
+        if (banner) banner.style.display = 'none';
+        if (btnTour) btnTour.style.background = '#0b1120';
+      } else {
+        if (banner) banner.style.display = 'block';
+        if (btnTour) btnTour.style.background = '#d97706';
+        cinematicDirector.startTour(updateWaypointDisplay);
+      }
+    });
+
+    document.getElementById('btn-tour-next')?.addEventListener('click', () => cinematicDirector.next());
+    document.getElementById('btn-tour-prev')?.addEventListener('click', () => cinematicDirector.prev());
+    document.getElementById('btn-tour-stop')?.addEventListener('click', () => {
+      cinematicDirector.stopTour();
+      if (banner) banner.style.display = 'none';
+      if (btnTour) btnTour.style.background = '#0b1120';
+    });
+  }
+
+  private bindRangefinderEvents() {
+    const btnRf = document.getElementById('btn-rangefinder-tool');
+    const overlay = document.getElementById('rangefinder-overlay-card');
+    const btnClose = document.getElementById('btn-close-rangefinder');
+    const selOrigin = document.getElementById('sel-rf-origin') as HTMLSelectElement;
+    const selDest = document.getElementById('sel-rf-dest') as HTMLSelectElement;
+
+    btnRf?.addEventListener('click', () => {
+      this.isRangefinderActive = !this.isRangefinderActive;
+      if (overlay) overlay.style.display = this.isRangefinderActive ? 'block' : 'none';
+      if (this.isRangefinderActive) this.populateRangefinderSelects();
+    });
+
+    btnClose?.addEventListener('click', () => {
+      this.isRangefinderActive = false;
+      if (overlay) overlay.style.display = 'none';
+    });
+
+    selOrigin?.addEventListener('change', () => this.computeRangefinderMeasurement());
+    selDest?.addEventListener('change', () => this.computeRangefinderMeasurement());
+  }
+
+  private populateRangefinderSelects() {
+    const selOrigin = document.getElementById('sel-rf-origin') as HTMLSelectElement;
+    const selDest = document.getElementById('sel-rf-dest') as HTMLSelectElement;
+    if (!selOrigin || !selDest || this.districts.length === 0) return;
+
+    selOrigin.innerHTML = this.districts
+      .map(d => `<option value="${d.id}" ${d.id === this.selectedDistrictId ? 'selected' : ''}>${d.name} (${d.state})</option>`)
+      .join('');
+
+    const destDefault = this.districts.find(d => d.id !== this.selectedDistrictId) || this.districts[0];
+    selDest.innerHTML = this.districts
+      .map(d => `<option value="${d.id}" ${d.id === destDefault.id ? 'selected' : ''}>${d.name} (${d.state})</option>`)
+      .join('');
+
+    this.computeRangefinderMeasurement();
+  }
+
+  private computeRangefinderMeasurement() {
+    const selOrigin = document.getElementById('sel-rf-origin') as HTMLSelectElement;
+    const selDest = document.getElementById('sel-rf-dest') as HTMLSelectElement;
+    if (!selOrigin || !selDest) return;
+
+    const d1 = this.districts.find(d => d.id === selOrigin.value);
+    const d2 = this.districts.find(d => d.id === selDest.value);
+    if (!d1 || !d2) return;
+
+    const m = SpatialRangefinder.measureCorridor(d1, d2);
+    const distEl = document.getElementById('rf-res-dist');
+    const elevEl = document.getElementById('rf-res-elev');
+    const heliEl = document.getElementById('rf-res-heli');
+    const roadEl = document.getElementById('rf-res-road');
+
+    if (distEl) distEl.textContent = `${m.distanceKm} km`;
+    if (elevEl) elevEl.textContent = `Δ ${m.elevationDeltaM}m (${m.terrainGradientPct}%)`;
+    if (heliEl) heliEl.textContent = `${m.rescueHelicopterEtaMin} min`;
+    if (roadEl) roadEl.textContent = `${m.groundRescueEtaMin} min`;
+  }
+
+  private bindVoiceConsoleEvents() {
+    const btnVoice = document.getElementById('btn-tactical-voice');
+    const overlay = document.getElementById('voice-command-overlay-card');
+    const btnClose = document.getElementById('btn-close-voice');
+    const btnMic = document.getElementById('btn-voice-mic-trigger');
+    const micLabel = document.getElementById('voice-mic-label');
+    const input = document.getElementById('input-voice-text') as HTMLInputElement;
+    const btnSend = document.getElementById('btn-voice-send');
+    const log = document.getElementById('voice-response-log');
+
+    btnVoice?.addEventListener('click', () => {
+      const isVisible = overlay?.style.display === 'block';
+      if (overlay) overlay.style.display = isVisible ? 'none' : 'block';
+    });
+
+    btnClose?.addEventListener('click', () => {
+      if (overlay) overlay.style.display = 'none';
+    });
+
+    const executeCommand = (cmd: TacticalCommandResult) => {
+      if (log) log.textContent = `[COMMAND RECEIVED]: ${cmd.actionSummary}`;
+
+      switch (cmd.intent) {
+        case 'OPTICS_FLIR': sensorOpticsManager.setMode('flir'); break;
+        case 'OPTICS_NVG': sensorOpticsManager.setMode('nvg'); break;
+        case 'OPTICS_CRT': sensorOpticsManager.setMode('crt'); break;
+        case 'OPTICS_NOIR': sensorOpticsManager.setMode('noir'); break;
+        case 'OPTICS_NATURAL': sensorOpticsManager.setMode('natural'); break;
+        case 'TOGGLE_HUD': this.hudOverlay?.toggleHud(); break;
+        case 'TOGGLE_DETECTION': this.hudOverlay?.toggleDetectionMesh(); break;
+        case 'CINEMATIC_TOUR': document.getElementById('btn-cinematic-tour')?.click(); break;
+        case 'DOWNLOAD_SITREP': document.getElementById('btn-download-sitrep')?.click(); break;
+        case 'NAV_SIKKIM':
+          const dSikkim = this.districts.find(d => d.id === 'sk_mangan');
+          if (dSikkim) this.flyToDistrict(dSikkim);
+          break;
+        case 'NAV_ASSAM':
+          const dAssam = this.districts.find(d => d.id === 'as_dima_hasao');
+          if (dAssam) this.flyToDistrict(dAssam);
+          break;
+        case 'NAV_MANIPUR':
+          const dManipur = this.districts.find(d => d.id === 'mn_noney');
+          if (dManipur) this.flyToDistrict(dManipur);
+          break;
+        case 'NAV_MEGHALAYA':
+          const dMegh = this.districts.find(d => d.id === 'ml_east_khasi');
+          if (dMegh) this.flyToDistrict(dMegh);
+          break;
+        case 'NAV_ARUNACHAL':
+          const dArun = this.districts.find(d => d.id === 'ar_papum_pare');
+          if (dArun) this.flyToDistrict(dArun);
+          break;
+      }
+    };
+
+    btnMic?.addEventListener('click', () => {
+      voiceCommandEngine.startListening(
+        (res) => executeCommand(res),
+        (isListening) => {
+          if (micLabel) micLabel.textContent = isListening ? 'Listening...' : 'Speak Directive';
+          if (btnMic) btnMic.style.background = isListening ? '#10b981' : '#ef4444';
+        }
+      );
+    });
+
+    btnSend?.addEventListener('click', () => {
+      if (input && input.value.trim()) {
+        const res = voiceCommandEngine.executeTextCommand(input.value.trim());
+        executeCommand(res);
+        input.value = '';
+      }
+    });
+
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && input.value.trim()) {
+        const res = voiceCommandEngine.executeTextCommand(input.value.trim());
+        executeCommand(res);
+        input.value = '';
       }
     });
   }
@@ -225,6 +572,12 @@ export class UnifiedSituationMap {
       if (windEl) windEl.textContent = `${this.liveTelemetry.speedKmh} km/h ${this.liveTelemetry.directionCardinal}`;
       if (thermalEl) thermalEl.textContent = `${this.liveTelemetry.thermalSurfaceTempC}°C`;
       if (cloudEl) cloudEl.textContent = `${this.liveTelemetry.cloudCoverTotalPct}%`;
+    }
+
+    // Update HUD Telemetry
+    const risk = this.riskMap.get(d.id);
+    if (risk) {
+      this.hudOverlay?.updateTelemetry(d, risk);
     }
   }
 
@@ -244,6 +597,12 @@ export class UnifiedSituationMap {
     this.riskMap = riskMap;
     this.selectedDistrictId = selectedDistrictId;
     this.quakes = quakes;
+
+    const currentD = this.districts.find(d => d.id === selectedDistrictId);
+    const currentR = riskMap.get(selectedDistrictId);
+    if (currentD && currentR) {
+      this.hudOverlay?.updateTelemetry(currentD, currentR);
+    }
 
     this.syncData();
   }
@@ -277,6 +636,8 @@ export class UnifiedSituationMap {
 
   public destroy() {
     if (this.clockTimer) clearInterval(this.clockTimer);
+    cinematicDirector.stopTour();
+    voiceCommandEngine.stopListening();
     this.globe3d?.destroy();
   }
 }
