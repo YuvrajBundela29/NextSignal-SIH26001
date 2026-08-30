@@ -1,4 +1,4 @@
-﻿import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import type { OutputBundle } from 'rollup';
 import { resolve, dirname, extname } from 'path';
@@ -835,7 +835,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       htmlVariantPlugin(activeMeta, activeVariant, isDesktopBuild),
-      !isDesktopBuild && dashboardHtmlOutputPlugin(),
+      // !isDesktopBuild && dashboardHtmlOutputPlugin(),
       // Variant subdomain SEO pages only make sense on the web deployment,
       // which is always the 'full' build (variant selection is runtime by
       // hostname). Desktop and dedicated VITE_VARIANT builds skip it.
