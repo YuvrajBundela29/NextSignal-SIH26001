@@ -1,5 +1,4 @@
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
@@ -8,15 +7,13 @@ import { NER_RIVER_GAUGES } from '../../services/landslide/river-gauges';
 
 export class LandslideMap {
   private map: L.Map | null = null;
-  private baseLayers: Record<string, L.LayerGroup> = {};
-  private currentBaseLayer: L.LayerGroup | null = null;
-  
-  // Overlays
   private districtLayer: L.LayerGroup | null = null;
   private coolrLayer: L.LayerGroup | null = null;
   private seismicLayer: L.LayerGroup | null = null;
   private shelterLayer: L.LayerGroup | null = null;
   private gaugeLayer: L.LayerGroup | null = null;
+  private baseLayers: Record<string, L.LayerGroup> = {};
+  private currentBaseLayer: L.LayerGroup | null = null;
 
   // Remote Sensing Satellite & Earth Observation Layers
   private satLayers: Record<string, L.TileLayer> = {};
@@ -24,25 +21,23 @@ export class LandslideMap {
   private onSelectDistrict: (districtId: string) => void;
   private lang: AppLanguage = 'en';
 
-  constructor(
-    containerId: string,
-    onSelectDistrict: (districtId: string) => void
-  ) {
+  constructor(containerId: string, onSelectDistrict: (districtId: string) => void) {
     this.onSelectDistrict = onSelectDistrict;
     this.initMap(containerId);
   }
 
   private initMap(containerId: string) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
+    const el = document.getElementById(containerId);
+    if (!el) throw new Error(`Map container #${containerId} not found`);
 
-    // Centered squarely on Northeast India (NER)
+    // Center on Northeast Region (Sikkim, Assam, Meghalaya, Arunachal, Nagaland, Manipur, Mizoram, Tripura)
     this.map = L.map(containerId, {
-      center: [26.0, 92.9],
+      center: [26.0, 92.8],
       zoom: 7,
-      minZoom: 4,
-      maxZoom: 19,
       zoomControl: false,
+      attributionControl: true,
+      minZoom: 4,
+      maxZoom: 18,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
@@ -94,31 +89,31 @@ export class LandslideMap {
     this.currentBaseLayer = darkGroup;
     this.currentBaseLayer.addTo(this.map);
 
-    // Live Earth Remote Sensing Layers (NASA IMERG Doppler + MODIS Thermal + VIIRS Clouds)
+    // Live Earth Remote Sensing Layers (Seamless Indian Subcontinent & Northeast Coverage)
     this.satLayers = {
-      thermal_anomalies: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', {
-        opacity: 0.80,
-        maxNativeZoom: 7,
+      thermal_anomalies: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/AIRS_L2_Surface_Air_Temperature_Daily_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+        opacity: 0.78,
+        maxNativeZoom: 6,
         maxZoom: 19,
-        attribution: '&copy; NASA MODIS Real-Time Land Surface Thermal Radiance',
+        attribution: '&copy; NASA AIRS Live Land Surface Thermal Temperature Grid',
       }),
-      viirs_truecolor: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
+      viirs_truecolor: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg', {
         opacity: 0.85,
-        maxNativeZoom: 9,
+        maxNativeZoom: 8,
         maxZoom: 19,
-        attribution: '&copy; NASA EOSDIS VIIRS Satellite',
+        attribution: '&copy; NASA EOSDIS VIIRS TrueColor Satellite',
       }),
-      clouds_ir: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Cloud_Top_Height_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
-        opacity: 0.70,
+      clouds_ir: L.tileLayer('https://tilecache.rainviewer.com/v2/satellite/nowcast_0/512/{z}/{x}/{y}/0/1_1.png', {
+        opacity: 0.75,
         maxNativeZoom: 6,
         maxZoom: 19,
-        attribution: '&copy; NASA EOSDIS Infrared Cloud Tops',
+        attribution: '&copy; RainViewer / EUMETSAT Live Infrared Satellite Cloud Radar',
       }),
-      weather_radar: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      weather_radar: L.tileLayer('https://tilecache.rainviewer.com/v2/radar/nowcast_0/512/{z}/{x}/{y}/2/1_1.png', {
         opacity: 0.80,
         maxNativeZoom: 6,
         maxZoom: 19,
-        attribution: '&copy; NASA GPM / IMERG Live Precipitation Doppler Radar',
+        attribution: '&copy; Live Meteorological Doppler Precipitation Radar',
       }),
     };
 
@@ -163,7 +158,7 @@ export class LandslideMap {
         <div style="font-family: system-ui, sans-serif; font-size: 11px; color: #fff; min-width: 150px;">
           <strong style="color: #38bdf8;">🌊 ${g.stationName}</strong><br/>
           <span style="color: #cbd5e1;">River: ${g.riverName}</span><br/>
-          <span>Current Level: <strong>${g.currentLevelM}m</strong> (${g.trend === 'RISING' ? '▲ Rising' : '▬ Steady'})</span><br/>
+          <span>Current Level: <strong>${g.currentLevelM}m</strong> (${g.trend === 'RISING' ? '▲ Rising' : '━ Steady'})</span><br/>
           <span style="color: ${isHighRisk ? '#ef4444' : '#34d399'}; font-weight: bold;">GLOF / Flash Flood Risk: ${g.glofRisk}</span>
         </div>
       `, { direction: 'top', offset: [0, -6] });
@@ -188,7 +183,7 @@ export class LandslideMap {
 
       marker.bindTooltip(`
         <div style="font-family: system-ui, sans-serif; font-size: 11px; color: #fff;">
-          <strong style="color: #34d399;">🛡️ ${s.name}</strong><br/>
+          <strong style="color: #34d399;">🏥 ${s.name}</strong><br/>
           <span style="color: #94a3b8;">${s.type} &bull; ${s.elevationM}m MSL</span><br/>
           <span>Capacity: <strong>${s.capacityPersons} persons</strong></span><br/>
           <span style="color: #38bdf8;">DEOC Emergency: ${s.contactNumber}</span>

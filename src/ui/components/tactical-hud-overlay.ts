@@ -22,7 +22,7 @@ export class TacticalHudOverlay {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 12px;
+      padding: 10px;
       box-sizing: border-box;
       font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
     `;
@@ -100,12 +100,12 @@ export class TacticalHudOverlay {
 
   private render() {
     this.container.innerHTML = `
-      <!-- Top Tactical HUD Bar -->
+      <!-- Top Tactical HUD Bar (Cleanly Placed on Top Left & Top Right) -->
       <div id="hud-elements-group" style="display: ${this.isHudVisible ? 'block' : 'none'}; width: 100%;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           
           <!-- Top Left: Targeting Lock & Reticle Status -->
-          <div style="background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 12px; font-size: 10px; color: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
+          <div style="background: rgba(3, 7, 18, 0.90); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 6px 12px; font-size: 10px; color: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
               <span style="color: #ef4444; animation: pulse-red 1s infinite;">⦿ TARGET LOCK:</span>
               <strong id="hud-target-name" style="color: #38bdf8;">DIMA HASAO [ASSAM]</strong>
@@ -121,8 +121,8 @@ export class TacticalHudOverlay {
             </div>
           </div>
 
-          <!-- Top Right: Optics Mode & Heading Compass -->
-          <div style="background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 12px; font-size: 10px; color: #f8fafc; text-align: right;">
+          <!-- Top Right: Sensor Optic Badge & Heading Compass -->
+          <div style="background: rgba(3, 7, 18, 0.90); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 6px 12px; font-size: 10px; color: #f8fafc; text-align: right;">
             <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
               <span style="color: #94a3b8;">SENSOR OPTIC:</span>
               <span id="hud-optic-mode-badge" style="background: #0284c7; color: white; padding: 1px 6px; border-radius: 3px; font-weight: bold;">
@@ -149,20 +149,20 @@ export class TacticalHudOverlay {
         </div>
 
         <!-- Corner Viewport Brackets -->
-        <div style="position: absolute; top: 20px; left: 20px; width: 30px; height: 30px; border-top: 2px solid rgba(56,189,248,0.4); border-left: 2px solid rgba(56,189,248,0.4);"></div>
-        <div style="position: absolute; top: 20px; right: 20px; width: 30px; height: 30px; border-top: 2px solid rgba(56,189,248,0.4); border-right: 2px solid rgba(56,189,248,0.4);"></div>
-        <div style="position: absolute; bottom: 40px; left: 20px; width: 30px; height: 30px; border-bottom: 2px solid rgba(56,189,248,0.4); border-left: 2px solid rgba(56,189,248,0.4);"></div>
-        <div style="position: absolute; bottom: 40px; right: 20px; width: 30px; height: 30px; border-bottom: 2px solid rgba(56,189,248,0.4); border-right: 2px solid rgba(56,189,248,0.4);"></div>
+        <div style="position: absolute; top: 12px; left: 12px; width: 24px; height: 24px; border-top: 2px solid rgba(56,189,248,0.4); border-left: 2px solid rgba(56,189,248,0.4);"></div>
+        <div style="position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-top: 2px solid rgba(56,189,248,0.4); border-right: 2px solid rgba(56,189,248,0.4);"></div>
+        <div style="position: absolute; bottom: 12px; left: 12px; width: 24px; height: 24px; border-bottom: 2px solid rgba(56,189,248,0.4); border-left: 2px solid rgba(56,189,248,0.4);"></div>
+        <div style="position: absolute; bottom: 12px; right: 12px; width: 24px; height: 24px; border-bottom: 2px solid rgba(56,189,248,0.4); border-right: 2px solid rgba(56,189,248,0.4);"></div>
       </div>
 
-      <!-- Bottom Tactical AI Intel Summary -->
-      <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-end;">
-        <div style="background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 4px 10px; font-size: 9px; color: #f8fafc; display: flex; align-items: center; gap: 8px;">
+      <!-- Bottom Tactical AI Intel Summary & Hotkey Reference (Positioned on the Right to avoid Map Legend) -->
+      <div style="width: 100%; display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px;">
+        <div style="background: rgba(3, 7, 18, 0.90); backdrop-filter: blur(8px); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 6px; padding: 4px 10px; font-size: 9px; color: #f8fafc; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
           <span style="color: #38bdf8; font-weight: bold;">🛰️ GEOINT AI:</span>
           <span id="hud-ai-intel-summary" style="color: #cbd5e1;">MONITORING 28 MOUNTAIN CORRIDORS &bull; SATELLITE TELEMETRY SYNCHRONIZED</span>
         </div>
 
-        <div style="background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 6px; padding: 3px 8px; font-size: 8px; color: #94a3b8;">
+        <div style="background: rgba(3, 7, 18, 0.90); backdrop-filter: blur(8px); border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 8px; color: #94a3b8;">
           HOTKEYS: <strong>[1-6]</strong> Optics &bull; <strong>[H]</strong> HUD &bull; <strong>[D]</strong> Detection
         </div>
       </div>

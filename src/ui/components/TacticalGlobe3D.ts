@@ -49,38 +49,38 @@ export class TacticalGlobe3D {
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
 
-    // Create Globe with photorealistic Earth texture & Fresnel atmosphere matching NextSignal Sentinel
+    // Create Globe with photorealistic Earth texture & Fresnel atmosphere matching God's Eye View
     this.globe = new (Globe as any)(this.container, { animateIn: true })
       .globeImageUrl('/textures/earth-blue-marble.jpg')
       .bumpImageUrl('/textures/earth-topo-bathy.jpg')
       .backgroundImageUrl('')
       .showAtmosphere(true)
-      .atmosphereColor('#4466cc')
-      .atmosphereAltitude(0.24)
+      .atmosphereColor('#38bdf8')
+      .atmosphereAltitude(0.22)
       .width(width)
       .height(height)
       .enablePointerInteraction(true);
 
     const controls = this.globe.controls();
     if (controls) {
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.25;
+      controls.autoRotate = false;
+      controls.autoRotateSpeed = 0.2;
       controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
+      controls.dampingFactor = 0.08;
       controls.minDistance = 101.2;
-      controls.maxDistance = 550;
+      controls.maxDistance = 500;
     }
 
     // Centered squarely on Northeast India (Lat 26.0N, Lon 92.8E)
     this.globe.pointOfView({ lat: 26.0, lng: 92.8, altitude: 1.5 }, 1200);
 
-    // Setup Paths for Highway passes
-    this.initPaths();
+    // Setup 3D Geospatial Arcs & Rings
+    this.init3DTelemetryLayers();
 
-    // Setup HTML Tactical Markers (Triangles, circles, anchors, quakes, shelters)
+    // Setup HTML Tactical Markers
     this.initMarkersLayer();
 
-    // Handle auto-resize so the globe is always perfectly centered
+    // Auto-resize handler
     this.resizeObserver = new ResizeObserver(() => {
       if (this.globe && this.container) {
         const w = this.container.clientWidth;
@@ -93,43 +93,25 @@ export class TacticalGlobe3D {
     this.resizeObserver.observe(this.container);
   }
 
-  public resize() {
-    if (this.globe && this.container) {
-      const w = this.container.clientWidth;
-      const h = this.container.clientHeight;
-      if (w > 0 && h > 0) {
-        this.globe.width(w).height(h);
-        this.globe.pointOfView({ lat: 26.0, lng: 92.8, altitude: 1.5 }, 0);
-      }
-    }
-  }
-
-  private initPaths() {
+  private init3DTelemetryLayers() {
     if (!this.globe) return;
 
-    if (!this.showHighways) {
-      this.globe.pathsData([]);
-      return;
-    }
-
-    const paths = NER_HIGHWAY_ROUTES.map(h => ({
-      name: h.name,
-      status: h.currentPassStatus,
-      coords: h.coordinates.map(c => [c[1], c[0]]), // [lng, lat]
-      color: h.overallVulnerability === 'CRITICAL' ? 'rgba(239, 68, 68, 0.85)' : 'rgba(249, 115, 22, 0.85)',
-    }));
+    // Strategic corridor 3D arc vectors
+    const arcData = [
+      { startLat: 27.3389, startLng: 88.6065, endLat: 27.6042, endLng: 88.6472, color: ['#38bdf8', '#ef4444'], name: 'Teesta Hydro Corridor (Sikkim)' },
+      { startLat: 26.1445, startLng: 91.7362, endLat: 25.1812, endLng: 93.0210, color: ['#38bdf8', '#f97316'], name: 'Guwahati - Haflong Arterial Cut' },
+      { startLat: 24.8170, startLng: 93.9368, endLat: 24.8167, endLng: 93.6333, color: ['#38bdf8', '#ef4444'], name: 'Imphal - Tupul Mountain Rail Link' },
+      { startLat: 25.5788, startLng: 91.8933, endLat: 25.2986, endLng: 91.7306, color: ['#38bdf8', '#f59e0b'], name: 'Shillong - Cherrapunji Escarpment' },
+    ];
 
     this.globe
-      .pathsData(paths)
-      .pathPoints('coords')
-      .pathPointLat((p: number[]) => p[1])
-      .pathPointLng((p: number[]) => p[0])
-      .pathColor('color')
-      .pathStroke(1.4)
-      .pathDashLength(0.8)
-      .pathDashGap(0.2)
-      .pathDashAnimateTime(3000)
-      .pathLabel((d: any) => `<b>${d.name}</b> (${d.status})`);
+      .arcsData(arcData)
+      .arcColor('color')
+      .arcDashLength(0.4)
+      .arcDashGap(0.2)
+      .arcDashAnimateTime(2000)
+      .arcAltitude(0.12)
+      .arcStroke(1.5);
   }
 
   private initMarkersLayer() {
@@ -137,52 +119,58 @@ export class TacticalGlobe3D {
 
     this.globe
       .htmlElementsData([])
-      .htmlLat('lat')
-      .htmlLng('lng')
-      .htmlAltitude(0.012)
-      .htmlElement((d: GlobeTacticalMarker) => {
+      .htmlLat((d: any) => d.lat)
+      .htmlLng((d: any) => d.lng)
+      .htmlAltitude(0.02)
+      .htmlElement((d: any) => {
         const el = document.createElement('div');
         el.className = 'tactical-globe-marker';
-        el.style.position = 'relative';
-        el.style.cursor = 'pointer';
-        el.style.transform = 'translate(-50%, -50%)';
-        el.style.pointerEvents = 'auto';
-        el.title = d.name;
-
-        // Render sleek miniature tactical symbols matching Screenshot 2
-        el.innerHTML = `
-          <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; filter: drop-shadow(0 0 6px ${d.color});">
-            ${d.iconSvg}
-            ${d.isSelected ? `<div style="position: absolute; inset: -4px; border: 1.5px solid #ffffff; border-radius: 50%; animation: pulse-ring 1.5s infinite;"></div>` : ''}
-          </div>
+        el.style.cssText = `
+          cursor: pointer;
+          transform: translate(-50%, -50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          pointer-events: auto;
+          transition: transform 0.15s ease;
         `;
 
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (d.type === 'district') {
+        if (d.type === 'district') {
+          const isCrit = d.level === 'CRITICAL';
+          const isHigh = d.level === 'HIGH';
+          const pulseRing = isCrit || isHigh ? `<div style="position: absolute; inset: -6px; border: 2px solid ${d.color}; border-radius: 50%; animation: pulse-red 1.2s infinite; pointer-events: none;"></div>` : '';
+
+          el.innerHTML = `
+            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${d.isSelected ? 26 : 20}px; height: ${d.isSelected ? 26 : 20}px; background: rgba(5,8,17,0.92); border: 2px solid ${d.isSelected ? '#ffffff' : d.color}; border-radius: 50%; box-shadow: 0 0 14px ${d.color};">
+              ${pulseRing}
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: ${d.color};"></div>
+            </div>
+            <div style="background: rgba(3,7,18,0.85); backdrop-filter: blur(6px); border: 1px solid rgba(56,189,248,0.3); border-radius: 4px; padding: 1px 5px; font-size: 9px; font-weight: bold; color: #fff; margin-top: 3px; white-space: nowrap; pointer-events: none;">
+              ${d.name} <span style="color: ${d.color};">${d.score ? `[${d.score}]` : ''}</span>
+            </div>
+          `;
+
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.onSelectDistrict(d.id);
-          }
-        });
+          });
+        } else if (d.type === 'quake') {
+          el.innerHTML = `
+            <div style="width: 14px; height: 14px; border-radius: 50%; background: rgba(56,189,248,0.3); border: 1.5px solid #38bdf8; display: flex; align-items: center; justify-content: center;" title="${d.name}">
+              <div style="width: 6px; height: 6px; border-radius: 50%; background: #38bdf8;"></div>
+            </div>
+          `;
+        }
 
         return el;
       });
   }
 
-  public renderDistricts(
-    districts: DistrictProfile[],
-    riskMap: Map<string, RiskScoreBreakdown>,
-    selectedDistrictId?: string
-  ) {
-    if (!this.globe) return;
-
-    const markers: GlobeTacticalMarker[] = [];
-
-    // 1. District Hazard Markers (Warning Triangles & Hazard Dots)
-    for (const d of districts) {
+  public renderDistricts(districts: DistrictProfile[], riskMap: Map<string, RiskScoreBreakdown>, selectedDistrictId?: string) {
+    const list: GlobeTacticalMarker[] = districts.map((d) => {
       const risk = riskMap.get(d.id);
       const score = risk ? risk.compositeScore : 20;
       const level = risk ? risk.level : 'LOW';
-
       const color =
         level === 'CRITICAL'
           ? '#ef4444'
@@ -192,117 +180,79 @@ export class TacticalGlobe3D {
           ? '#eab308'
           : '#22c55e';
 
-      // SVG Tactical Warning Triangle matching NextSignal
-      const iconSvg = `
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="${color}">
-          <path d="M12 2L1 21h22L12 2zm0 3.5L20.3 19H3.7L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
-        </svg>
-      `;
-
-      markers.push({
+      return {
         id: d.id,
         lat: d.lat,
         lng: d.lon,
         type: 'district',
-        name: this.lang === 'hi' ? d.nameHi : d.name,
+        name: d.name,
         state: d.state,
         score,
         level,
         elevationM: d.elevationM,
         color,
-        iconSvg,
+        iconSvg: '',
         isSelected: d.id === selectedDistrictId,
-      });
-    }
+      };
+    });
 
-    // 2. Safe Shelters (Shield / Home Icons)
-    if (this.showShelters) {
-      for (const s of NER_SAFE_SHELTERS) {
-        markers.push({
-          id: s.id,
-          lat: s.lat,
-          lng: s.lon,
-          type: 'shelter',
-          name: s.name,
-          details: `Capacity: ${s.capacityPersons} persons`,
-          color: '#10b981',
-          iconSvg: `
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#34d399">
-              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
-            </svg>
-          `,
-        });
-      }
-    }
+    this.markersData = list;
+    if (this.globe) {
+      this.globe.htmlElementsData(this.markersData);
 
-    // 3. USGS Earthquakes (Lightning / Seismic Pulse)
-    if (this.showSeismic && this.quakesData.length > 0) {
-      for (const q of this.quakesData) {
-        markers.push({
-          id: q.id,
-          lat: q.lat,
-          lng: q.lon,
-          type: 'quake',
-          name: `M${q.mag.toFixed(1)} Earthquake`,
-          details: q.place,
-          color: '#38bdf8',
-          iconSvg: `
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#38bdf8">
-              <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
-            </svg>
-          `,
-        });
-      }
-    }
+      // Pulse rings on Critical and High Risk areas
+      const ringsData = list
+        .filter(m => m.level === 'CRITICAL' || m.level === 'HIGH')
+        .map(m => ({
+          lat: m.lat,
+          lng: m.lng,
+          maxR: m.level === 'CRITICAL' ? 3.5 : 2.5,
+          propagationSpeed: 2,
+          repeatPeriod: 1200,
+          color: m.level === 'CRITICAL' ? '#ef4444' : '#f97316',
+        }));
 
-    // 4. NASA COOLR Historical Landslides (Danger Diamond)
-    if (this.showCoolr) {
-      for (const c of NASA_COOLR_NER_EVENTS) {
-        markers.push({
-          id: `coolr_${c.id}`,
-          lat: c.lat,
-          lng: c.lon,
-          type: 'coolr',
-          name: `Landslide (${c.date})`,
-          details: `Fatalities: ${c.fatalities}`,
-          color: '#dc2626',
-          iconSvg: `
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="#ef4444">
-              <polygon points="12,2 22,12 12,22 2,12"/>
-            </svg>
-          `,
-        });
-      }
+      this.globe
+        .ringsData(ringsData)
+        .ringColor((d: any) => d.color)
+        .ringMaxRadius((d: any) => d.maxR)
+        .ringPropagationSpeed((d: any) => d.propagationSpeed)
+        .ringRepeatPeriod((d: any) => d.repeatPeriod);
     }
+  }
 
-    this.markersData = markers;
-    this.globe.htmlElementsData(this.markersData);
+  public renderSeismicQuakes(quakes: UsgsEarthquake[], show: boolean) {
+    this.quakesData = quakes || [];
+    this.showSeismic = show;
   }
 
   public renderCoolrEvents(show: boolean) {
     this.showCoolr = show;
   }
 
-  public renderSeismicQuakes(quakes: UsgsEarthquake[], show: boolean) {
-    this.quakesData = quakes;
-    this.showSeismic = show;
+  public orientToCoordinates(lat: number, lng: number, altitude = 0.8) {
+    if (this.globe) {
+      this.globe.pointOfView({ lat, lng, altitude }, 1400);
+    }
+  }
+
+  public resize() {
+    if (this.globe && this.container) {
+      const w = this.container.clientWidth;
+      const h = this.container.clientHeight;
+      if (w > 0 && h > 0) {
+        this.globe.width(w).height(h);
+      }
+    }
   }
 
   public setLanguage(lang: AppLanguage) {
     this.lang = lang;
   }
 
-  public orientToCoordinates(lat: number, lon: number, altitude = 0.75) {
-    if (!this.globe) return;
-    this.globe.pointOfView({ lat, lng: lon, altitude }, 1200);
-  }
-
   public destroy() {
-    this.resizeObserver?.disconnect();
-    if (this.globe) {
-      this.globe._destructor?.();
-      this.container.innerHTML = '';
-      this.globe = null;
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
     }
   }
 }
