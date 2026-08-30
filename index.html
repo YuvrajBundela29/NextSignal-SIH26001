@@ -24,6 +24,7 @@
         background: #090d16;
         color: #f8fafc;
         overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
       #app {
         width: 100%;
@@ -39,16 +40,215 @@
       .leaflet-tile {
         image-rendering: -webkit-optimize-contrast;
       }
+
+      /* ============================================================ */
+      /* CINEMATIC CLOUD SPLIT & LOGO OPENING INTRO ANIMATION         */
+      /* ============================================================ */
+      #intro-splash-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #020617;
+        pointer-events: all;
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+      }
+
+      /* Cloud Split Left Curtain */
+      .cloud-curtain-left {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 50vw;
+        height: 100vh;
+        background: radial-gradient(circle at 100% 50%, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 1));
+        box-shadow: 20px 0 60px rgba(0, 0, 0, 0.9);
+        transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+        z-index: 2;
+      }
+
+      /* Cloud Split Right Curtain */
+      .cloud-curtain-right {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50vw;
+        height: 100vh;
+        background: radial-gradient(circle at 0% 50%, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 1));
+        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.9);
+        transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+        z-index: 2;
+      }
+
+      /* Atmospheric Cloud Texture Overlay */
+      .cloud-texture {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 60%);
+        pointer-events: none;
+        animation: cloud-drift 8s ease-in-out infinite alternate;
+      }
+
+      @keyframes cloud-drift {
+        0% { transform: scale(1) translate(0, 0); opacity: 0.6; }
+        100% { transform: scale(1.1) translate(-20px, 15px); opacity: 0.9; }
+      }
+
+      /* Intro Center Content */
+      .intro-center-content {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease;
+      }
+
+      .intro-logo-glow {
+        width: 72px;
+        height: 72px;
+        border-radius: 14px;
+        box-shadow: 0 0 40px rgba(56, 189, 248, 0.6), 0 0 80px rgba(2, 132, 199, 0.4);
+        margin-bottom: 20px;
+        animation: logo-pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes logo-pulse {
+        0%, 100% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.06); filter: brightness(1.2); }
+      }
+
+      .intro-title {
+        font-size: 24px;
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: 2px;
+        margin-bottom: 6px;
+        text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+      }
+
+      .intro-subtitle {
+        font-size: 11px;
+        font-weight: 700;
+        color: #38bdf8;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+      }
+
+      .intro-progress-bar {
+        width: 220px;
+        height: 3px;
+        background: #1e293b;
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 12px;
+      }
+
+      .intro-progress-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #0284c7, #38bdf8, #34d399);
+        border-radius: 999px;
+        animation: progress-fill-anim 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+
+      @keyframes progress-fill-anim {
+        0% { width: 0%; }
+        40% { width: 65%; }
+        80% { width: 90%; }
+        100% { width: 100%; }
+      }
+
+      .intro-status-text {
+        font-size: 10px;
+        color: #94a3b8;
+        letter-spacing: 0.5px;
+        font-family: monospace;
+      }
+
+      /* Split Trigger State */
+      .intro-splitting .cloud-curtain-left {
+        transform: translateX(-100%);
+      }
+
+      .intro-splitting .cloud-curtain-right {
+        transform: translateX(100%);
+      }
+
+      .intro-splitting .intro-center-content {
+        transform: scale(1.15);
+        opacity: 0;
+      }
+
+      .intro-done {
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
     </style>
   </head>
   <body>
-    <div id="app">
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: system-ui, sans-serif; background: #090d16;">
-        <img src="/nextsignal-logo.jpg" style="width: 48px; height: 48px; border-radius: 8px; margin-bottom: 14px; box-shadow: 0 0 20px rgba(56,189,248,0.5);" alt="NextSignal" />
-        <div style="font-size: 18px; font-weight: 900; color: #f8fafc; margin-bottom: 6px; letter-spacing: 1px;">NEXTSIGNAL</div>
-        <div style="font-size: 12px; color: #38bdf8;">Initializing Geohazard & Early Warning Intelligence Console...</div>
+
+    <!-- Cinematic Cloud-Split & Logo Opening Intro -->
+    <div id="intro-splash-overlay">
+      <div class="cloud-curtain-left">
+        <div class="cloud-texture"></div>
+      </div>
+      <div class="cloud-curtain-right">
+        <div class="cloud-texture"></div>
+      </div>
+
+      <div class="intro-center-content">
+        <img class="intro-logo-glow" src="/nextsignal-logo.jpg" alt="NextSignal" />
+        <div class="intro-title">NEXTSIGNAL</div>
+        <div class="intro-subtitle">AI-POWERED GEOHAZARD & EARLY WARNING SYSTEM &bull; NER</div>
+        <div class="intro-progress-bar">
+          <div class="intro-progress-fill"></div>
+        </div>
+        <div id="intro-boot-status" class="intro-status-text">INITIALIZING SATELLITE TELEMETRY &bull; 28 DISTRICTS...</div>
       </div>
     </div>
+
+    <!-- Application Mounting Target -->
+    <div id="app"></div>
+
+    <script>
+      // Automatically orchestrate the cinematic cloud splitting sequence on load
+      window.addEventListener('DOMContentLoaded', () => {
+        const overlay = document.getElementById('intro-splash-overlay');
+        const statusText = document.getElementById('intro-boot-status');
+        if (!overlay) return;
+
+        setTimeout(() => {
+          if (statusText) statusText.textContent = 'SYNCHRONIZING MOHR-COULOMB RISK MATRIX & HIGHWAY CORRIDORS...';
+        }, 600);
+
+        setTimeout(() => {
+          if (statusText) statusText.textContent = 'SYSTEM READY &bull; REVEALING SITUATION THEATER';
+        }, 1100);
+
+        setTimeout(() => {
+          // Trigger the cloud split animation
+          overlay.classList.add('intro-splitting');
+        }, 1400);
+
+        setTimeout(() => {
+          // Fade out and remove overlay
+          overlay.classList.add('intro-done');
+          setTimeout(() => {
+            overlay.remove();
+          }, 800);
+        }, 2200);
+      });
+    </script>
 
     <!-- Application Entry Point -->
     <script type="module" src="/src/main.ts"></script>
