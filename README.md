@@ -1,107 +1,123 @@
-﻿# NextSignal SIH26001 — AI-Based Early Warning & Landslide Risk Monitoring System in North Eastern Region (NER), India
+﻿# NextSignal &bull; AI-Powered Geohazard & Landslide Early Warning System
+### Smart India Hackathon (SIH 26001) &bull; Northeast Region Disaster Intelligence System
 
-[![Smart India Hackathon 2024](https://img.shields.io/badge/SIH-2024%20Submission-blue?style=for-the-badge)](https://sih.gov.in)
-[![Ministry](https://img.shields.io/badge/Ministry-MDoNER-darkgreen?style=for-the-badge)](https://mdoner.gov.in)
-[![Theme](https://img.shields.io/badge/Theme-Disaster%20Management-red?style=for-the-badge)]()
-[![Free APIs](https://img.shields.io/badge/APIs-100%25%20Free%20%26%20Keyless-teal?style=for-the-badge)]()
-
-An end-to-end, multi-sensor, AI-powered landslide susceptibility and early-warning intelligence dashboard tailored specifically for the 8 North Eastern States of India (Assam, Meghalaya, Arunachal Pradesh, Nagaland, Manipur, Mizoram, Tripura, Sikkim).
-
----
-
-## 📌 Problem Statement (SIH26001)
-
-- **ID**: SIH26001
-- **Title**: AI-Based Early Warning and Landslide Risk Monitoring System in North Eastern Region (NER), India
-- **Organization**: Ministry of Development of North Eastern Region (MDoNER)
-- **Category**: Software
-- **Theme**: Disaster Management
-
-The North Eastern Region (NER) of India accounts for over 50% of the country's landslide vulnerabilities due to fragile Himalayan geology, steep slopes, high seismic activity (Zones IV and V), and extreme monsoon precipitation. This project delivers an explainable, real-time early warning and decision-support system to empower State Disaster Management Authorities (SDMAs), NDRF, District Magistrates, and vulnerable citizens.
+[![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Three.js / Globe.gl](https://img.shields.io/badge/WebGL-Three.js%20%2F%20Globe.gl-000000?logo=three.js&logoColor=white)](https://globe.gl/)
+[![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
+[![Netlify Status](https://img.shields.io/badge/Deploy-Netlify-00C7B7?logo=netlify&logoColor=white)](https://www.netlify.com/)
 
 ---
 
-## 🚀 Key Features
+## 📌 Executive Summary & SIH Problem Statement (SIH 26001)
+The **Northeast Region of India (NER)** represents one of the world's most vulnerable mountainous terrains to rainfall-triggered landslides, seismic slope destabilization, and Glacial Lake Outburst Floods (GLOF).
 
-### 1. Explainable Composite Landslide Risk Scoring Engine
-The system calculates a continuous susceptibility score (0 to 100) per district using weighted geotechnical and meteorological parameters:
-$$\text{Composite Score} = W_s \cdot S_{\text{slope}} + W_r \cdot S_{\text{rainfall}} + W_m \cdot S_{\text{soil}} + W_e \cdot S_{\text{seismic}} + W_h \cdot S_{\text{historical}}$$
-
-- **Slope Angle & Terrain Ruggedness ($W_s = 0.25$)**: Topographical gradient analysis (>35° critical).
-- **Precipitation Intensity & Antecedent Wetness ($W_r = 0.30$)**: 24h burst intensity (50%), 72h antecedent accumulation (35%), and next 24h IMD/Open-Meteo forecast (15%).
-- **Root-Zone Soil Moisture Saturation ($W_m = 0.20$)**: NASA POWER root-zone wetness index.
-- **Seismic Activity & Ground Shake Factor ($W_e = 0.15$)**: USGS real-time earthquakes in the Himalayan/NER bounding box (`21.5°-29.5°N, 88.0°-97.5°E`) with distance-magnitude attenuation.
-- **Historical Event Density ($W_h = 0.10$)**: Clustering against historical disaster records from the NASA Global Landslide Catalog (COOLR) and Geological Survey of India (GSI).
-
-### 2. 100% Free, Keyless Live Data Ingestion
-- **Open-Meteo API**: Live hourly/daily precipitation, humidity, and temperature without API keys.
-- **USGS Seismic Hazards API**: Automated 72h earthquake ingestion across the Eastern Himalayas.
-- **NASA POWER API**: Agroclimatology root-zone soil wetness data.
-- **NASA COOLR Catalog**: Integrated database of historical landslide disasters in Northeast India.
-- **CartoDB Dark Matter / OpenStreetMap**: Lightweight, high-performance 2D mapping tiles via Leaflet.
-
-### 3. Dual Persona Architecture
-- **Authority / Analyst HUD**:
-  - Full factor breakdown radar and contribution bars.
-  - Live sensor telemetry (24h/72h rainfall, root-zone wetness, seismic shake factor).
-  - DEOC contact directory and population exposure metrics.
-  - Printable official **District Landslide Situation Report (PDF)**.
-- **Citizen Safety Portal (English & हिन्दी)**:
-  - High-contrast, low-bandwidth emergency status (SAFE / WATCH / DANGER).
-  - Plain-language Do's and Don'ts for hillside residents.
-  - 1-Tap Emergency Speed Dial for **NDRF (1078)**, **SDMA (1070)**, **National Emergency (112)**, and **Ambulance (108)**.
-
-### 4. Local AI Disaster Advisory Engine (Ollama Integration)
-- Ingests real-time multi-sensor telemetry to generate concise, professional situational reports and civil defense directives.
-- Supports local quantized LLMs (`gemma:2b`, `llama3.2:3b`, `phi3:mini`) with instant deterministic rule-engine fallback.
-
-### 5. Resilient Offline Demo Simulator (Live Presentation Safety)
-- 1-click toggle between live API feeds and 3 pre-configured demo scenarios:
-  1. **Monsoon Deluge Crisis**: High-intensity cloudbursts in Dima Hasao, Mangan, East Khasi Hills, and Noney.
-  2. **Severe Seismic Trigger (Himalayan M5.8)**: Recent tectonic epicenter near Bomdila/Tawang triggering steep-slope shear alerts.
-  3. **Normal Baseline**: Safe terrain conditions across all 8 NER states.
+**NextSignal** is an enterprise-grade, real-time geohazard intelligence dashboard engineered for the **National Disaster Management Authority (NDMA)**, **State Disaster Management Authorities (SDMA)**, **NDRF Battalions**, and **citizens across all 8 NER states** (Assam, Arunachal Pradesh, Meghalaya, Sikkim, Manipur, Mizoram, Nagaland, Tripura).
 
 ---
 
-## 🛠️ Quick Start & Local Run
+## 🌟 Key System Capabilities
+
+### 1. Dual 2D/3D Geospatial Situation Engine
+* **2D Leaflet Tactical Map:** High-performance vector rendering with real-time district risk pins, thermal heat gradient circles for India, seismic epicenter rings, NASA COOLR historical landslide coordinates, and safe shelters.
+* **3D WebGL Earth Globe:** Photorealistic planetary view powered by Three.js/Globe.gl with flat geospatial surface markers and real-time atmospheric lighting.
+* **Synchronized Layer Switching:** Real-time hot-swapping between **4K Satellite Imagery**, **Dark Tactical Base**, **Live Land Surface Temp (LST)**, **Satellite Clouds (IR)**, **Doppler Weather Radar**, and **Topographic DEM Relief**.
+
+### 2. Multi-Spectral Sensor Optics
+* **FLIR Thermal [2]:** Heat gradient visualization highlighting critical slope moisture hotspots.
+* **Night Vision (NVG) [3]:** High-contrast phosphor luminescence for low-light night monitoring.
+* **CRT Scanline [4]:** Military-grade command center tactical overlay.
+* **Recon Noir [5] & Rock Scar [6]:** High-frequency geological contrast for active fault detection.
+
+### 3. 5-Factor Geotechnical Risk Decomposition Algorithm
+Every monitored district in Northeast India is evaluated continuously across 5 weighted geophysical variables:
+$$\text{Composite Risk} = 0.30 \cdot R_{\text{rain}} + 0.25 \cdot S_{\text{slope}} + 0.20 \cdot M_{\text{soil}} + 0.15 \cdot E_{\text{quake}} + 0.10 \cdot H_{\text{coolr}}$$
+
+* **Antecedent Rainfall (30%):** Open-Meteo & IMD 24h/72h cumulative precipitation vs. dynamic threshold $I_{\text{crit}}$.
+* **Slope Topography (25%):** Digital Elevation Model (DEM) gradient analysis.
+* **Root-Zone Soil Saturation (20%):** Live soil moisture percentage and pore-water pressure ($u$).
+* **Seismic Shaking & PGA (15%):** Live USGS earthquake telemetry and Peak Ground Acceleration impact.
+* **NASA COOLR Historical (10%):** Global landslide catalog density index.
+
+### 4. Automated NDRF & SDRF Mobilization Orders
+* Real-time automated generation of **NDRF Deployment Orders** specifying assigned battalions (e.g. 1st Bn Guwahati, 12th Bn Itanagar), designated helipad staging coordinates, and required personnel count.
+* One-click instant copy for emergency response dispatchers.
+
+### 5. Hydrological Basin & GLOF Early Warning Gauges
+* Continuous tracking of high-altitude river gauges along the **Teesta**, **Brahmaputra**, and **Subansiri** basins.
+* Trend monitoring (`▲ Rising` vs `▶ Steady`) and danger level exceedance detection.
+
+### 6. Citizen Early Warning Portal & Multi-Lingual Interface
+* Instant toggle between **Authority Command View** and **Citizen Public Portal**.
+* Full English and **Hindi (हिन्दी)** localized warnings, emergency helplines (`1070`, `1077`, `112`), and live risk advisories.
+
+### 7. Strategic Corridor Inspection & Rangefinder
+* **Cinematic Tour:** Autonomous camera navigation through critical mountain highway choke points (Chungthang, Dima Hasao, Noney, Sela Pass).
+* **Geodetic Rangefinder:** Calculates distance, terrain elevation delta ($\Delta h$), and exact rescue arrival ETAs for **IAF Helicopter Airlift** and **Ground 4x4 QRV Teams**.
+
+---
+
+## 🏗️ Architecture & Technology Stack
+
+```
+NextSignal-SIH26001/
+├── src/
+│   ├── services/
+│   │   └── landslide/            # Geohazard services, Open-Meteo, USGS, NDRF dispatch
+│   ├── ui/
+│   │   ├── components/
+│   │   │   ├── UnifiedSituationMap.ts  # Integrated 2D/3D map controller & GIS toolbar
+│   │   │   ├── TacticalGlobe3D.ts      # Flat WebGL 3D Globe with layer/optic sync
+│   │   │   ├── LandslideMap.ts         # 2D Leaflet geospatial map engine
+│   │   │   ├── DistrictHud.ts          # Executive risk telemetry HUD
+│   │   │   ├── AlertTicker.ts          # Dark command alert marquee
+│   │   │   ├── CitizenView.ts          # Public emergency warning view (EN/HI)
+│   │   │   ├── HighwayNavigationModal.ts # Highway corridor evacuation planner
+│   │   │   └── sensor-optics.ts        # FLIR, NVG, CRT, Noir optical shaders
+│   │   └── LandslideDashboard.ts       # Master dashboard orchestrator
+├── index.html                    # Single Page Application entry
+├── netlify.toml                  # Netlify deployment configuration
+└── vite.config.ts                # Optimized Vite bundler configuration
+```
+
+---
+
+## 🚀 Getting Started Locally
 
 ### Prerequisites
-- **Node.js**: v20 or higher
-- **npm**: v9 or higher
+* **Node.js**: v18.0 or higher (v20+ recommended)
+* **npm**: v9.0 or higher
 
-### Installation & Launch
+### Installation & Run
 ```bash
-# 1. Navigate to project root
+# 1. Clone the repository
+git clone https://github.com/YuvrajBundela29/NextSignal-SIH26001.git
 cd NextSignal-SIH26001
 
 # 2. Install dependencies
 npm install
 
-# 3. Start local development server
+# 3. Start development server
 npm run dev
 ```
 
-The application will be running at **`http://localhost:3001/`** (or `http://localhost:5173/`).
+Visit **`http://localhost:3000`** in your browser.
 
 ---
 
-## 🗺️ Monitored NER States & Key Districts
+## 🌐 Deploy to Netlify
 
-| State | Key Monitored Districts | High-Risk Corridors |
-|---|---|---|
-| **Assam** | Dima Hasao, Karbi Anglong, Kamrup Metro, Cachar | Haflong Railway, Guwahati Hills |
-| **Meghalaya** | East Khasi Hills, SW Khasi Hills, Ri-Bhoi, West Garo Hills | Cherrapunji, Mawsynram, NH-6 |
-| **Arunachal Pradesh** | Papum Pare, Tawang, West Kameng, East Siang, Dibang Valley | Bhalukpong-Bomdila, Trans-Arunachal Hwy |
-| **Nagaland** | Kohima, Mokokchung, Phek | Dzükou Valley, NH-29 Paglapahar |
-| **Manipur** | Noney, Kangpokpi, Tamenglong | Tupul Railway Zone, NH-2 Lifeline |
-| **Mizoram** | Aizawl, Lunglei, Champhai | Hunthar Slope, Melthum Corridor |
-| **Tripura** | Dhalai, North Tripura | Ambassa-Dharmanagar Ridge |
-| **Sikkim** | Mangan, Gangtok, Namchi, Gyalshing | Chungthang, Teesta Valley NH-10 |
+This project is pre-configured with [`netlify.toml`](./netlify.toml) for 1-click zero-config deployment:
+
+1. Connect your GitHub repository to [Netlify](https://app.netlify.com/).
+2. Set the build settings:
+   * **Build Command:** `npm run build`
+   * **Publish Directory:** `dist`
+3. Click **Deploy Site** — your live dashboard will be active in seconds!
 
 ---
 
-## 🏛️ Sponsoring Ministry & Hackathon Details
-
-- **Ministry**: Ministry of Development of North Eastern Region (MDoNER), Government of India
-- **Problem Statement ID**: SIH26001
-- **Team**: NextSignal SIH Team
+## 👥 Contributors & SIH Team
+* **Project Name:** NextSignal
+* **Problem Statement:** SIH 26001
+* **Lead Developer:** Yuvraj Singh Bundela

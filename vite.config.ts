@@ -839,7 +839,7 @@ export default defineConfig(({ mode }) => {
       // Variant subdomain SEO pages only make sense on the web deployment,
       // which is always the 'full' build (variant selection is runtime by
       // hostname). Desktop and dedicated VITE_VARIANT builds skip it.
-      !isDesktopBuild && activeVariant === 'full' && variantDashboardHtmlPlugin(),
+      // variantDashboardHtmlPlugin(),
       webMcpDevSecurityHeadersPlugin(),
       polymarketPlugin(),
       rssProxyPlugin(),
@@ -1044,7 +1044,7 @@ export default defineConfig(({ mode }) => {
           // into the SVG fallback). Fixed by co-locating the DeckGLMap renderer
           // into the 'deck-stack' chunk below so deck deps never split across the
           // DeckGLMap boundary.
-          onlyExplicitManualChunks: true,
+          // onlyExplicitManualChunks: true,
           manualChunks(id) {
             if (id.includes('node_modules')) {
               if (id.includes('/@xenova/transformers/')) {
@@ -1598,4 +1598,6 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
+
+
 
