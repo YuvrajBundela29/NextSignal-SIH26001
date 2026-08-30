@@ -89,31 +89,31 @@ export class LandslideMap {
     this.currentBaseLayer = darkGroup;
     this.currentBaseLayer.addTo(this.map);
 
-    // Live Earth Remote Sensing Layers (Seamless Indian Subcontinent & Northeast Coverage)
+    // Live NASA Earth Observation Layers (Verified Active Level Formats)
     this.satLayers = {
-      thermal_anomalies: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/AIRS_L2_Surface_Air_Temperature_Daily_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
-        opacity: 0.78,
-        maxNativeZoom: 6,
-        maxZoom: 19,
-        attribution: '&copy; NASA AIRS Live Land Surface Thermal Temperature Grid',
-      }),
-      viirs_truecolor: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg', {
+      thermal_anomalies: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', {
         opacity: 0.85,
-        maxNativeZoom: 8,
+        maxNativeZoom: 7,
         maxZoom: 19,
-        attribution: '&copy; NASA EOSDIS VIIRS TrueColor Satellite',
+        attribution: '&copy; NASA MODIS Real-Time Land Surface Thermal Radiance',
       }),
-      clouds_ir: L.tileLayer('https://tilecache.rainviewer.com/v2/satellite/nowcast_0/512/{z}/{x}/{y}/0/1_1.png', {
+      viirs_truecolor: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
+        opacity: 0.85,
+        maxNativeZoom: 9,
+        maxZoom: 19,
+        attribution: '&copy; NASA EOSDIS VIIRS Satellite',
+      }),
+      clouds_ir: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Cloud_Top_Height_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
         opacity: 0.75,
         maxNativeZoom: 6,
         maxZoom: 19,
-        attribution: '&copy; RainViewer / EUMETSAT Live Infrared Satellite Cloud Radar',
+        attribution: '&copy; NASA EOSDIS Infrared Cloud Tops',
       }),
-      weather_radar: L.tileLayer('https://tilecache.rainviewer.com/v2/radar/nowcast_0/512/{z}/{x}/{y}/2/1_1.png', {
-        opacity: 0.80,
+      weather_radar: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+        opacity: 0.85,
         maxNativeZoom: 6,
         maxZoom: 19,
-        attribution: '&copy; Live Meteorological Doppler Precipitation Radar',
+        attribution: '&copy; NASA GPM / IMERG Live Precipitation Doppler Radar',
       }),
     };
 
@@ -134,6 +134,7 @@ export class LandslideMap {
 
     if (enabled) {
       layer.addTo(this.map);
+      layer.bringToFront();
     } else {
       this.map.removeLayer(layer);
     }
@@ -345,6 +346,12 @@ export class LandslideMap {
   public flyToDistrict(lat: number, lon: number, zoom = 10) {
     if (this.map) {
       this.map.flyTo([lat, lon], zoom, { duration: 1.2 });
+    }
+  }
+
+  public invalidateSize() {
+    if (this.map) {
+      this.map.invalidateSize();
     }
   }
 }
