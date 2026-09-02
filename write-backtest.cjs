@@ -1,4 +1,6 @@
-/**
+﻿const fs = require('fs');
+
+const code = `/**
  * BacktestPanel - Methodology Illustration Chart
  * Responsive SVG bar chart + summary table for the COOLR backtest.
  * Designed to fit within the 370px right sidebar (330px inner width after padding).
@@ -44,16 +46,16 @@ export class BacktestPanel {
       const label = res.district.length > 12 ? res.district.slice(0, 11) + '~' : res.district;
       const tick = res.truePositive ? '&#10003;' : '&#215;';
       const tickColor = res.truePositive ? '#22c55e' : '#ef4444';
-      return `
+      return \`
       <g>
-        <text x="2" y="${y + 17}" font-size="9" fill="#94a3b8" font-family="monospace">${label}</text>
-        <rect x="${BAR_START}" y="${y + 4}" width="${barW}" height="16" rx="2" fill="${color}" opacity="0.85"/>
-        <text x="${BAR_START + barW + 3}" y="${y + 16}" font-size="9" fill="${color}" font-weight="700">${res.predictedRiskScore}</text>
-        <text x="${SVG_W - 12}" y="${y + 16}" font-size="10" fill="${tickColor}" text-anchor="middle">${tick}</text>
-      </g>`;
+        <text x="2" y="\${y + 17}" font-size="9" fill="#94a3b8" font-family="monospace">\${label}</text>
+        <rect x="\${BAR_START}" y="\${y + 4}" width="\${barW}" height="16" rx="2" fill="\${color}" opacity="0.85"/>
+        <text x="\${BAR_START + barW + 3}" y="\${y + 16}" font-size="9" fill="\${color}" font-weight="700">\${res.predictedRiskScore}</text>
+        <text x="\${SVG_W - 12}" y="\${y + 16}" font-size="10" fill="\${tickColor}" text-anchor="middle">\${tick}</text>
+      </g>\`;
     }).join('');
 
-    this.container.innerHTML = `
+    this.container.innerHTML = \`
     <div style="padding:10px 8px;overflow-y:auto;overflow-x:hidden;height:100%;box-sizing:border-box;">
 
       <!-- Header -->
@@ -69,16 +71,16 @@ export class BacktestPanel {
 
       <!-- 3-stat summary (3 cols fit in 330px) -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
-        ${[
+        \${[
           { label: 'Detection Rate', value: r.detectionRate + '%', color: '#22c55e' },
           { label: 'Avg Score',      value: r.averageRiskScore,    color: '#f97316' },
           { label: 'Critical',       value: r.criticalDetections,  color: '#ef4444' },
-        ].map(m => `
+        ].map(m => \`
           <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:6px;padding:8px 6px;text-align:center;">
-            <div style="color:${m.color};font-size:18px;font-weight:800;font-family:monospace;">${m.value}</div>
-            <div style="color:#64748b;font-size:9px;margin-top:2px;text-transform:uppercase;">${m.label}</div>
+            <div style="color:\${m.color};font-size:18px;font-weight:800;font-family:monospace;">\${m.value}</div>
+            <div style="color:#64748b;font-size:9px;margin-top:2px;text-transform:uppercase;">\${m.label}</div>
           </div>
-        `).join('')}
+        \`).join('')}
       </div>
 
       <!-- Bar Chart -->
@@ -86,8 +88,8 @@ export class BacktestPanel {
         Risk Score per Event &nbsp;&#10003;=detected &nbsp;&#215;=missed
       </div>
       <div style="overflow-x:hidden;width:100%;">
-        <svg viewBox="0 0 ${SVG_W} ${svgHeight}" width="100%" height="${svgHeight}" style="display:block;overflow:visible;">
-          ${bars}
+        <svg viewBox="0 0 \${SVG_W} \${svgHeight}" width="100%" height="\${svgHeight}" style="display:block;overflow:visible;">
+          \${bars}
         </svg>
       </div>
 
@@ -104,17 +106,17 @@ export class BacktestPanel {
             </tr>
           </thead>
           <tbody>
-            ${r.results.map(res => {
+            \${r.results.map(res => {
               const loc = res.location.length > 22 ? res.location.slice(0, 20) + '..' : res.location;
               const col = this.levelColor(res.predictedLevel);
-              return `
+              return \`
               <tr style="border-bottom:1px solid #0d1524;">
-                <td style="padding:3px 4px;color:#64748b;white-space:nowrap;">${res.eventDate.slice(0,7)}</td>
-                <td style="padding:3px 4px;color:#cbd5e1;">${loc}</td>
-                <td style="padding:3px 4px;text-align:right;color:${col};font-weight:700;">${res.predictedRiskScore}</td>
-                <td style="padding:3px 4px;"><span style="background:${col}22;color:${col};padding:1px 4px;border-radius:3px;">${res.predictedLevel}</span></td>
-                <td style="padding:3px 4px;text-align:center;color:${res.truePositive ? '#22c55e' : '#ef4444'};">${res.truePositive ? '&#10003;' : '&#215;'}</td>
-              </tr>`;
+                <td style="padding:3px 4px;color:#64748b;white-space:nowrap;">\${res.eventDate.slice(0,7)}</td>
+                <td style="padding:3px 4px;color:#cbd5e1;">\${loc}</td>
+                <td style="padding:3px 4px;text-align:right;color:\${col};font-weight:700;">\${res.predictedRiskScore}</td>
+                <td style="padding:3px 4px;"><span style="background:\${col}22;color:\${col};padding:1px 4px;border-radius:3px;">\${res.predictedLevel}</span></td>
+                <td style="padding:3px 4px;text-align:center;color:\${res.truePositive ? '#22c55e' : '#ef4444'};">\${res.truePositive ? '&#10003;' : '&#215;'}</td>
+              </tr>\`;
             }).join('')}
           </tbody>
         </table>
@@ -125,12 +127,24 @@ export class BacktestPanel {
         <div style="color:#94a3b8;font-size:9px;line-height:1.6;">
           <strong style="color:#e2e8f0;">Methodology:</strong>
           Pre-event rainfall reconstructed from IMD/NDMA trigger archetypes.
-          Model would score <strong style="color:#22c55e;">${r.truePositives}/${r.totalEvents}</strong>
-          events as MODERATE+ (${r.detectionRate}% detection rate).
+          Model would score <strong style="color:#22c55e;">\${r.truePositives}/\${r.totalEvents}</strong>
+          events as MODERATE+ (\${r.detectionRate}% detection rate).
           Reference: NASA COOLR &amp; GSI catalog 2020-2024.
         </div>
       </div>
 
-    </div>`;
+    </div>\`;
   }
 }
+`;
+
+fs.writeFileSync(
+  'Y:/Dev/projects/NextSignal-SIH26001/src/ui/components/BacktestPanel.ts',
+  Buffer.from(code, 'utf8')
+);
+
+// Verify zero non-ASCII
+const verify = fs.readFileSync('Y:/Dev/projects/NextSignal-SIH26001/src/ui/components/BacktestPanel.ts');
+let nonAscii = 0;
+for (const b of verify) { if (b > 127) nonAscii++; }
+console.log('Written. Non-ASCII bytes:', nonAscii);

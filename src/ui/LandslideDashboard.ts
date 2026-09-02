@@ -279,7 +279,7 @@ export class LandslideDashboard {
                 `).join('')}
               </div>
               <!-- Backtest Validation Tab -->
-              <div id="backtest-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column;"></div>
+              <div id="backtest-tab-content" style="flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0; display: none; flex-direction: column;"></div>
             </aside>
           </div>
 
