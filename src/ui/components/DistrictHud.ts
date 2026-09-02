@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   DistrictProfile,
   RiskScoreBreakdown,
   WeatherTelemetry,
@@ -150,10 +150,10 @@ export class DistrictHud {
         <div style="background: linear-gradient(135deg, #1c1008 0%, #111827 100%); border: 1px solid #d9770640; border-radius: 10px; padding: 10px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <div style="font-weight: 800; font-size: 9px; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px;">
-              NDRF / SDRF MOBILIZATION ORDER
+              NDRF / SDRF DISPATCH DECISION SUPPORT
             </div>
             <button id="btn-copy-ndrf" style="background: #1f2937; color: #38bdf8; border: 1px solid #374151; padding: 2px 7px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 600;">
-              Copy Order
+              Copy Draft
             </button>
           </div>
           <div style="font-size: 10px; color: #cbd5e1; line-height: 1.6; background: #0b1120; padding: 8px 10px; border-radius: 6px; border: 1px dashed #374151;">
@@ -192,7 +192,7 @@ export class DistrictHud {
     `;
 
     document.getElementById('btn-copy-ndrf')?.addEventListener('click', () => {
-      const text = `NDRF ORDER: ${ndrfOrder.orderId}\nBattalion: ${ndrfOrder.commandingBattalion}\nStaging: ${ndrfOrder.stagingLocation}\nPersonnel: ${ndrfOrder.personnelCount} Rescuers`;
+      const text = `DISPATCH RECOMMENDATION: ${ndrfOrder.orderId}\nBattalion: ${ndrfOrder.commandingBattalion}\nStaging: ${ndrfOrder.stagingLocation}\nPersonnel: ${ndrfOrder.personnelCount} Rescuers`;
       navigator.clipboard.writeText(text).catch(() => {});
     });
   }

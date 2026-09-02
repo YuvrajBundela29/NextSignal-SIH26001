@@ -1,4 +1,4 @@
-﻿# NextSignal &bull; AI-Powered Geohazard & Landslide Early Warning System
+# NextSignal &bull; AI-Powered Geohazard & Landslide Early Warning System
 ### Smart India Hackathon (SIH 26001) &bull; Northeast Region Disaster Intelligence System
 
 [![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -39,8 +39,8 @@ $$\text{Composite Risk} = 0.30 \cdot R_{\text{rain}} + 0.25 \cdot S_{\text{slope
 * **Seismic Shaking & PGA (15%):** Live USGS earthquake telemetry and Peak Ground Acceleration impact.
 * **NASA COOLR Historical (10%):** Global landslide catalog density index.
 
-### 4. Automated NDRF & SDRF Mobilization Orders
-* Real-time automated generation of **NDRF Deployment Orders** specifying assigned battalions (e.g. 1st Bn Guwahati, 12th Bn Itanagar), designated helipad staging coordinates, and required personnel count.
+### 4. Decision-Support Dispatch Recommendations for NDRF & SDRF
+* Real-time generation of **Decision-Support Dispatch Recommendations** specifying assigned battalions (e.g. 1st Bn Guwahati, 12th Bn Itanagar), designated helipad staging coordinates, and required personnel count.
 * One-click instant copy for emergency response dispatchers.
 
 ### 5. Hydrological Basin & GLOF Early Warning Gauges
