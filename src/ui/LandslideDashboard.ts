@@ -478,10 +478,10 @@ export class LandslideDashboard {
       this.aiAdvisoryMap.set(district.id, aiAdvisory);
     }
 
-    this.hudComp?.setLanguage(this.lang === 'hi');
+    this.hudComp?.setLanguage(this.lang);
     this.hudComp?.render(district, risk, weather, soil, seismic, aiAdvisory, nearbyHistorical);
 
-    this.citizenComp?.setLanguage(this.lang === 'hi');
+    this.citizenComp?.setLanguage(this.lang);
     this.citizenComp?.render(district, risk, weather);
   }
 

@@ -654,7 +654,7 @@ export class UnifiedSituationMap {
  this.map2d?.flyToDistrict(district.lat, district.lon);
  this.map2d?.renderDistricts(this.districts, this.riskMap, this.selectedDistrictId);
  } else {
- this.globe3d?.orientToCoordinates(district.lat, district.lon, 0.7);
+ this.globe3d?.orientToCoordinates(district.lat, district.lon, 0.28);
  this.globe3d?.renderDistricts(this.districts, this.riskMap, this.selectedDistrictId);
  }
  void this.updateTelemetryForDistrict(district);
