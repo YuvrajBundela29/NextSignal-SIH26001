@@ -46,18 +46,37 @@ export class TacticalGlobe3D {
     this.injectZoomControls();
   }
 
+  private getTileUrl(x: number, y: number, level: number): string {
+    switch (this.currentLayer) {
+      case 'dark':
+        return `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${level}/${y}/${x}`;
+      case 'topo':
+      case 'opentopo':
+        return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${level}/${y}/${x}`;
+      case 'thermal':
+        return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${level}/${y}/${x}`;
+      case 'satellite':
+      default:
+        // ESRI World Imagery: high-resolution multi-scale satellite streaming (up to 18 zoom levels with roads & building clarity)
+        return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${level}/${y}/${x}`;
+    }
+  }
+
   private initGlobe() {
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
 
-    // High-Resolution 4K Blue Marble Texture & Bump Mapping
+    // Multi-Resolution Dynamic Tile Engine on 3D Sphere (Just like 2D Map)
+    // Streams crystal-clear satellite imagery with roads, buildings, and terrain as you zoom in
     this.globe = new (Globe as any)(this.container, { animateIn: true })
+      .globeTileEngineUrl((x: number, y: number, l: number) => this.getTileUrl(x, y, l))
+      .globeTileEngineMaxLevel(18)
       .globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/earth-blue-marble.jpg')
       .bumpImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/earth-topology.png')
       .backgroundImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/night-sky.png')
       .showAtmosphere(true)
       .atmosphereColor('#38bdf8')
-      .atmosphereAltitude(0.18)
+      .atmosphereAltitude(0.15)
       .width(width)
       .height(height)
       .enablePointerInteraction(true);
@@ -67,26 +86,24 @@ export class TacticalGlobe3D {
     if (renderer) {
       const dpr = Math.min(window.devicePixelRatio || 1, 3);
       renderer.setPixelRatio(dpr);
-      if (renderer.capabilities && renderer.capabilities.getMaxAnisotropy) {
-        renderer.toneMapping = 3; // ACESFilmicToneMapping
-        renderer.toneMappingExposure = 1.15;
-      }
+      renderer.toneMapping = 3; // ACESFilmicToneMapping
+      renderer.toneMappingExposure = 1.15;
     }
 
-    // High Zoomability Orbit Controls (Allows deep zoom right down to surface)
+    // High Zoomability Orbit Controls (Allows deep zoom right down to buildings & roads)
     const controls = this.globe.controls();
     if (controls) {
       controls.autoRotate = false;
       controls.autoRotateSpeed = 0.2;
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
-      controls.minDistance = 100.02; // Close zoom right to mountain terrain
-      controls.maxDistance = 600;    // Deep space overview
-      controls.zoomSpeed = 1.35;     // Highly responsive zoom feel
+      controls.minDistance = 100.01; // Ultra-deep zoom right to surface terrain
+      controls.maxDistance = 600;
+      controls.zoomSpeed = 1.4;
       controls.rotateSpeed = 0.85;
     }
 
-    // Focus on North East India (NER center: 26.2 N, 92.9 E)
+    // Focus on North East India (NER center: 26.15 N, 92.9 E)
     this.globe.pointOfView({ lat: 26.15, lng: 92.9, altitude: 1.25 }, 1200);
     this.initMarkersLayer();
 
@@ -133,11 +150,11 @@ export class TacticalGlobe3D {
 
     const btnZoomIn = document.createElement('button');
     btnZoomIn.innerHTML = '+';
-    btnZoomIn.title = 'Zoom In (4K Extreme Close-up)';
+    btnZoomIn.title = 'Zoom In (High-Res 4K Satellite & Road View)';
     btnZoomIn.style.cssText = btnStyle;
     btnZoomIn.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.zoomBy(-0.35);
+      this.zoomBy(-0.30);
     });
 
     const btnZoomOut = document.createElement('button');
@@ -146,7 +163,7 @@ export class TacticalGlobe3D {
     btnZoomOut.style.cssText = btnStyle;
     btnZoomOut.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.zoomBy(0.35);
+      this.zoomBy(0.30);
     });
 
     const btnReset = document.createElement('button');
@@ -168,27 +185,27 @@ export class TacticalGlobe3D {
   public zoomBy(deltaAltitude: number) {
     if (!this.globe) return;
     const current = this.globe.pointOfView();
-    const targetAlt = Math.max(0.04, Math.min(3.5, (current.altitude || 1.0) + deltaAltitude));
+    const targetAlt = Math.max(0.02, Math.min(3.5, (current.altitude || 1.0) + deltaAltitude));
     this.globe.pointOfView({ lat: current.lat, lng: current.lng, altitude: targetAlt }, 400);
   }
 
   public setLayer(layerId: string) {
     if (!this.globe) return;
     this.currentLayer = layerId;
+    if ((this.globe as any).globeTileEngineClearCache) {
+      (this.globe as any).globeTileEngineClearCache();
+    }
+    (this.globe as any).globeTileEngineUrl((x: number, y: number, l: number) => this.getTileUrl(x, y, l));
+
     if (layerId === 'dark') {
-      this.globe.globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/earth-night.jpg');
       this.globe.atmosphereColor('#6366f1');
     } else if (layerId === 'satellite') {
-      this.globe.globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/earth-blue-marble.jpg');
       this.globe.atmosphereColor('#38bdf8');
     } else if (layerId === 'thermal') {
-      this.globe.globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/earth-day.jpg');
       this.globe.atmosphereColor('#ef4444');
     } else if (layerId === 'clouds' || layerId === 'radar') {
-      this.globe.globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/earth-water.png');
       this.globe.atmosphereColor('#38bdf8');
     } else if (layerId === 'topo' || layerId === 'opentopo') {
-      this.globe.globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/earth-topology.png');
       this.globe.atmosphereColor('#10b981');
     }
   }
@@ -237,7 +254,7 @@ export class TacticalGlobe3D {
           el.addEventListener('click', (e) => {
             e.stopPropagation();
             this.onSelectDistrict(d.id);
-            this.orientToCoordinates(d.lat, d.lng, 0.25);
+            this.orientToCoordinates(d.lat, d.lng, 0.12);
           });
         } else if (d.type === 'quake') {
           el.innerHTML = '<div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(56,189,248,0.4); border: 1px solid #38bdf8;"></div>';
@@ -303,7 +320,7 @@ export class TacticalGlobe3D {
     this.showCoolr = show;
   }
 
-  public orientToCoordinates(lat: number, lng: number, altitude = 0.45) {
+  public orientToCoordinates(lat: number, lng: number, altitude = 0.15) {
     if (this.globe) this.globe.pointOfView({ lat, lng, altitude }, 1200);
   }
 
@@ -318,7 +335,6 @@ export class TacticalGlobe3D {
   public setLanguage(lang: AppLanguage) {
     this.lang = lang;
     if (this.globe) {
-      // Re-trigger htmlElementsData to re-render marker labels in new language
       this.globe.htmlElementsData([...this.markersData]);
     }
   }
