@@ -158,9 +158,9 @@ export class LandslideMap {
 
       marker.bindTooltip(`
         <div style="font-family: system-ui, sans-serif; font-size: 11px; color: #fff; min-width: 150px;">
-          <strong style="color: #38bdf8;">ðŸŒŠ ${g.stationName}</strong><br/>
+ <strong style="color: #38bdf8;"> ${g.stationName}</strong><br/>
           <span style="color: #cbd5e1;">River: ${g.riverName}</span><br/>
-          <span>Current Level: <strong>${g.currentLevelM}m</strong> (${g.trend === 'RISING' ? 'â–² Rising' : 'â” Steady'})</span><br/>
+ <span>Current Level: <strong>${g.currentLevelM}m</strong> (${g.trend === 'RISING' ? ' Rising' : ' Steady'})</span><br/>
           <span style="color: ${isHighRisk ? '#ef4444' : '#34d399'}; font-weight: bold;">GLOF / Flash Flood Risk: ${g.glofRisk}</span>
         </div>
       `, { direction: 'top', offset: [0, -6] });
@@ -185,7 +185,7 @@ export class LandslideMap {
 
       marker.bindTooltip(`
         <div style="font-family: system-ui, sans-serif; font-size: 11px; color: #fff;">
-          <strong style="color: #34d399;">ðŸ¥ ${s.name}</strong><br/>
+ <strong style="color: #34d399;"> ${s.name}</strong><br/>
           <span style="color: #94a3b8;">${s.type} &bull; ${s.elevationM}m MSL</span><br/>
           <span>Capacity: <strong>${s.capacityPersons} persons</strong></span><br/>
           <span style="color: #38bdf8;">DEOC Emergency: ${s.contactNumber}</span>

@@ -135,11 +135,10 @@ theme: Disaster Management.
 
 The dashboard shell — Vite/TypeScript build tooling, CSS layout primitives (dark tactical theme,
 sidebar/tab layout), Leaflet 2D map container, and Globe.gl 3D WebGL wrapper — was
-adapted from **WorldMonitor / NextSignal** by [Elie Habib](https://github.com/eliehabib),
+adapted from an existing AGPL-3.0 licensed open-source geospatial dashboard project (WorldMonitor / NextSignal by Elie Habib),
 originally released under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
-Repository: https://github.com/eliehabib/nextsignal *(private/commercial upstream)*
-Original license: AGPL-3.0
+Original license: AGPL-3.0 (upstream repo is private/commercial; URL unverified at time of submission)
 
 ### Original Work Built on Top (100% New for SIH 26001)
 
