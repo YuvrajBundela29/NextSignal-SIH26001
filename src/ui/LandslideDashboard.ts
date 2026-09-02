@@ -211,7 +211,7 @@ export class LandslideDashboard {
             </main>
 
             <!-- Right Sidebar: 3 Clear Purposeful Tabs (HUD, Highways, Shelters) -->
-            <aside style="width: 370px; background: #050811; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
+            <aside style="width: 370px; background: #050811; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500; padding-bottom: 48px;">
               <!-- Tab Bar (3 Essential Views) -->
               <div style="display: flex; background: #0b1120; border-bottom: 1px solid #1e293b; font-size: 11px;">
                 <button id="tab-btn-hud" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #050811; color: #38bdf8; border-bottom: 2px solid #38bdf8;">
@@ -223,10 +223,10 @@ export class LandslideDashboard {
                 <button id="tab-btn-shelters" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;">
                   Shelters
                 </button>
-              </div>
-                <button id="tab-btn-backtest" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent; font-size: 9.5px;">
-                  [Chart] Backtest
+                <button id="tab-btn-backtest" style="flex: 1; padding: 10px 4px; font-size: 10px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent; border-left: 1px solid #1e293b;">
+                  Backtest
                 </button>
+              </div>
 
               <!-- Tab Contents -->
               <div id="hud-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: block;"></div>
@@ -572,23 +572,25 @@ export class LandslideDashboard {
     });
 
     // Right Sidebar Tab Switchers
-    const tabBtnHud = document.getElementById('tab-btn-hud');
-    const tabBtnHwy = document.getElementById('tab-btn-highways');
-    const tabBtnShl = document.getElementById('tab-btn-shelters');
+    const tabBtnHud = document.getElementById('tab-btn-hud') as HTMLButtonElement | null;
+    const tabBtnHwy = document.getElementById('tab-btn-highways') as HTMLButtonElement | null;
+    const tabBtnShl = document.getElementById('tab-btn-shelters') as HTMLButtonElement | null;
+    const tabBtnBacktest = document.getElementById('tab-btn-backtest') as HTMLButtonElement | null;
 
-    const hudContent = document.getElementById('hud-tab-content');
-    const hwyContent = document.getElementById('highways-tab-content');
-    const shlContent = document.getElementById('shelters-tab-content');
+    const hudContent = document.getElementById('hud-tab-content') as HTMLElement | null;
+    const hwyContent = document.getElementById('highways-tab-content') as HTMLElement | null;
+    const shlContent = document.getElementById('shelters-tab-content') as HTMLElement | null;
+    const backtestContent = document.getElementById('backtest-tab-content') as HTMLElement | null;
 
     const resetTabs = () => {
-      [tabBtnHud, tabBtnHwy, tabBtnShl].forEach(btn => {
+      [tabBtnHud, tabBtnHwy, tabBtnShl, tabBtnBacktest].forEach(btn => {
         if (btn) {
           btn.style.background = '#0b1120';
           btn.style.color = '#94a3b8';
           btn.style.borderBottom = '2px solid transparent';
         }
       });
-      [hudContent, hwyContent, shlContent].forEach(c => {
+      [hudContent, hwyContent, shlContent, backtestContent].forEach(c => {
         if (c) c.style.display = 'none';
       });
     };
@@ -621,9 +623,8 @@ export class LandslideDashboard {
         tabBtnShl.style.borderBottom = '2px solid #38bdf8';
         shlContent.style.display = 'flex';
       }
-    }); 
-    const tabBtnBacktest = document.getElementById('tab-btn-backtest');
-    const backtestContent = document.getElementById('backtest-tab-content');
+    });
+
     if (tabBtnBacktest && backtestContent) {
       tabBtnBacktest.addEventListener('click', () => {
         resetTabs();
