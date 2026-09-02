@@ -25,6 +25,7 @@ import { NASA_COOLR_NER_EVENTS } from '../services/landslide/coolr-dataset';
 import { NER_HIGHWAY_ROUTES } from '../services/landslide/highway-navigation';
 import { NER_SAFE_SHELTERS } from '../services/landslide/safe-shelters';
 import { openPrintableSitRepPdf } from '../services/landslide/sitrep-pdf';
+import { BacktestPanel } from './components/BacktestPanel';
 import { UnifiedSituationMap } from './components/UnifiedSituationMap';
 import { DistrictHud } from './components/DistrictHud';
 import { CitizenView } from './components/CitizenView';
@@ -137,16 +138,16 @@ export class LandslideDashboard {
             <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px;">
               <span style="font-size: 9px; color: #94a3b8; margin-right: 4px;">Feed:</span>
               <select id="sel-scenario" style="background: #0b1120; color: #38bdf8; border: none; font-size: 10px; font-weight: bold; outline: none; cursor: pointer;">
-                <option value="live" style="background: #0b1120; color: #38bdf8;" ${!this.isOfflineDemo ? 'selected' : ''}>📡 Live (Open-Meteo & USGS)</option>
-                <option value="monsoon_deluge" style="background: #0b1120; color: #38bdf8;" ${this.isOfflineDemo && this.currentScenario === 'monsoon_deluge' ? 'selected' : ''}>⛈️ Demo (Monsoon Deluge)</option>
-                <option value="seismic_crisis" style="background: #0b1120; color: #38bdf8;" ${this.isOfflineDemo && this.currentScenario === 'seismic_crisis' ? 'selected' : ''}>⚡ Demo (Seismic M5.8)</option>
-                <option value="normal_baseline" style="background: #0b1120; color: #38bdf8;" ${this.isOfflineDemo && this.currentScenario === 'normal_baseline' ? 'selected' : ''}>☀️ Demo (Normal Baseline)</option>
+                <option value="live" style="background: #0b1120; color: #38bdf8;" ${!this.isOfflineDemo ? 'selected' : ''}>ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€šÃ‚Â¡ Live (Open-Meteo & USGS)</option>
+                <option value="monsoon_deluge" style="background: #0b1120; color: #38bdf8;" ${this.isOfflineDemo && this.currentScenario === 'monsoon_deluge' ? 'selected' : ''}>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂºÃƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Demo (Monsoon Deluge)</option>
+                <option value="seismic_crisis" style="background: #0b1120; color: #38bdf8;" ${this.isOfflineDemo && this.currentScenario === 'seismic_crisis' ? 'selected' : ''}>ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â¡ Demo (Seismic M5.8)</option>
+                <option value="normal_baseline" style="background: #0b1120; color: #38bdf8;" ${this.isOfflineDemo && this.currentScenario === 'normal_baseline' ? 'selected' : ''}>ÃƒÆ’Ã‚Â¢Ãƒâ€¹Ã…â€œÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Demo (Normal Baseline)</option>
               </select>
             </div>
 
             <!-- Download PDF Situation Report Button -->
             <button id="btn-download-sitrep" style="background: #0b1120; color: #38bdf8; border: 1px solid #0284c7; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s ease;" title="Download Beautiful PDF Situation Report">
-              <span>📄</span>
+              <span>ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾</span>
               <span>Download PDF Report</span>
             </button>
 
@@ -162,16 +163,16 @@ export class LandslideDashboard {
 
             <!-- Multi-Language Selector Dropdown -->
             <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px;">
-              <span style="font-size: 10px; margin-right: 4px;">🌐</span>
+              <span style="font-size: 10px; margin-right: 4px;">ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã¢â‚¬â„¢Ãƒâ€šÃ‚Â</span>
               <select id="sel-app-language" style="background: #0b1120; color: #f8fafc; border: none; font-size: 10px; font-weight: bold; outline: none; cursor: pointer;">
                 <option value="en" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'en' ? 'selected' : ''}>English</option>
-                <option value="hi" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'hi' ? 'selected' : ''}>हिन्दी (Hindi)</option>
-                <option value="as" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'as' ? 'selected' : ''}>অসমীয়া (Assamese)</option>
-                <option value="bn" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'bn' ? 'selected' : ''}>বাংলা (Bengali)</option>
-                <option value="mni" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'mni' ? 'selected' : ''}>মৈতৈলোন্ (Manipuri)</option>
-                <option value="lus" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'lus' ? 'selected' : ''}>Mizo ṭawng (Mizo)</option>
+                <option value="hi" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'hi' ? 'selected' : ''}>ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â¹ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¥Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¥ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ (Hindi)</option>
+                <option value="as" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'as' ? 'selected' : ''}>ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â§ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¼ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¾ (Assamese)</option>
+                <option value="bn" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'bn' ? 'selected' : ''}>ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¾ (Bengali)</option>
+                <option value="mni" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'mni' ? 'selected' : ''}>ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â§Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â§Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â§ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¦Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â§Ãƒâ€šÃ‚Â (Manipuri)</option>
+                <option value="lus" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'lus' ? 'selected' : ''}>Mizo ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â¹Ãƒâ€šÃ‚Â­awng (Mizo)</option>
                 <option value="kha" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'kha' ? 'selected' : ''}>Ka Ktien Khasi (Khasi)</option>
-                <option value="ne" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'ne' ? 'selected' : ''}>नेपाली (Nepali)</option>
+                <option value="ne" style="background: #0b1120; color: #f8fafc;" ${this.lang === 'ne' ? 'selected' : ''}>ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¥ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¥ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ (Nepali)</option>
               </select>
             </div>
           </div>
@@ -214,15 +215,18 @@ export class LandslideDashboard {
               <!-- Tab Bar (3 Essential Views) -->
               <div style="display: flex; background: #0b1120; border-bottom: 1px solid #1e293b; font-size: 11px;">
                 <button id="tab-btn-hud" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #050811; color: #38bdf8; border-bottom: 2px solid #38bdf8;">
-                  📊 Risk HUD
+                  ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€¦Ã‚Â  Risk HUD
                 </button>
                 <button id="tab-btn-highways" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;">
-                  🛣️ Highways
+                  ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂºÃƒâ€šÃ‚Â£ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Highways
                 </button>
                 <button id="tab-btn-shelters" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;">
-                  🛡️ Shelters
+                  ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂºÃƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Shelters
                 </button>
               </div>
+                <button id="tab-btn-backtest" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent; font-size: 9.5px;">
+                  ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Backtest
+                </button>
 
               <!-- Tab Contents -->
               <div id="hud-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: block;"></div>
@@ -231,7 +235,7 @@ export class LandslideDashboard {
               <div id="highways-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase;">
-                    🛣️ Arterial Highway Corridors
+                    ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂºÃƒâ€šÃ‚Â£ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Arterial Highway Corridors
                   </div>
                   <span style="font-size: 9px; color: #94a3b8;">Google Maps Nav</span>
                 </div>
@@ -243,9 +247,9 @@ export class LandslideDashboard {
                         ${h.currentPassStatus}
                       </span>
                     </div>
-                    <div style="font-size: 10px; color: #cbd5e1; margin-top: 3px;">📍 ${h.origin} ➔ 🏁 ${h.destination}</div>
+                    <div style="font-size: 10px; color: #cbd5e1; margin-top: 3px;">ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€šÃ‚Â ${h.origin} ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¾ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂÃƒâ€šÃ‚Â ${h.destination}</div>
                     <div style="font-size: 9px; color: #38bdf8; margin-top: 4px; font-weight: bold;">
-                      👉 Click for Step-by-Step Waypoints
+                      ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â° Click for Step-by-Step Waypoints
                     </div>
                   </div>
                 `).join('')}
@@ -254,7 +258,7 @@ export class LandslideDashboard {
               <!-- Shelters Tab -->
               <div id="shelters-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 8px;">
                 <div style="font-size: 11px; font-weight: 800; color: #34d399; text-transform: uppercase;">
-                  🛡️ Designated Safe Shelters & Evacuation Centers
+                  ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂºÃƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Designated Safe Shelters & Evacuation Centers
                 </div>
                 ${NER_SAFE_SHELTERS.map(s => `
                   <div style="background: #0b1120; border-radius: 8px; padding: 10px; border-left: 3px solid #10b981;">
@@ -269,11 +273,13 @@ export class LandslideDashboard {
                       Emergency Helpline: <strong>${s.contactNumber}</strong>
                     </div>
                     <div style="font-size: 8px; color: #a7f3d0; margin-top: 2px;">
-                      ${s.hasMedicalPost ? '✓ Medical Post' : ''} ${s.hasGeneratorPower ? '✓ Generator Power' : ''} ${s.hasSatelliteComms ? '✓ Satellite Link' : ''}
+                      ${s.hasMedicalPost ? 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ Medical Post' : ''} ${s.hasGeneratorPower ? 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ Generator Power' : ''} ${s.hasSatelliteComms ? 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ Satellite Link' : ''}
                     </div>
                   </div>
                 `).join('')}
               </div>
+              <!-- Backtest Validation Tab -->
+              <div id="backtest-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column;"></div>
             </aside>
           </div>
 
@@ -437,7 +443,7 @@ export class LandslideDashboard {
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; pointer-events: none;">
             <span>${d.state} &bull; ${d.elevationM}m</span>
-            <span>🌧️ ${rain24}mm</span>
+            <span>ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã¢â‚¬â„¢Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â ${rain24}mm</span>
           </div>
         </div>
       `;
@@ -615,7 +621,21 @@ export class LandslideDashboard {
         tabBtnShl.style.borderBottom = '2px solid #38bdf8';
         shlContent.style.display = 'flex';
       }
-    });
+    }); 
+    const tabBtnBacktest = document.getElementById('tab-btn-backtest');
+    const backtestContent = document.getElementById('backtest-tab-content');
+    if (tabBtnBacktest && backtestContent) {
+      tabBtnBacktest.addEventListener('click', () => {
+        resetTabs();
+        tabBtnBacktest.style.background = '#050811';
+        tabBtnBacktest.style.color = '#38bdf8';
+        tabBtnBacktest.style.borderBottom = '2px solid #38bdf8';
+        backtestContent.style.display = 'flex';
+        if (!backtestContent.hasChildNodes()) {
+          new BacktestPanel(backtestContent);
+        }
+      });
+    }
 
     // Highway Corridor Item clicks -> Open Highway Navigator
     hwyContent?.addEventListener('click', (e) => {

@@ -9,14 +9,14 @@
 
 ---
 
-## 📌 Executive Summary & SIH Problem Statement (SIH 26001)
+## ðŸ“Œ Executive Summary & SIH Problem Statement (SIH 26001)
 The **Northeast Region of India (NER)** represents one of the world's most vulnerable mountainous terrains to rainfall-triggered landslides, seismic slope destabilization, and Glacial Lake Outburst Floods (GLOF).
 
 **NextSignal** is an enterprise-grade, real-time geohazard intelligence dashboard engineered for the **National Disaster Management Authority (NDMA)**, **State Disaster Management Authorities (SDMA)**, **NDRF Battalions**, and **citizens across all 8 NER states** (Assam, Arunachal Pradesh, Meghalaya, Sikkim, Manipur, Mizoram, Nagaland, Tripura).
 
 ---
 
-## 🌟 Key System Capabilities
+## ðŸŒŸ Key System Capabilities
 
 ### 1. Dual 2D/3D Geospatial Situation Engine
 * **2D Leaflet Tactical Map:** High-performance vector rendering with real-time district risk pins, thermal heat gradient circles for India, seismic epicenter rings, NASA COOLR historical landslide coordinates, and safe shelters.
@@ -45,11 +45,11 @@ $$\text{Composite Risk} = 0.30 \cdot R_{\text{rain}} + 0.25 \cdot S_{\text{slope
 
 ### 5. Hydrological Basin & GLOF Early Warning Gauges
 * Continuous tracking of high-altitude river gauges along the **Teesta**, **Brahmaputra**, and **Subansiri** basins.
-* Trend monitoring (`▲ Rising` vs `▶ Steady`) and danger level exceedance detection.
+* Trend monitoring (`â–² Rising` vs `â–¶ Steady`) and danger level exceedance detection.
 
 ### 6. Citizen Early Warning Portal & Multi-Lingual Interface
 * Instant toggle between **Authority Command View** and **Citizen Public Portal**.
-* Full English and **Hindi (हिन्दी)** localized warnings, emergency helplines (`1070`, `1077`, `112`), and live risk advisories.
+* Full English and **Hindi (à¤¹à¤¿à¤¨à¥à¤¦à¥€)** localized warnings, emergency helplines (`1070`, `1077`, `112`), and live risk advisories.
 
 ### 7. Strategic Corridor Inspection & Rangefinder
 * **Cinematic Tour:** Autonomous camera navigation through critical mountain highway choke points (Chungthang, Dima Hasao, Noney, Sela Pass).
@@ -57,32 +57,32 @@ $$\text{Composite Risk} = 0.30 \cdot R_{\text{rain}} + 0.25 \cdot S_{\text{slope
 
 ---
 
-## 🏗️ Architecture & Technology Stack
+## ðŸ—ï¸ Architecture & Technology Stack
 
 ```
 NextSignal-SIH26001/
-├── src/
-│   ├── services/
-│   │   └── landslide/            # Geohazard services, Open-Meteo, USGS, NDRF dispatch
-│   ├── ui/
-│   │   ├── components/
-│   │   │   ├── UnifiedSituationMap.ts  # Integrated 2D/3D map controller & GIS toolbar
-│   │   │   ├── TacticalGlobe3D.ts      # Flat WebGL 3D Globe with layer/optic sync
-│   │   │   ├── LandslideMap.ts         # 2D Leaflet geospatial map engine
-│   │   │   ├── DistrictHud.ts          # Executive risk telemetry HUD
-│   │   │   ├── AlertTicker.ts          # Dark command alert marquee
-│   │   │   ├── CitizenView.ts          # Public emergency warning view (EN/HI)
-│   │   │   ├── HighwayNavigationModal.ts # Highway corridor evacuation planner
-│   │   │   └── sensor-optics.ts        # FLIR, NVG, CRT, Noir optical shaders
-│   │   └── LandslideDashboard.ts       # Master dashboard orchestrator
-├── index.html                    # Single Page Application entry
-├── netlify.toml                  # Netlify deployment configuration
-└── vite.config.ts                # Optimized Vite bundler configuration
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ services/
+â”‚   â”‚   â””â”€â”€ landslide/            # Geohazard services, Open-Meteo, USGS, NDRF dispatch
+â”‚   â”œâ”€â”€ ui/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ UnifiedSituationMap.ts  # Integrated 2D/3D map controller & GIS toolbar
+â”‚   â”‚   â”‚   â”œâ”€â”€ TacticalGlobe3D.ts      # Flat WebGL 3D Globe with layer/optic sync
+â”‚   â”‚   â”‚   â”œâ”€â”€ LandslideMap.ts         # 2D Leaflet geospatial map engine
+â”‚   â”‚   â”‚   â”œâ”€â”€ DistrictHud.ts          # Executive risk telemetry HUD
+â”‚   â”‚   â”‚   â”œâ”€â”€ AlertTicker.ts          # Dark command alert marquee
+â”‚   â”‚   â”‚   â”œâ”€â”€ CitizenView.ts          # Public emergency warning view (EN/HI)
+â”‚   â”‚   â”‚   â”œâ”€â”€ HighwayNavigationModal.ts # Highway corridor evacuation planner
+â”‚   â”‚   â”‚   â””â”€â”€ sensor-optics.ts        # FLIR, NVG, CRT, Noir optical shaders
+â”‚   â”‚   â””â”€â”€ LandslideDashboard.ts       # Master dashboard orchestrator
+â”œâ”€â”€ index.html                    # Single Page Application entry
+â”œâ”€â”€ netlify.toml                  # Netlify deployment configuration
+â””â”€â”€ vite.config.ts                # Optimized Vite bundler configuration
 ```
 
 ---
 
-## 🚀 Getting Started Locally
+## ðŸš€ Getting Started Locally
 
 ### Prerequisites
 * **Node.js**: v18.0 or higher (v20+ recommended)
@@ -105,7 +105,7 @@ Visit **`http://localhost:3000`** in your browser.
 
 ---
 
-## 🌐 Deploy to Netlify
+## ðŸŒ Deploy to Netlify
 
 This project is pre-configured with [`netlify.toml`](./netlify.toml) for 1-click zero-config deployment:
 
@@ -113,11 +113,59 @@ This project is pre-configured with [`netlify.toml`](./netlify.toml) for 1-click
 2. Set the build settings:
    * **Build Command:** `npm run build`
    * **Publish Directory:** `dist`
-3. Click **Deploy Site** — your live dashboard will be active in seconds!
+3. Click **Deploy Site** â€” your live dashboard will be active in seconds!
 
 ---
 
-## 👥 Contributors & SIH Team
+## ðŸ‘¥ Contributors & SIH Team
 * **Project Name:** NextSignal
 * **Problem Statement:** SIH 26001
 * **Lead Developer:** Yuvraj Singh Bundela
+
+---
+
+## Attribution & Originality Disclosure
+
+This project was developed for **Smart India Hackathon 2024 — Problem Statement SIH 26001**
+("AI-Based Early Warning and Landslide Risk Monitoring System in NER"),
+sponsored by the Ministry of Development of North Eastern Region (MDoNER),
+theme: Disaster Management.
+
+### Base Infrastructure (Forked & Heavily Adapted)
+
+The dashboard shell — Vite/TypeScript build tooling, CSS layout primitives (dark tactical theme,
+sidebar/tab layout), Leaflet 2D map container, and Globe.gl 3D WebGL wrapper — was
+adapted from **WorldMonitor / NextSignal** by [Elie Habib](https://github.com/eliehabib),
+originally released under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+Repository: https://github.com/eliehabib/nextsignal *(private/commercial upstream)*
+Original license: AGPL-3.0
+
+### Original Work Built on Top (100% New for SIH 26001)
+
+All of the following were written from scratch for this submission and contain no code
+from the original project:
+
+| Module | Description |
+|---|---|
+| src/services/landslide/ | Entire geohazard intelligence stack (24 files) |
+| src/services/landslide/risk-engine.ts | 5-factor weighted geotechnical composite score |
+| src/services/landslide/ner-districts.ts | 28-district NER GIS database with slope/elevation/multilingual data |
+| src/services/landslide/coolr-dataset.ts | 10 curated NASA COOLR / GSI historical NER landslide events |
+| src/services/landslide/backtest-validator.ts | Historical backtest — detection rate validation against COOLR events |
+| src/services/landslide/usgs-seismic.ts | Live USGS FDSN earthquake ingestion for NER bounding box |
+| src/services/landslide/open-meteo.ts | Live Open-Meteo precipitation / soil moisture ingestion |
+| src/services/landslide/ndrf-dispatch.ts | Structured decision-support dispatch recommendations |
+| src/services/landslide/river-gauges.ts | High-altitude GLOF river basin monitoring |
+| src/services/landslide/highway-corridors.ts | 8 arterial NER mountain corridor vulnerability profiles |
+| src/ui/components/DistrictHud.ts | Executive geotechnical telemetry HUD |
+| src/ui/components/BacktestPanel.ts | Historical validation chart & precision report |
+| src/ui/components/CitizenView.ts | Multi-lingual citizen early warning view (8 NER languages) |
+| src/ui/LandslideDashboard.ts | Master dashboard orchestrator (rewritten from ground up) |
+
+### License Compliance Note
+
+The AGPL-3.0 license requires derivative works to be released under the same license.
+This repository **complies** with AGPL-3.0: the source code is publicly available at
+https://github.com/YuvrajBundela29/NextSignal-SIH26001 and this attribution is provided.
+The original AGPL-3.0 license text is preserved in the LICENSE file.
