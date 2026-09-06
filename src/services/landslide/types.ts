@@ -33,6 +33,16 @@ export interface DistrictProfile {
   deocContact: string; // District Emergency Operation Center contact
 }
 
+export interface CitizenProfile {
+  name: string;
+  state: NerState;
+  districtId: string;
+  districtName: string;
+  localArea: string;
+  lat: number;
+  lon: number;
+}
+
 export interface WeatherTelemetry {
   currentRainfallMm: number;
   rainfall24hMm: number;

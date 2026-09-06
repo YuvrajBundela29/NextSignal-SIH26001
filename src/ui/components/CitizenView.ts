@@ -1,573 +1,571 @@
-﻿import type { DistrictProfile, RiskScoreBreakdown, WeatherTelemetry, AppLanguage } from '../../services/landslide/types';
+import L from 'leaflet';
+import type { DistrictProfile, RiskScoreBreakdown, WeatherTelemetry, SoilTelemetry, SeismicTelemetry, AppLanguage, CitizenProfile } from '../../services/landslide/types';
 import { NER_DISTRICTS } from '../../services/landslide/ner-districts';
+import { getLocalAreasForDistrict } from '../../services/landslide/local-areas';
+import { NER_SAFE_SHELTERS } from '../../services/landslide/safe-shelters';
 import { groundReportsService, type GroundReport } from '../../services/landslide/ground-reports';
 import { GroundReportModal } from './GroundReportModal';
 
-interface LangLabels {
-  portalTitle: string;
-  dangerStatus: string;
-  cautionStatus: string;
-  safeStatus: string;
-  rain24: string;
-  compRisk: string;
-  avgSlope: string;
-  guidelinesTitle: string;
-  emergencyTitle: string;
-  emergencyDesc: string;
-  deocContact: string;
-  ndrfHotline: string;
-  disasterControl: string;
-  policeHelp: string;
-  reportHazardBtn: string;
-  communityReportsTitle: string;
-  advisoriesDanger: string[];
-  advisoriesCaution: string[];
-  advisoriesSafe: string[];
-}
-
-const TRANSLATIONS: Record<AppLanguage, LangLabels> = {
-  en: {
-    portalTitle: 'CITIZEN SAFETY & EARLY WARNING PORTAL (NER INDIA)',
-    dangerStatus: 'HIGH LANDSLIDE DANGER - STAY ALERT & PREPARE TO EVACUATE',
-    cautionStatus: 'MODERATE RISK - EXERCISE HEIGHTENED CAUTION',
-    safeStatus: 'AREA STABLE & NORMAL MONITORING',
-    rain24: '24h Rainfall',
-    compRisk: 'Composite Risk',
-    avgSlope: 'Average Slope',
-    guidelinesTitle: 'IMMEDIATE CITIZEN SAFETY GUIDELINES',
-    emergencyTitle: 'EMERGENCY CONTACTS & RESCUE HELPLINES',
-    emergencyDesc: 'If you observe active tension cracks, bulging ground, or tilting trees, contact local authorities immediately:',
-    deocContact: 'District Disaster Control (DEOC)',
-    ndrfHotline: 'National Disaster Response (NDRF)',
-    disasterControl: 'State Disaster Management Authority (SDMA)',
-    policeHelp: 'Emergency Response Support System (ERSS)',
-    reportHazardBtn: 'REPORT A HAZARD / GROUND CONDITION',
-    communityReportsTitle: 'COMMUNITY & FIELD GROUND REPORTS',
-    advisoriesDanger: [
-      'Avoid all non-essential travel along identified hillside highway corridors.',
-      'Move immediately to designated safe elevation shelters if tension cracks widen.',
-      'Stay away from steep natural slopes, river banks, and mountain drainage channels.',
-      'Keep emergency grab-bag ready with drinking water, torch, medications, and IDs.',
-    ],
-    advisoriesCaution: [
-      'Monitor local meteorological advisories and rainfall updates continuously.',
-      'Ensure hillside retaining walls and household stormwater drains are clear.',
-      'Drive cautiously on hill roads; watch for loose debris and small rockfalls.',
-    ],
-    advisoriesSafe: [
-      'Normal baseline geohazard conditions detected.',
-      'Maintain awareness of seasonal monsoon trends and standard slope safety.',
-    ],
-  },
-  hi: {
-    portalTitle: 'नागरिक सुरक्षा एवं भूस्खलन पूर्व चेतावनी पोर्टल (उत्तर पूर्व भारत)',
-    dangerStatus: 'उच्च भूस्खलन खतरा - सतर्क रहें एवं सुरक्षित स्थान पर जाएं',
-    cautionStatus: 'मध्यम जोखिम - अतिरिक्त सावधानी बरतें',
-    safeStatus: 'क्षेत्र स्थिर एवं सामान्य निगरानी में',
-    rain24: '24 घंटे की वर्षा',
-    compRisk: 'समग्र जोखिम',
-    avgSlope: 'औसत ढलान',
-    guidelinesTitle: 'नागरिकों हेतु तत्काल सुरक्षा दिशानिर्देश',
-    emergencyTitle: 'आपातकालीन संपर्क एवं आपदा नियंत्रण कक्ष',
-    emergencyDesc: 'यदि आपको जमीन में दरारें, झुकते पेड़ या पत्थरों का गिरना दिखाई दे तो तुरंत सूचित करें:',
-    deocContact: 'जिला आपदा नियंत्रण कक्ष (DEOC)',
-    ndrfHotline: 'राष्ट्रीय आपदा मोचन बल (NDRF)',
-    disasterControl: 'राज्य आपदा प्रबंधन प्राधिकरण (SDMA)',
-    policeHelp: 'आपातकालीन प्रतिक्रिया प्रणाली (ERSS)',
-    reportHazardBtn: 'भूस्खलन या खतरे की सूचना दें (फोटो/वीडियो)',
-    communityReportsTitle: 'नागरिक एवं फील्ड ग्राउंड रिपोर्ट',
-    advisoriesDanger: [
-      'पहाड़ी राजमार्गों और जोखिम भरे ढलानों पर अनावश्यक यात्रा से बचें।',
-      'दरारें चौड़ी होने पर तुरंत नजदीकी सुरक्षित आश्रय स्थलों में जाएं।',
-      'नदी किनारों और तेज ढलानों वाले रास्तों से दूर रहें।',
-      'आवश्यक दस्तावेज, टार्च और दवाइयों से युक्त इमरजेंसी बैग तैयार रखें।',
-    ],
-    advisoriesCaution: [
-      'मौसम विभाग और जिला प्रशासन के निर्देशों का पालन करें।',
-      'नालियों और जल निकासी को खुला रखें ताकि पानी ढलान पर न भरे।',
-    ],
-    advisoriesSafe: [
-      'वर्तमान में भूस्खलन का कोई तात्कालिक खतरा नहीं है।',
-    ],
-  },
-  as: {
-    portalTitle: 'নাগৰিক সুৰক্ষা আৰু আগতীয়া সতৰ্কবাৰ্তা প\'ৰ্টেল (উত্তৰ-পূৰ্বাঞ্চল)',
-    dangerStatus: 'উচ্চ ভূমিস্খলনৰ বিপদ - সতৰ্ক থাকক আৰু নিৰাপদ স্থানলৈ যাওক',
-    cautionStatus: 'মধ্যমীয়া বিপদ - বিশেষ সাৱধানতা অৱলম্বন কৰক',
-    safeStatus: 'অঞ্চল সুস্থিৰ আৰু স্বাভাৱিক নিৰীক্ষণ চলি আছে',
-    rain24: '২৪ ঘণ্টাৰ বৰষুণ',
-    compRisk: 'সামগ্ৰিক বিপদাশংকা',
-    avgSlope: 'গড় হেলনীয়া ঢাল',
-    guidelinesTitle: 'নাগৰিকৰ বাবে জৰুৰী সুৰক্ষা নিৰ্দেশনাৱলী',
-    emergencyTitle: 'জৰুৰীকালীন যোগাযোগ আৰু উদ্ধাৰ হেল্পলাইন',
-    emergencyDesc: 'মাটিত ফাঁট মেলা, গছ হেলনীয়া হোৱা বা মাটি খহি পৰা দেখা পালে লগে লগে জনাওক:',
-    deocContact: 'জিলা দুৰ্যোগ নিয়ন্ত্ৰণ কক্ষ (DEOC)',
-    ndrfHotline: 'ৰাষ্ট্ৰীয় দুৰ্যোগ সঁহাৰি বাহিনী (NDRF)',
-    disasterControl: 'ৰাজ্যিক দুৰ্যোগ ব্যৱস্থাপনা কৰ্তৃপক্ষ (SDMA)',
-    policeHelp: 'জৰুৰীকালীন সঁহাৰি সেৱা (ERSS)',
-    reportHazardBtn: 'ভূমিস্খলন বা বিপদৰ ৰিপ\'ৰ্ট কৰক (ফটো/ভিডিঅ\')',
-    communityReportsTitle: 'নাগৰিক আৰু ফিল্ড গ্ৰাউণ্ড ৰিপ\'ৰ্টসমূহ',
-    advisoriesDanger: [
-      'পাহাৰীয়া পথত সকলো অনাহুত যাতায়াত স্থগিত ৰাখক।',
-      'ফাঁট বৃদ্ধি পালে নিকটৱৰ্তী নিৰাপদ আশ্ৰয় শিবিৰলৈ যাওক।',
-      'পাহাৰৰ তীব্ৰ ঢাল আৰু নদীৰ পাৰৰ পৰা আঁতৰি থাকক।',
-    ],
-    advisoriesCaution: [
-      'বতৰৰ সতৰ্কবাৰ্তা আৰু জিলা প্ৰশাসনৰ নিৰ্দেশ অনুসৰণ কৰক।',
-      'পানী নিষ্কাশন নলাসমূহ পৰিষ্কাৰ কৰি ৰাখক।',
-    ],
-    advisoriesSafe: [
-      'বৰ্তমান অঞ্চলটোত ভূমিস্খলনৰ কোনো তাৎক্ষণিক সম্ভাৱনা নাই।',
-    ],
-  },
-  bn: {
-    portalTitle: 'নাগরিক সুরক্ষা ও আগাম সতর্কতা পোর্টাল (উত্তর-পূর্ব ভারত)',
-    dangerStatus: 'উচ্চ ভূমিধসের ঝুঁকি - সতর্ক থাকুন ও নিরাপদ স্থানে যান',
-    cautionStatus: 'মাঝারি ঝুঁকি - বাড়তি সতর্কতা অবলম্বন করুন',
-    safeStatus: 'এলাকা স্থিতিশীল ও স্বাভাবিক পর্যবেক্ষণে রয়েছে',
-    rain24: '২৪ ঘণ্টার বৃষ্টিপাত',
-    compRisk: 'সামগ্রিক ঝুঁকি সূচক',
-    avgSlope: 'গড় ঢাল',
-    guidelinesTitle: 'নাগরিকদের জন্য জরুরি সুরক্ষা নির্দেশিকা',
-    emergencyTitle: 'জরুরি যোগাযোগ ও উদ্ধার হেল্পলাইন',
-    emergencyDesc: 'মাটিতে ফাটল বা ভূমিধসের লক্ষণ দেখা দিলে অবিলম্বে জানান:',
-    deocContact: 'জেলা বিপর্যয় নিয়ন্ত্রণ কেন্দ্র (DEOC)',
-    ndrfHotline: 'জাতীয় বিপর্যয় মোকাবিলা বাহিনী (NDRF)',
-    disasterControl: 'রাজ্য বিপর্যয় মোকাবিলা কর্তৃপক্ষ (SDMA)',
-    policeHelp: 'জরুরি সহায়তা ব্যবস্থা (ERSS)',
-    reportHazardBtn: 'ভূমিধস বা ঝুঁকির তথ্য রিপোর্ট করুন',
-    communityReportsTitle: 'নাগরিক ও ফিল্ড গ্রাউন্ড রিপোর্ট',
-    advisoriesDanger: [
-      'পাহাড়ি রাস্তায় অপ্রয়োজনীয় চলাচল এড়িয়ে চলুন।',
-      'ফাটল চওড়া হলে অবিলম্বে নিরাপদ আশ্রয়কেন্দ্রে যান।',
-      'খাড়া ঢাল ও পাহাড়ি নদীর তীর থেকে দূরে থাকুন।',
-    ],
-    advisoriesCaution: [
-      'আবহাওয়ার খবর এবং জেলা প্রশাসনের বিজ্ঞপ্তিতে নজর রাখুন।',
-    ],
-    advisoriesSafe: [
-      'বর্তমানে এলাকায় ভূমিধসের সরাসরি ঝুঁকি নেই।',
-    ],
-  },
-  mni: {
-    portalTitle: 'নাগরিক য়ুম্বু অমসুং লৈবাক নিংবগী অহানবা চেকশিন ৱাফম (NER)',
-    dangerStatus: 'লৈবাক নিংবগী য়াম্না শাথিবা খুদোংথিব - চেকশিন্না লৈবীয়ু',
-    cautionStatus: 'চাউনা খুদোংথিবা লৈ - চেকশিন্না লৈবীয়ু',
-    safeStatus: 'হৌজিক্কী ওইনা লম অসিদা লৈবাক নিংবগী ফিভম শান্ত ওইরি',
-    rain24: 'পুং ২৪গী নোংচুবা',
-    compRisk: 'খুদোংথিবগী চাং',
-    avgSlope: 'চীংগী চিংখৈ চাং',
-    guidelinesTitle: 'মীয়ামগী অথুবা সুৰক্ষা চেকশিন-ৱাফমশিং',
-    emergencyTitle: 'জরুরি হেল্পলাইন নম্বরশিং',
-    emergencyDesc: 'লৈবাক ফাটপা নত্রগা উ-পাম্বী হেন্দোরকপা উরবদি অথুবদা খঙহনবীয়ু:',
-    deocContact: 'ডিস্ট্রিক্ট দিজাস্টার কন্ত্রোল (DEOC)',
-    ndrfHotline: 'নেস্নেল দিজাস্টার রেস্পোন্স ফোর্স (NDRF)',
-    disasterControl: 'স্তেত দিজাস্টার মেনেজমেন্ত ওথোরিতি (SDMA)',
-    policeHelp: 'ইমর্জেন্সী রেস্পোন্স সপোর্ত সিস্তেম (ERSS)',
-    reportHazardBtn: 'লৈবাক নিংবগী পাউ ইমেল/ফটো থাবীয়ু',
-    communityReportsTitle: 'মীয়াম অমসুং ফিল্ড গ্রাউণ্ড রিপোর্ট',
-    advisoriesDanger: [
-      'চীংগী লম্বীশিংদা চৎ-থোক তৌবা লেপপীয়ু।',
-      'লৈবাক ফাটপা উরবদি অথুবদা মীয়াম পুল্লপ হোংদোকপীয়ু।',
-      'জরুরি পোৎলম (টোর্চ, হিদাক, থক্নবা ঈশিং) শেদুনা থম্বীয়ু।',
-    ],
-    advisoriesCaution: [
-      'লোকেল নোং-চিংগী পাউ মীয়াম্না চেকশিন্না তাবীগদবনি।',
-    ],
-    advisoriesSafe: [
-      'হৌজিক্কী ওইনা লম অসিদা লৈবাক নিংবগী ফিভম শান্ত ওইরি।',
-    ],
-  },
-  lus: {
-    portalTitle: 'MIPUI HIMNA LEH LEILASIN VENCHHUNG PORTAL (NER INDIA)',
-    dangerStatus: 'LEILASIN HLAUHLAWM CHUNGCHUANG - HLAUHTHAWNNA NENA INVEN TUR',
-    cautionStatus: 'HLAUHLAWM ZAWNG A AWM - FIMKHUR A NGAI',
-    safeStatus: 'HMUN HIM LEH HMANGAIHNA NENA ENZUI MEK',
-    rain24: 'Darkar 24 Ruahsur',
-    compRisk: 'Risk Tehchhuah',
-    avgSlope: 'Chhuk-Chhoh Dan',
-    guidelinesTitle: 'MIPUI HIMNA ATANGA THURAWNTE',
-    emergencyTitle: 'KHAWPUI LEH CHHIATRUPNA HELPLINE',
-    emergencyDesc: 'Leilung khi emaw, thing thal thluang emaw i hmuh chuan a rang lamin DEOC hriattir rawh:',
-    deocContact: 'District Emergency Operation Center (DEOC)',
-    ndrfHotline: 'National Disaster Response Force (NDRF)',
-    disasterControl: 'State Disaster Management Authority (SDMA)',
-    policeHelp: 'Emergency Response Support System (ERSS)',
-    reportHazardBtn: 'LEILASIN CHANCHIN REPORT RAWH (PHOTO/VIDEO)',
-    communityReportsTitle: 'MIPUI LEH FIELD OFFICIAL REPORT-TE',
-    advisoriesDanger: [
-      'Kham chung leh kawngpuia lei chim theihna hmun atangin inthiarfihlim vat rawh.',
-      'Tlangkawng zawh hrim hrim a tul lo anih chuan thulh rih tur a ni.',
-      'Leilung a khi emaw tui a chhuah chuan rang takin hmun himah insawn rawh.',
-      'Hmanrua pawimawh (Torch, damdawi, tui thianghlim, lehkha pawimawh) keng reng rawh.',
-    ],
-    advisoriesCaution: [
-      'Khawchin chanchin leh sorkar thuchhuahte ngaihven reng rawh.',
-    ],
-    advisoriesSafe: [
-      'Tun dinhmunah leilung a la nghet tawk a ni.',
-    ],
-  },
-  kha: {
-    portalTitle: 'KA PORTAL JINGIADA BA JINGMAHAM SHWA NA KA JINGTWA KA KHYNDEW (NER)',
-    dangerStatus: 'KA JINGMA BA KHRAW NA KA JINGTWA KHYNDEW - MAHAM BA KIEH SHROH',
-    cautionStatus: 'DON KA JINGMA - PHIKHIR SHROH',
-    safeStatus: 'KA SHNONG KA THAW KA SHNGIAIN',
-    rain24: 'Jinghap Slap 24 Kynta',
-    compRisk: 'Jingkhein Jingma',
-    avgSlope: 'Ka Jingriam Lum',
-    guidelinesTitle: 'KI JINGBTHAH IADA NA KA BYNTA KI PAIBAH',
-    emergencyTitle: 'KI HELPLINE PYRTOI HA KA POR JINGMA',
-    emergencyDesc: 'Lada phi iohi ba pait ka khyndew lane ba noh ki dieng, pyntip mar-mar sha:',
-    deocContact: 'District Emergency Operation Center (DEOC)',
-    ndrfHotline: 'National Disaster Response Force (NDRF)',
-    disasterControl: 'State Disaster Management Authority (SDMA)',
-    policeHelp: 'Emergency Response Support System (ERSS)',
-    reportHazardBtn: 'PYNTIP IA KA JINGTWA KHYNDEW (PHOTO/VIDEO)',
-    communityReportsTitle: 'KI KHUBOR PAIBAH NA KHYNDEW',
-    advisoriesDanger: [
-      'Kieng jngai na ki lum ba thie, ki nala um ba khlai, bad ki wah bah.',
-      'Sangeh lut ia ki jingleit jinglei ha ki surok lum ba don jingma.',
-      'Lada pait ka khyndew, kynriah mardor sha ki jaka ba shngiain.',
-      'Pynkhreh ia ka pla jingiada (Torch, dawai, umdih, ki kot ki sla ba kongsan).',
-    ],
-    advisoriesCaution: [
-      'Bud thuh ia ka khubor suinbneng bad ki jingbthah jong ka District Administration.',
-    ],
-    advisoriesSafe: [
-      'Ka jaka ka don ha ka kyrdan ba shngiain mynta.',
-    ],
-  },
-  ne: {
-    portalTitle: 'नागरिक सुरक्षा तथा पहिरो पूर्व चेतावनी पोर्टल (उत्तर पूर्व भारत)',
-    dangerStatus: 'उच्च पहिरो जोखिम - सतर्क रहनुहोस् र सुरक्षित स्थानमा जानुहोस्',
-    cautionStatus: 'मध्यम जोखिम - विशेष सावधानी अपनाउनुहोस्',
-    safeStatus: 'क्षेत्र स्थिर तथा सामान्य निगरानीमा',
-    rain24: '२४ घण्टाको वर्षा',
-    compRisk: 'समग्र जोखिम स्तर',
-    avgSlope: 'औसत भिरालोपन',
-    guidelinesTitle: 'नागरिक सुरक्षाका लागि तुरुन्त निर्देशनहरू',
-    emergencyTitle: 'आपतकालीन सम्पर्क तथा उद्धार हेल्पलाइन',
-    emergencyDesc: 'यदि जमिनमा चिरा परेको, पानीको अनौठो बहाव वा रुख ढल्किन थालेको देखेमा तुरुन्त सम्पर्क गर्नुहोस्:',
-    deocContact: 'जिल्ला विपद् नियन्त्रण कक्ष (DEOC)',
-    ndrfHotline: 'राष्ट्रिय विपद् प्रतिकार्य बल (NDRF)',
-    disasterControl: 'प्रदेश विपद् व्यवस्थापन प्राधिकरण (SDMA)',
-    policeHelp: 'आपतकालीन प्रतिक्रिया सहायता प्रणाली (ERSS)',
-    reportHazardBtn: 'पहिरो वा जोखिमको फोटो/भिडियो रिपोर्ट गर्नुहोस्',
-    communityReportsTitle: 'नागरिक तथा फिल्ड रिपोर्टहरू',
-    advisoriesDanger: [
-      'भिरालो पहाडी पाखा, खोला किनारा र पहिरोग्रस्त क्षेत्रबाट तुरुन्त टाढा रहनुहोस्।',
-      'पहाडी सडक र जोखिमपूर्ण खण्डहरूमा अनावश्यक यात्रा तुरुन्त बन्द गर्नुहोस्।',
-      'जमिनमा नयाँ चिरा परेको देखेमा बिना ढिलाइ सुरक्षित आश्रयस्थलमा जानुहोस्।',
-      'आपतकालीन झोला तयार राख्नुहोस् (टर्च, प्राथमिक उपचार औषधि, पिउने पानी, कागजातहरू)।',
-    ],
-    advisoriesCaution: [
-      'स्थानीय मौसम पूर्वानुमान तथा जिल्ला प्रशासनको निर्देशनहरू नियमित हेर्नुहोस्।',
-    ],
-    advisoriesSafe: [
-      'हालको भू-प्राविधिक तथ्याङ्कले क्षेत्र सामान्य र स्थिर रहेको देखाउँछ।',
-    ],
-  },
-};
-
 export class CitizenView {
   private container: HTMLElement;
+  private currentDistrict: DistrictProfile;
+  private citizenProfile: CitizenProfile;
   private lang: AppLanguage = 'en';
-  private currentDistrict: DistrictProfile = NER_DISTRICTS[0];
   private onSelectDistrictCallback?: (districtId: string) => void;
+  private onExitToRoleSelection?: () => void;
+  private localMap: L.Map | null = null;
+  private userMarker: L.Marker | null = null;
+  private reportMarkersLayer: L.LayerGroup | null = null;
 
-  constructor(containerId: string, onSelectDistrict?: (districtId: string) => void) {
-    const el = document.getElementById(containerId);
-    if (!el) throw new Error(`Element #${containerId} not found`);
-    this.container = el;
+  constructor(
+    container: HTMLElement,
+    currentDistrict: DistrictProfile,
+    citizenProfile?: CitizenProfile,
+    onSelectDistrict?: (districtId: string) => void,
+    onExitToRoleSelection?: () => void
+  ) {
+    this.container = container;
+    this.currentDistrict = currentDistrict;
     this.onSelectDistrictCallback = onSelectDistrict;
+    this.onExitToRoleSelection = onExitToRoleSelection;
+
+    // Load or initialize citizen profile
+    if (citizenProfile) {
+      this.citizenProfile = citizenProfile;
+    } else {
+      const cached = localStorage.getItem('nexsignal_citizen_profile');
+      if (cached) {
+        try {
+          this.citizenProfile = JSON.parse(cached);
+        } catch (e) {
+          this.citizenProfile = this.createDefaultProfile(currentDistrict);
+        }
+      } else {
+        this.citizenProfile = this.createDefaultProfile(currentDistrict);
+      }
+    }
+
+    // Subscribe to ground reports for real-time reactivity
+    groundReportsService.subscribe(() => {
+      this.renderReportMarkers();
+      this.renderCommunityFeed();
+    });
+  }
+
+  private createDefaultProfile(district: DistrictProfile): CitizenProfile {
+    const areas = getLocalAreasForDistrict(district.id);
+    const primaryArea = areas[0]?.name || district.name;
+    return {
+      name: 'Yuvraj',
+      state: district.state,
+      districtId: district.id,
+      districtName: district.name,
+      localArea: primaryArea,
+      lat: district.lat + (areas[0]?.latOffset || 0),
+      lon: district.lon + (areas[0]?.lonOffset || 0),
+    };
   }
 
   public setLanguage(lang: AppLanguage) {
     this.lang = lang;
   }
 
-  private getDistrictName(d: DistrictProfile): string {
-    switch (this.lang) {
-      case 'hi': return d.nameHi || d.name;
-      case 'as': return d.nameAs || d.name;
-      case 'bn': return d.nameBn || d.name;
-      case 'mni': return d.nameMni || d.name;
-      case 'lus': return d.nameLus || d.name;
-      case 'kha': return d.nameKha || d.name;
-      case 'ne': return d.nameNe || d.name;
-      default: return d.name;
+  public setDistrict(district: DistrictProfile, risk: RiskScoreBreakdown, weather: WeatherTelemetry, soil?: SoilTelemetry, seismic?: SeismicTelemetry) {
+    this.currentDistrict = district;
+    if (this.citizenProfile.districtId !== district.id) {
+      const areas = getLocalAreasForDistrict(district.id);
+      this.citizenProfile.districtId = district.id;
+      this.citizenProfile.districtName = district.name;
+      this.citizenProfile.state = district.state;
+      this.citizenProfile.localArea = areas[0]?.name || district.name;
+      this.citizenProfile.lat = district.lat + (areas[0]?.latOffset || 0);
+      this.citizenProfile.lon = district.lon + (areas[0]?.lonOffset || 0);
+      localStorage.setItem('nexsignal_citizen_profile', JSON.stringify(this.citizenProfile));
     }
+    this.render(this.currentDistrict, risk, weather, soil, seismic);
   }
 
-  public render(district: DistrictProfile, risk: RiskScoreBreakdown, weather: WeatherTelemetry) {
+  public render(
+    district: DistrictProfile,
+    risk: RiskScoreBreakdown,
+    weather: WeatherTelemetry,
+    soil?: SoilTelemetry,
+    seismic?: SeismicTelemetry
+  ) {
     this.currentDistrict = district;
-    const t = TRANSLATIONS[this.lang] || TRANSLATIONS.en;
-    const isDanger = risk.level === 'CRITICAL' || risk.level === 'HIGH';
-    const isCaution = risk.level === 'MODERATE';
 
-    const statusTitle = isDanger
-      ? t.dangerStatus
-      : isCaution
-      ? t.cautionStatus
-      : t.safeStatus;
+    const riskColor = risk.level === 'CRITICAL' ? '#ef4444' : risk.level === 'HIGH' ? '#f97316' : risk.level === 'MODERATE' ? '#eab308' : '#22c55e';
+    const riskBg = risk.level === 'CRITICAL' ? '#ef444415' : risk.level === 'HIGH' ? '#f9731615' : risk.level === 'MODERATE' ? '#eab30815' : '#22c55e15';
 
-    const statusBg = isDanger ? '#ef4444' : isCaution ? '#eab308' : '#22c55e';
-    const districtName = this.getDistrictName(district);
+    // Nearest shelter
+    const shelters = NER_SAFE_SHELTERS.filter((s) => s.districtId === district.id);
+    const nearestShelter = shelters[0] || {
+      id: 'default_shelter',
+      districtId: district.id,
+      name: `${district.name} Higher Secondary School`,
+      type: 'Government Higher Secondary School' as const,
+      capacityPersons: 350,
+      lat: district.lat,
+      lon: district.lon,
+      elevationM: district.elevationM,
+      contactNumber: district.deocContact,
+      hasMedicalPost: true,
+      hasGeneratorPower: true,
+      hasHelipadAccess: false,
+    };
 
-    const advisories = isDanger
-      ? t.advisoriesDanger
-      : isCaution
-      ? t.advisoriesCaution
-      : t.advisoriesSafe;
-
-    const districtReports = groundReportsService.getReportsForDistrict(district.id);
+    const soilPct = soil ? soil.soilMoisturePct : 68;
+    const soilStatus = soil ? soil.soilSaturationStatus : 'Moderate';
+    const quakesCount = seismic ? seismic.recentQuakes72hCount : 1;
 
     this.container.innerHTML = `
-      <div style="max-width: 880px; margin: 0 auto; padding: 20px 16px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #f8fafc; box-sizing: border-box;">
+      <div style="background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; padding: 20px 24px; box-sizing: border-box; animation: fadeIn 0.3s ease;">
         
-        <!-- Location Selector & GPS Header Bar -->
-        <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 18px;">📍</span>
+        <!-- Citizen Header -->
+        <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid #1e293b; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 16px rgba(22, 163, 74, 0.4);">
+              📱
+            </div>
             <div>
-              <div style="font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
-                Selected District Area
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px; font-weight: 900; color: #ffffff; letter-spacing: -0.3px;">
+                  NEXSIGNAL CITIZEN
+                </span>
+                <span style="background: #22c55e20; border: 1px solid #22c55e; color: #22c55e; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 12px;">
+                  LOCAL SAFETY PORTAL
+                </span>
               </div>
-              <div style="font-size: 14px; font-weight: 800; color: #38bdf8;">
-                ${districtName}, ${district.state}
+              <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">
+                Hello, <strong style="color: #f1f5f9;">${this.citizenProfile.name}</strong> &bull; 📍 <span style="color: #38bdf8; font-weight: 700;">${this.citizenProfile.localArea}</span> (${district.name}, ${district.state})
               </div>
             </div>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <select id="citizen-district-select" style="background: #0b1120; border: 1px solid #334155; color: #f1f5f9; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
-              ${NER_DISTRICTS.map((d) => `
-                <option value="${d.id}" ${d.id === district.id ? 'selected' : ''}>
-                  ${this.getDistrictName(d)} (${d.state})
-                </option>
-              `).join('')}
-            </select>
-            <button id="btn-citizen-gps" style="background: #0284c720; border: 1px solid #0284c7; color: #38bdf8; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-              <span>🛰️</span> My Location
+          <!-- Header Right Controls -->
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            
+            <!-- Change Location Button -->
+            <button id="btn-citizen-change-location" style="background: #0b1120; border: 1px solid #334155; color: #38bdf8; font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <span>📍</span> Change Location
             </button>
+
+            <!-- Language Selector -->
+            <select id="sel-citizen-lang" style="background: #0b1120; border: 1px solid #334155; color: #cbd5e1; font-size: 12px; font-weight: 600; padding: 7px 10px; border-radius: 8px; outline: none; cursor: pointer;">
+              <option value="en" ${this.lang === 'en' ? 'selected' : ''}>🇬🇧 English</option>
+              <option value="hi" ${this.lang === 'hi' ? 'selected' : ''}>🇮🇳 हिन्दी</option>
+              <option value="as" ${this.lang === 'as' ? 'selected' : ''}>🇮🇳 অসমীয়া</option>
+              <option value="bn" ${this.lang === 'bn' ? 'selected' : ''}>🇮🇳 বাংলা</option>
+              <option value="mni" ${this.lang === 'mni' ? 'selected' : ''}>🇮🇳 মৈতৈলোন্</option>
+              <option value="lus" ${this.lang === 'lus' ? 'selected' : ''}>🇮🇳 Mizo ṭawng</option>
+              <option value="kha" ${this.lang === 'kha' ? 'selected' : ''}>🇮🇳 Ka Ktien Khasi</option>
+              <option value="ne" ${this.lang === 'ne' ? 'selected' : ''}>🇮🇳 नेपाली</option>
+            </select>
+
+            <!-- Exit to Gateway -->
+            <button id="btn-exit-to-gateway" style="background: transparent; border: 1px solid #ef444460; color: #f87171; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <span>🚪</span> Exit Portal
+            </button>
+          </div>
+        </header>
+
+        <!-- Hero Question & Local Risk Banner -->
+        <div style="background: linear-gradient(180deg, #0b1120 0%, #050811 100%); border: 1px solid ${riskColor}50; border-radius: 16px; padding: 24px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+          <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: ${riskColor};"></div>
+          
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
+            <div>
+              <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">
+                YOUR LOCAL AREA SAFETY STATUS
+              </div>
+              <h1 style="font-size: 26px; font-weight: 900; color: #ffffff; margin: 0 0 8px;">
+                Is my area safe right now?
+              </h1>
+              <p style="font-size: 14px; color: #cbd5e1; max-width: 600px; margin: 0; line-height: 1.55;">
+                Your selected location <strong style="color: #38bdf8;">${this.citizenProfile.localArea}</strong> is currently under <strong style="color: ${riskColor};">${risk.level}</strong> landslide risk.
+                <span style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">
+                  District-level AI multi-factor risk model calibrated for ${district.name} &amp; surrounding slopes.
+                </span>
+              </p>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="background: ${riskBg}; border: 2px solid ${riskColor}; border-radius: 14px; padding: 14px 22px; text-align: center;">
+                <div style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">RISK LEVEL</div>
+                <div style="font-size: 26px; font-weight: 900; color: ${riskColor}; letter-spacing: 0.5px;">${risk.level}</div>
+                <div style="font-size: 11px; color: #cbd5e1; font-weight: 700; margin-top: 2px;">Score: ${risk.compositeScore}/100</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Hero Hazard Report Button -->
-        <div style="margin-bottom: 24px;">
-          <button id="btn-open-ground-report" style="width: 100%; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border: 1px solid #fb923c; color: #ffffff; font-size: 14px; font-weight: 900; padding: 14px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4); text-transform: uppercase; letter-spacing: 0.5px; transition: transform 0.15s ease;">
-            <span style="font-size: 20px;">📸</span> ${t.reportHazardBtn}
+        <!-- Primary Action: Report a Hazard Hero Button -->
+        <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #6366f160; border-radius: 14px; padding: 18px 24px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+          <div>
+            <div style="font-size: 15px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+              <span>🚨</span> Observed slope cracks, road damage or rockfall nearby?
+            </div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
+              Send geo-tagged photo/video ground evidence directly to District Emergency Control for validation.
+            </div>
+          </div>
+
+          <button id="btn-citizen-report-hazard" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: 1px solid #f87171; color: #ffffff; font-size: 13px; font-weight: 800; padding: 12px 24px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(239, 68, 68, 0.4); white-space: nowrap; transition: transform 0.15s ease;">
+            <span>📸</span> REPORT A HAZARD (PHOTO / VIDEO)
           </button>
         </div>
 
-        <!-- Status Hero Card -->
-        <div style="background: ${statusBg}15; border: 2px solid ${statusBg}; border-radius: 12px; padding: 24px 20px; text-align: center; margin-bottom: 24px; box-shadow: 0 0 25px ${statusBg}20;">
-          <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px;">
-            ${t.portalTitle}
-          </div>
-          <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin: 8px 0;">
-            ${districtName}, ${district.state}
-          </div>
-          <div style="display: inline-block; padding: 6px 18px; border-radius: 20px; background: ${statusBg}; color: #ffffff; font-weight: 800; font-size: 13px; margin-bottom: 12px; letter-spacing: 0.5px;">
-            ${statusTitle}
-          </div>
-          <div style="font-size: 13px; color: #e2e8f0; max-width: 680px; margin: 0 auto; line-height: 1.6;">
-            ${risk.dominantTrigger ? `Primary Trigger: <strong style="color:${statusBg};">${risk.dominantTrigger}</strong>. ` : ''}${risk.advisoryEn || ''}
-          </div>
-        </div>
-
-        <!-- 3-Column Local Status -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px;">
-          <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 16px; text-align: center;">
-            <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-              ${t.rain24}
-            </div>
-            <div style="font-size: 26px; font-weight: 800; color: #38bdf8; margin-top: 4px;">
-              ${weather.rainfall24hMm} <span style="font-size: 12px; font-weight: 400; color: #64748b;">mm</span>
-            </div>
-          </div>
-          <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 16px; text-align: center;">
-            <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-              ${t.compRisk}
-            </div>
-            <div style="font-size: 26px; font-weight: 800; color: ${statusBg}; margin-top: 4px;">
-              ${risk.compositeScore}<span style="font-size: 13px; color: #64748b;">/100</span>
-            </div>
-          </div>
-          <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 16px; text-align: center;">
-            <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-              ${t.avgSlope}
-            </div>
-            <div style="font-size: 26px; font-weight: 800; color: #f59e0b; margin-top: 4px;">
-              ${district.averageSlopeDeg}&deg;
-            </div>
-          </div>
-        </div>
-
-        <!-- Community Ground Reports Feed Section -->
-        <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 18px; margin-bottom: 24px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <div style="font-size: 12px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
-              <span>📍</span> ${t.communityReportsTitle} (${districtReports.length})
-            </div>
-            <span style="font-size: 10px; color: #94a3b8;">${districtName} Sector</span>
-          </div>
-
-          ${districtReports.length === 0 ? `
-            <div style="text-align: center; padding: 20px; color: #64748b; font-size: 11px; background: #0b1120; border-radius: 8px;">
-              No community reports submitted in this district yet. Use the "Report a Hazard" button above if you observe slope cracks or road blockage.
-            </div>
-          ` : `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px;">
-              ${districtReports.map((r) => {
-                const isVerified = r.status === 'VERIFIED';
-                const isEscalated = r.status === 'ESCALATED';
-                const pillColor = isEscalated ? '#ef4444' : isVerified ? '#22c55e' : '#eab308';
-
-                return `
-                  <div class="citizen-community-report-card" data-id="${r.id}" style="background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 10px; display: flex; gap: 10px; cursor: pointer;">
-                    <div style="width: 50px; height: 50px; border-radius: 6px; overflow: hidden; background: #020617; border: 1px solid #1e293b; flex-shrink: 0;">
-                      <img src="${r.mediaUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Report Media" />
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                        <span style="font-size: 11px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                          ${r.categoryLabel}
-                        </span>
-                        <span style="font-size: 8px; font-weight: 800; background: ${pillColor}20; color: ${pillColor}; border: 1px solid ${pillColor}; padding: 1px 4px; border-radius: 3px;">
-                          ${r.status}
-                        </span>
-                      </div>
-                      <div style="font-size: 10px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        ${r.locationName}
-                      </div>
-                      <div style="font-size: 9px; color: #64748b; margin-top: 2px;">
-                        ${new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull; ${r.reporterRole}
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          `}
-        </div>
-
-        <!-- Citizen Safety Checklist -->
-        <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-          <div style="font-size: 13px; font-weight: 800; color: #38bdf8; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
-            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38bdf8;"></span>
-            ${t.guidelinesTitle}
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            ${advisories.map((a, i) => `
-              <div style="display: flex; gap: 12px; align-items: flex-start; background: #0b1120; padding: 12px 14px; border-radius: 8px; border: 1px solid #1e293b;">
-                <span style="background: #1e293b; color: #38bdf8; font-size: 11px; font-weight: 800; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  ${i + 1}
-                </span>
-                <span style="font-size: 12px; color: #e2e8f0; line-height: 1.5;">${a}</span>
+        <!-- 2-Column Responsive Layout -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 28px;">
+          
+          <!-- Left Column: Metrics, Weather, Alerts, Helpline -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Local Risk Factors 5-Decomposition -->
+            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px;">
+              <div style="font-size: 12px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">
+                LOCAL RISK FACTORS BREAKDOWN
               </div>
-            `).join('')}
-          </div>
-        </div>
 
-        <!-- Emergency Helplines -->
-        <div style="background: linear-gradient(135deg, #180d0d 0%, #0f172a 100%); border: 1px solid #ef444440; border-radius: 12px; padding: 20px;">
-          <div style="font-size: 13px; font-weight: 800; color: #ef4444; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
-            ${t.emergencyTitle}
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                <div style="background: #050811; border: 1px solid #1e293b; border-radius: 10px; padding: 12px;">
+                  <div style="font-size: 11px; color: #94a3b8;">🌧 Rainfall (24h)</div>
+                  <div style="font-size: 16px; font-weight: 800; color: #38bdf8; margin-top: 4px;">
+                    ${weather.rainfall24hMm.toFixed(1)} mm
+                  </div>
+                  <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                    72h Acc: ${weather.rainfall72hMm.toFixed(1)} mm
+                  </div>
+                </div>
+
+                <div style="background: #050811; border: 1px solid #1e293b; border-radius: 10px; padding: 12px;">
+                  <div style="font-size: 11px; color: #94a3b8;">💧 Soil Moisture</div>
+                  <div style="font-size: 16px; font-weight: 800; color: #22c55e; margin-top: 4px;">
+                    ${soilPct.toFixed(0)}%
+                  </div>
+                  <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                    Status: ${soilStatus}
+                  </div>
+                </div>
+
+                <div style="background: #050811; border: 1px solid #1e293b; border-radius: 10px; padding: 12px;">
+                  <div style="font-size: 11px; color: #94a3b8;">⛰ Terrain Slope</div>
+                  <div style="font-size: 16px; font-weight: 800; color: #f59e0b; margin-top: 4px;">
+                    ${district.averageSlopeDeg}&deg; Steep
+                  </div>
+                  <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                    Elev: ${district.elevationM}m
+                  </div>
+                </div>
+
+                <div style="background: #050811; border: 1px solid #1e293b; border-radius: 10px; padding: 12px;">
+                  <div style="font-size: 11px; color: #94a3b8;">🌐 Seismic Activity</div>
+                  <div style="font-size: 16px; font-weight: 800; color: #a855f7; margin-top: 4px;">
+                    ${quakesCount > 0 ? `${quakesCount} Quakes (72h)` : 'Quiet'}
+                  </div>
+                  <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                    USGS Real-Time Feed
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Local Weather & Forecast -->
+            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px;">
+              <div style="font-size: 12px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                LOCAL WEATHER &amp; PRECIPITATION
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #050811; border: 1px solid #1e293b; border-radius: 10px; padding: 14px;">
+                <div>
+                  <div style="font-size: 22px; font-weight: 800; color: #ffffff;">${weather.temperatureC.toFixed(1)}&deg;C</div>
+                  <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">${weather.weatherCondition} &bull; Wind: ${weather.windSpeedKmh.toFixed(0)} km/h</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 11px; color: #94a3b8;">Forecast 24h</div>
+                  <div style="font-size: 15px; font-weight: 800; color: #38bdf8;">${weather.rainfallForecast24hMm.toFixed(1)} mm</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Safety Advice -->
+            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px;">
+              <div style="font-size: 12px; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span>⚠️</span> ACTIVE SAFETY ADVISORY
+              </div>
+              <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
+                ${risk.level === 'CRITICAL' || risk.level === 'HIGH' ? `
+                  <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px;">
+                    <li>Avoid non-essential travel along cut-slope road sections and high-gradient passes.</li>
+                    <li>Inspect retaining structures and surface runoff drains near your dwelling.</li>
+                    <li>Identify your family evacuation path to the designated shelter.</li>
+                  </ul>
+                ` : `
+                  <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px;">
+                    <li>Terrain stability is currently within normal thresholds.</li>
+                    <li>Continue monitoring weather advisories during evening showers.</li>
+                  </ul>
+                `}
+              </div>
+            </div>
+
+            <!-- Nearest Safe Shelter -->
+            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px;">
+              <div style="font-size: 12px; font-weight: 800; color: #22c55e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+                NEAREST DESIGNATED SAFE SHELTER
+              </div>
+              <div style="background: #050811; border: 1px solid #1e293b; border-radius: 10px; padding: 14px;">
+                <div style="font-size: 14px; font-weight: 800; color: #ffffff;">${nearestShelter.name}</div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">${nearestShelter.type} &bull; Capacity: ~${nearestShelter.capacityPersons} persons</div>
+                <div style="font-size: 12px; color: #38bdf8; margin-top: 6px; font-weight: 700;">📞 Emergency Staging: ${nearestShelter.contactNumber}</div>
+              </div>
+            </div>
+
+            <!-- Emergency Helpline Directory -->
+            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px;">
+              <div style="font-size: 12px; font-weight: 800; color: #ef4444; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                EMERGENCY HELPLINE DIRECTORY
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 12px;">
+                <div style="background: #050811; padding: 10px; border-radius: 8px; border: 1px solid #1e293b;">
+                  <span style="color: #94a3b8;">DEOC Direct:</span>
+                  <div style="font-weight: 800; color: #38bdf8; margin-top: 2px;">${district.deocContact}</div>
+                </div>
+                <div style="background: #050811; padding: 10px; border-radius: 8px; border: 1px solid #1e293b;">
+                  <span style="color: #94a3b8;">Police / Emergency:</span>
+                  <div style="font-weight: 800; color: #22c55e; margin-top: 2px;">112 (Toll Free)</div>
+                </div>
+                <div style="background: #050811; padding: 10px; border-radius: 8px; border: 1px solid #1e293b;">
+                  <span style="color: #94a3b8;">Disaster Control:</span>
+                  <div style="font-weight: 800; color: #f59e0b; margin-top: 2px;">1070 / 1077</div>
+                </div>
+                <div style="background: #050811; padding: 10px; border-radius: 8px; border: 1px solid #1e293b;">
+                  <span style="color: #94a3b8;">NDRF Control:</span>
+                  <div style="font-weight: 800; color: #ef4444; margin-top: 2px;">011-24363260</div>
+                </div>
+              </div>
+            </div>
+
           </div>
-          <div style="font-size: 11px; color: #94a3b8; margin-bottom: 14px;">
-            ${t.emergencyDesc}
+
+          <!-- Right Column: Local Map & Community Reports Feed -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Local Interactive Map -->
+            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px; display: flex; flex-direction: column;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 12px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">
+                  LOCAL TACTICAL HAZARD MAP &bull; ${this.citizenProfile.localArea}
+                </div>
+                <span style="font-size: 11px; color: #94a3b8;">Zoom to inspect terrain</span>
+              </div>
+
+              <div id="citizen-local-map" style="height: 380px; width: 100%; border-radius: 10px; overflow: hidden; background: #050811; border: 1px solid #1e293b;"></div>
+            </div>
+
+            <!-- Nearby Community Ground Reports Feed -->
+            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px; flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div style="font-size: 12px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">
+                  NEARBY COMMUNITY GROUND REPORTS
+                </div>
+                <span id="citizen-reports-count-badge" style="background: #38bdf820; border: 1px solid #38bdf8; color: #38bdf8; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px;">
+                  Active Feed
+                </span>
+              </div>
+
+              <div id="citizen-community-feed-container">
+                <!-- Injected by renderCommunityFeed -->
+              </div>
+            </div>
+
           </div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
-            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 12px;">
-              <div style="font-size: 10px; color: #94a3b8;">${t.deocContact}</div>
-              <div style="font-size: 15px; font-weight: 800; color: #38bdf8; margin-top: 4px;">${district.deocContact}</div>
-            </div>
-            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 12px;">
-              <div style="font-size: 10px; color: #94a3b8;">${t.policeHelp}</div>
-              <div style="font-size: 15px; font-weight: 800; color: #22c55e; margin-top: 4px;">112 (Toll Free)</div>
-            </div>
-            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 12px;">
-              <div style="font-size: 10px; color: #94a3b8;">${t.disasterControl}</div>
-              <div style="font-size: 15px; font-weight: 800; color: #f59e0b; margin-top: 4px;">1070 / 1077</div>
-            </div>
-            <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 12px;">
-              <div style="font-size: 10px; color: #94a3b8;">${t.ndrfHotline}</div>
-              <div style="font-size: 15px; font-weight: 800; color: #ef4444; margin-top: 4px;">011-24363260</div>
-            </div>
-          </div>
+
         </div>
 
       </div>
     `;
 
     this.bindEvents(risk, weather);
+    this.initLocalMap();
+    this.renderCommunityFeed();
+  }
+
+  private initLocalMap() {
+    const mapEl = document.getElementById('citizen-local-map');
+    if (!mapEl) return;
+
+    if (this.localMap) {
+      this.localMap.remove();
+      this.localMap = null;
+    }
+
+    this.localMap = L.map('citizen-local-map', {
+      zoomControl: true,
+      attributionControl: false,
+    }).setView([this.citizenProfile.lat, this.citizenProfile.lon], 12);
+
+    // Dark Tactical Tile Layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 18,
+      subdomains: 'abcd',
+    }).addTo(this.localMap);
+
+    // User Location Pulsing Marker
+    const userIcon = L.divIcon({
+      className: 'citizen-loc-icon',
+      html: `
+        <div style="position: relative; width: 20px; height: 20px;">
+          <div style="position: absolute; top: 0; left: 0; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; border: 2px solid #ffffff; box-shadow: 0 0 12px #22c55e;"></div>
+          <div style="position: absolute; top: -5px; left: -5px; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #22c55e; animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; opacity: 0.75;"></div>
+        </div>
+      `,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    });
+
+    this.userMarker = L.marker([this.citizenProfile.lat, this.citizenProfile.lon], { icon: userIcon })
+      .addTo(this.localMap)
+      .bindPopup(`
+        <div style="font-family: sans-serif; padding: 4px;">
+          <strong style="color: #22c55e;">📍 YOU ARE HERE</strong><br/>
+          <span style="font-size: 11px; color: #334155;">${this.citizenProfile.localArea}, ${this.currentDistrict.name}</span>
+        </div>
+      `);
+
+    this.reportMarkersLayer = L.layerGroup().addTo(this.localMap);
+    this.renderReportMarkers();
+  }
+
+  private renderReportMarkers() {
+    if (!this.localMap || !this.reportMarkersLayer) return;
+    this.reportMarkersLayer.clearLayers();
+
+    const reports = groundReportsService.getReportsForDistrict(this.currentDistrict.id);
+
+    reports.forEach((r) => {
+      const isVerified = r.status === 'VERIFIED';
+      const isEscalated = r.status === 'ESCALATED';
+      const color = isEscalated ? '#ef4444' : isVerified ? '#22c55e' : '#eab308';
+
+      const icon = L.divIcon({
+        className: 'cit-rep-marker',
+        html: `
+          <div style="width: 14px; height: 14px; border-radius: 50%; background: ${color}; border: 2px solid #ffffff; box-shadow: 0 0 8px ${color};"></div>
+        `,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+
+      const marker = L.marker([r.lat, r.lon], { icon })
+        .addTo(this.reportMarkersLayer!)
+        .bindPopup(`
+          <div style="font-family: system-ui, sans-serif; width: 180px; padding: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <strong style="font-size: 11px; color: #0284c7;">${r.categoryLabel}</strong>
+              <span style="font-size: 9px; font-weight: 800; color: ${color};">${r.status}</span>
+            </div>
+            <div style="font-size: 10px; color: #475569; margin-bottom: 6px;">${r.locationName}</div>
+            <img src="${r.mediaUrl}" style="width: 100%; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;" alt="Evidence" />
+            <div style="font-size: 9px; color: #64748b;">${new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull; ${r.reporterName}</div>
+          </div>
+        `);
+    });
+  }
+
+  private renderCommunityFeed() {
+    const feedContainer = document.getElementById('citizen-community-feed-container');
+    if (!feedContainer) return;
+
+    const reports = groundReportsService.getReportsForDistrict(this.currentDistrict.id);
+    const badge = document.getElementById('citizen-reports-count-badge');
+    if (badge) badge.textContent = `${reports.length} Reports`;
+
+    if (reports.length === 0) {
+      feedContainer.innerHTML = `
+        <div style="text-align: center; padding: 24px 12px; color: #64748b; font-size: 12px; background: #050811; border-radius: 8px; border: 1px dashed #1e293b;">
+          No ground reports in this locality yet. Use &ldquo;Report a Hazard&rdquo; above if you observe slope cracks or debris.
+        </div>
+      `;
+      return;
+    }
+
+    feedContainer.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
+        ${reports.map((r) => {
+          const isVerified = r.status === 'VERIFIED';
+          const isEscalated = r.status === 'ESCALATED';
+          const pillColor = isEscalated ? '#ef4444' : isVerified ? '#22c55e' : '#eab308';
+
+          return `
+            <div class="citizen-feed-card" data-id="${r.id}" style="background: #050811; border: 1px solid #1e293b; border-radius: 8px; padding: 10px; display: flex; gap: 10px; cursor: pointer; transition: border-color 0.15s ease;">
+              <div style="width: 48px; height: 48px; border-radius: 6px; overflow: hidden; background: #020617; border: 1px solid #1e293b; flex-shrink: 0;">
+                <img src="${r.mediaUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Thumbnail" />
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                  <span style="font-size: 11px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${r.categoryLabel}
+                  </span>
+                  <span style="font-size: 8px; font-weight: 800; background: ${pillColor}20; color: ${pillColor}; border: 1px solid ${pillColor}; padding: 1px 5px; border-radius: 4px;">
+                    ${r.status}
+                  </span>
+                </div>
+                <div style="font-size: 10px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${r.locationName}
+                </div>
+                <div style="font-size: 9px; color: #64748b; margin-top: 2px;">
+                  ${new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull; ${r.reporterName} (${r.reporterRole})
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    // Bind click on cards
+    feedContainer.querySelectorAll('.citizen-feed-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        const id = card.getAttribute('data-id');
+        if (id) {
+          const rep = groundReportsService.getReportById(id);
+          if (rep) {
+            alert(`REPORT #${rep.id}\n\nCategory: ${rep.categoryLabel}\nLocation: ${rep.locationName}\nReporter: ${rep.reporterName} (${rep.reporterRole})\nStatus: ${rep.status}\n\nObservation: ${rep.description}`);
+          }
+        }
+      });
+    });
   }
 
   private bindEvents(risk: RiskScoreBreakdown, weather: WeatherTelemetry) {
-    // Open Ground Report Modal Button
-    this.container.querySelector('#btn-open-ground-report')?.addEventListener('click', () => {
-      const modal = new GroundReportModal(this.currentDistrict, () => {
-        this.render(this.currentDistrict, risk, weather);
+    // Open Ground Report Modal
+    this.container.querySelector('#btn-citizen-report-hazard')?.addEventListener('click', () => {
+      const modal = new GroundReportModal(this.currentDistrict, (newReport) => {
+        this.renderCommunityFeed();
+        this.renderReportMarkers();
       });
       modal.open();
     });
 
-    // District Selector Dropdown
-    const selDist = this.container.querySelector('#citizen-district-select') as HTMLSelectElement;
-    selDist?.addEventListener('change', () => {
-      const id = selDist.value;
-      if (this.onSelectDistrictCallback) {
-        this.onSelectDistrictCallback(id);
+    // Exit to Gateway
+    this.container.querySelector('#btn-exit-to-gateway')?.addEventListener('click', () => {
+      if (this.onExitToRoleSelection) {
+        this.onExitToRoleSelection();
       }
     });
 
-    // GPS Auto-Detect Button
-    const btnGps = this.container.querySelector('#btn-citizen-gps') as HTMLButtonElement;
-    btnGps?.addEventListener('click', () => {
-      if ('geolocation' in navigator) {
-        btnGps.textContent = '🛰️ Finding...';
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            // Find closest district
-            let closestDist = NER_DISTRICTS[0];
-            let minDist = Infinity;
-            NER_DISTRICTS.forEach((d) => {
-              const dist = Math.hypot(d.lat - pos.coords.latitude, d.lon - pos.coords.longitude);
-              if (dist < minDist) {
-                minDist = dist;
-                closestDist = d;
-              }
-            });
-            btnGps.textContent = `✓ ${closestDist.name}`;
-            if (this.onSelectDistrictCallback) {
-              this.onSelectDistrictCallback(closestDist.id);
-            }
-          },
-          () => {
-            btnGps.textContent = '📍 East Khasi Hills';
-            if (this.onSelectDistrictCallback) {
-              this.onSelectDistrictCallback('east_khasi_hills');
-            }
-          },
-          { timeout: 5000 }
-        );
+    // Change Location Modal trigger
+    this.container.querySelector('#btn-citizen-change-location')?.addEventListener('click', () => {
+      if (this.onExitToRoleSelection) {
+        this.onExitToRoleSelection();
       }
     });
 
-    // Click on Community Report Card
-    const reportCards = this.container.querySelectorAll('.citizen-community-report-card');
-    reportCards.forEach((card) => {
-      card.addEventListener('click', () => {
-        const id = card.getAttribute('data-id');
-        if (id) {
-          const report = groundReportsService.getReportById(id);
-          if (report) {
-            alert(`Report #${report.id}\nCategory: ${report.categoryLabel}\nLocation: ${report.locationName}\nStatus: ${report.status}\n\nObservation: ${report.description}`);
-          }
-        }
-      });
+    // Language Selector
+    const selLang = this.container.querySelector('#sel-citizen-lang') as HTMLSelectElement;
+    selLang?.addEventListener('change', () => {
+      this.lang = selLang.value as AppLanguage;
+      this.render(this.currentDistrict, risk, weather);
     });
   }
 }
