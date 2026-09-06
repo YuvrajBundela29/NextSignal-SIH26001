@@ -218,7 +218,7 @@ export class RoleSelectScreen {
   private renderCitizenLocationSetup(container: HTMLElement) {
     const cachedProfileStr = localStorage.getItem('nexsignal_citizen_profile');
     let defaultProfile: CitizenProfile = {
-      name: 'Yuvraj',
+      name: '',
       state: 'Sikkim',
       districtId: 'sk_mangan',
       districtName: 'Mangan (North Sikkim)',
@@ -229,7 +229,11 @@ export class RoleSelectScreen {
 
     if (cachedProfileStr) {
       try {
-        defaultProfile = { ...defaultProfile, ...JSON.parse(cachedProfileStr) };
+        const parsed = JSON.parse(cachedProfileStr);
+        if (parsed.name === 'Yuvraj') {
+          parsed.name = '';
+        }
+        defaultProfile = { ...defaultProfile, ...parsed };
       } catch (e) {
         console.warn('Could not parse cached citizen profile', e);
       }
@@ -275,7 +279,7 @@ export class RoleSelectScreen {
             <label style="display: block; font-size: 11px; font-weight: 800; color: #cbd5e1; margin-bottom: 6px; letter-spacing: 0.5px;">
               YOUR NAME
             </label>
-            <input id="input-cit-name" type="text" value="${defaultProfile.name}" placeholder="Enter your name" style="width: 100%; background: #050811; border: 1px solid #334155; border-radius: 8px; padding: 11px 14px; font-size: 14px; color: #ffffff; box-sizing: border-box; outline: none;" />
+            <input id="input-cit-name" type="text" value="${defaultProfile.name || ''}" placeholder="Enter your name" style="width: 100%; background: #050811; border: 1px solid #334155; border-radius: 8px; padding: 11px 14px; font-size: 14px; color: #ffffff; box-sizing: border-box; outline: none;" />
           </div>
 
           <!-- Location Choice -->

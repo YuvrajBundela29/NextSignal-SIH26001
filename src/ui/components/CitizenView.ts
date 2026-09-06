@@ -37,7 +37,9 @@ export class CitizenView {
       const cached = localStorage.getItem('nexsignal_citizen_profile');
       if (cached) {
         try {
-          this.citizenProfile = JSON.parse(cached);
+          const parsed = JSON.parse(cached);
+          if (parsed.name === 'Yuvraj') parsed.name = '';
+          this.citizenProfile = parsed;
         } catch (e) {
           this.citizenProfile = this.createDefaultProfile(currentDistrict);
         }
@@ -57,7 +59,7 @@ export class CitizenView {
     const areas = getLocalAreasForDistrict(district.id);
     const primaryArea = areas[0]?.name || district.name;
     return {
-      name: 'Yuvraj',
+      name: '',
       state: district.state,
       districtId: district.id,
       districtName: district.name,
@@ -138,7 +140,7 @@ export class CitizenView {
                 </span>
               </div>
               <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">
-                Hello, <strong style="color: #f1f5f9;">${this.citizenProfile.name}</strong> &bull; 📍 <span style="color: #38bdf8; font-weight: 700;">${this.citizenProfile.localArea}</span> (${district.name}, ${district.state})
+                Hello, <strong style="color: #f1f5f9;">${this.citizenProfile.name || 'Citizen'}</strong> &bull; 📍 <span style="color: #38bdf8; font-weight: 700;">${this.citizenProfile.localArea}</span> (${district.name}, ${district.state})
               </div>
             </div>
           </div>
