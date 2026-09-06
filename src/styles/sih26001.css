@@ -269,7 +269,15 @@ body, html {
 
   /* Header adjustments */
   .dashboard-header {
-    padding: 0 !important;
+    height: 50px !important;
+    padding: 0 10px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .dashboard-header::-webkit-scrollbar {
+    display: none !important;
   }
   #ticker-header-container {
     display: none !important;

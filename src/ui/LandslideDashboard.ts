@@ -1,3 +1,4 @@
+import { GOVT_INDIA_EMBLEM } from '../services/landslide/govt-emblem';
 import { offlineService } from '../services/landslide/offline-mode-service';
 import type {
   DistrictProfile,
@@ -154,23 +155,28 @@ export class LandslideDashboard {
       <div id="authority-workspace" style="display: flex; flex-direction: column; height: 100vh; width: 100vw; background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; overflow: hidden;">
         
         <!-- Top Operational Header -->
-        <header style="height: 52px; background: #0b1120; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box; flex-shrink: 0; z-index: 1000; gap: 12px; overflow: hidden;">
+        <header class="dashboard-header" style="height: 52px; background: #0b1120; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box; flex-shrink: 0; z-index: 1000; gap: 12px; overflow: hidden;">
           
           <!-- Brand & Government Badge (Left) -->
           <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="font-size: 18px;">🏛️</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <img src="${GOVT_INDIA_EMBLEM}" alt="Govt of India & MDoNER Emblem" style="width: 34px; height: 34px; filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.45)); flex-shrink: 0;" />
               <div>
-                <span style="font-size: 14px; font-weight: 900; letter-spacing: -0.2px; color: #ffffff;">
-                  NEXSIGNAL
-                </span>
-                <span style="font-size: 10px; font-weight: 800; color: #38bdf8; margin-left: 4px; letter-spacing: 0.5px;">
-                  COMMAND CENTER
-                </span>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 14px; font-weight: 900; letter-spacing: -0.2px; color: #ffffff;">
+                    NEXSIGNAL
+                  </span>
+                  <span style="font-size: 10px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px;">
+                    COMMAND CENTER
+                  </span>
+                </div>
+                <div style="font-size: 8px; font-weight: 800; color: #eab308; letter-spacing: 0.5px; line-height: 1;">
+                  GOVT OF INDIA &bull; MDoNER
+                </div>
               </div>
             </div>
 
-            <div style="background: #0284c720; border: 1px solid #0284c7; color: #38bdf8; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 4px; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+            <div id="header-active-count" style="background: #0284c720; border: 1px solid #0284c7; color: #38bdf8; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 4px; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
               <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #38bdf8; animation: pulse 2s infinite;"></span>
               28 NER ACTIVE
             </div>
@@ -219,11 +225,32 @@ export class LandslideDashboard {
           </div>
         </header>
 
-        <!-- 3-Pane Tactical Command Grid -->
-        <div style="flex: 1; display: grid; grid-template-columns: 290px 1fr 400px; overflow: hidden; position: relative;">
+        <!-- Mobile View Mode Navigation Switcher Bar (Mobile <= 1024px only) -->
+        <nav id="mobile-view-nav" class="mobile-view-nav">
+          <button class="mobile-nav-btn active" data-view="map">
+            <span style="font-size: 14px;">🗺️</span> Tactical Map
+          </button>
+          <button class="mobile-nav-btn" data-view="districts">
+            <span style="font-size: 14px;">📋</span> 28 Districts
+          </button>
+          <button class="mobile-nav-btn" data-view="hud">
+            <span style="font-size: 14px;">📊</span> Risk HUD & Intel
+          </button>
+        </nav>
+
+        <!-- 3-Pane Tactical Command Grid (Desktop: 290px 1fr 400px; Mobile: single active view) -->
+        <div id="tactical-command-grid" class="tactical-command-grid" data-mobile-view="map">
           
           <!-- Left Panel: 28 Districts Risk HUD & Search Filter -->
-          <aside style="background: #0b1120; border-right: 1px solid #1e293b; display: flex; flex-direction: column; overflow: hidden;">
+          <aside id="dashboard-left-panel" class="dashboard-left-panel" style="background: #0b1120; border-right: 1px solid #1e293b; display: flex; flex-direction: column; overflow: hidden;">
+            
+            <!-- Mobile Return to Map Banner -->
+            <div class="mobile-only-header" style="display: none; padding: 10px 14px; background: #050811; border-bottom: 1px solid #1e293b; justify-content: space-between; align-items: center; flex-shrink: 0;">
+              <span style="font-size: 12px; font-weight: 800; color: #38bdf8;">📋 28 NER DISTRICTS</span>
+              <button class="btn-return-to-map" style="background: rgba(2, 132, 199, 0.2); border: 1px solid #0284c7; color: #38bdf8; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                <span>🗺️</span> Return to Map
+              </button>
+            </div>
             
             <div style="padding: 12px; border-bottom: 1px solid #1e293b;">
               <input id="input-search-district" type="text" placeholder="Search District or Locality..." style="width: 100%; background: #050811; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-size: 12px; color: #ffffff; box-sizing: border-box; outline: none;" />
@@ -243,7 +270,7 @@ export class LandslideDashboard {
             </div>
 
             <!-- District List Scroll -->
-            <div id="district-list-scroll" style="flex: 1; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px;"></div>
+            <div id="district-list-scroll" style="flex: 1; overflow-y: auto; padding: 8px 12px 90px; display: flex; flex-direction: column; gap: 6px;"></div>
 
           </aside>
 
@@ -291,23 +318,23 @@ export class LandslideDashboard {
             </div>
 
             <!-- Tab 1: District Risk HUD Container -->
-            <div id="hud-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: block; padding-bottom: 60px;"></div>
+            <div id="hud-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: block; padding-bottom: 90px;"></div>
 
             <!-- Tab 2: Highways Corridor Container -->
-            <div id="highways-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: none; flex-direction: column; gap: 10px; padding-bottom: 60px;">
+            <div id="highways-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: none; flex-direction: column; gap: 10px; padding-bottom: 90px;">
               ${this.renderHighwaysTabHtml()}
             </div>
 
             <!-- Tab 3: Safe Shelters Container -->
-            <div id="shelters-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: none; flex-direction: column; gap: 10px; padding-bottom: 60px;">
+            <div id="shelters-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: none; flex-direction: column; gap: 10px; padding-bottom: 90px;">
               ${this.renderSheltersTabHtml()}
             </div>
 
             <!-- Tab 4: Citizen & Field Ground Reports Panel Container -->
-            <div id="reports-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: none; flex-direction: column; padding-bottom: 60px;"></div>
+            <div id="reports-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: none; flex-direction: column; padding-bottom: 90px;"></div>
 
             <!-- Tab 5: Historical Backtest Container -->
-            <div id="backtest-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: none; flex-direction: column; padding-bottom: 60px;"></div>
+            <div id="backtest-tab-content" style="flex: 1; overflow-y: auto; padding: 14px; display: none; flex-direction: column; padding-bottom: 90px;"></div>
 
           </aside>
 
@@ -540,6 +567,31 @@ export class LandslideDashboard {
   }
 
   private bindGlobalEvents() {
+    // Mobile Navigation Switcher Tabs
+    const mobileNavBtns = document.querySelectorAll('.mobile-nav-btn');
+    mobileNavBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const view = btn.getAttribute('data-view') as 'map' | 'districts' | 'hud';
+        if (view) this.setMobileView(view);
+      });
+    });
+
+    // Mobile Return to Map Buttons
+    const returnBtns = document.querySelectorAll('.btn-return-to-map');
+    returnBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        this.setMobileView('map');
+      });
+    });
+
+    // Mobile Floating Quick Action Chips on Map
+    document.getElementById('btn-quick-open-districts')?.addEventListener('click', () => {
+      this.setMobileView('districts');
+    });
+    document.getElementById('btn-quick-open-hud')?.addEventListener('click', () => {
+      this.setMobileView('hud');
+    });
+
     const listEl = document.getElementById('district-list-scroll');
     listEl?.addEventListener('click', (e) => {
       const target = (e.target as HTMLElement).closest('.district-list-item');

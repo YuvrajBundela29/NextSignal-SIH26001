@@ -1,3 +1,4 @@
+import { GOVT_INDIA_EMBLEM } from '../../services/landslide/govt-emblem';
 import type { AppViewMode, CitizenProfile, NerState } from '../../services/landslide/types';
 import { NER_DISTRICTS } from '../../services/landslide/ner-districts';
 import { getLocalAreasForDistrict } from '../../services/landslide/local-areas';
@@ -29,6 +30,22 @@ export class RoleSelectScreen {
         
         <!-- Header & Branding -->
         <div style="text-align: center; margin-bottom: clamp(20px, 4vh, 36px); max-width: 620px; width: 100%;">
+          <!-- Official Government of India & MDoNER Seal -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 14px; gap: 6px;">
+            <img src="${GOVT_INDIA_EMBLEM}" alt="Government of India & MDoNER Emblem" style="width: 72px; height: 72px; filter: drop-shadow(0 0 16px rgba(234, 179, 8, 0.45));" />
+            <div style="text-align: center;">
+              <div style="font-size: 13px; font-weight: 900; letter-spacing: 1.5px; color: #facc15; text-transform: uppercase;">
+                GOVERNMENT OF INDIA
+              </div>
+              <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: #38bdf8; text-transform: uppercase; margin-top: 2px;">
+                MINISTRY OF DEVELOPMENT OF NORTH EASTERN REGION (MDoNER)
+              </div>
+              <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: #94a3b8; text-transform: uppercase; margin-top: 2px;">
+                SMART INDIA HACKATHON 2026 &bull; PROBLEM STATEMENT SIH 26001
+              </div>
+            </div>
+          </div>
+
           <div style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 10px;">
             <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(2, 132, 199, 0.5); font-size: 22px;">
               🏔️
@@ -56,10 +73,20 @@ export class RoleSelectScreen {
             
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                <span style="background: #0284c720; border: 1px solid #0284c7; color: #38bdf8; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
-                  DECISION SUPPORT
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="${GOVT_INDIA_EMBLEM}" alt="Government Emblem" style="width: 42px; height: 42px; filter: drop-shadow(0 0 10px rgba(234, 179, 8, 0.45)); flex-shrink: 0;" />
+                  <div>
+                    <span style="background: #0284c720; border: 1px solid #0284c7; color: #38bdf8; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                      OFFICIAL PORTAL
+                    </span>
+                    <div style="font-size: 9px; font-weight: 700; color: #eab308; margin-top: 2px; letter-spacing: 0.4px;">
+                      MDoNER &bull; NDRF &bull; SDMA
+                    </div>
+                  </div>
+                </div>
+                <span style="background: rgba(2, 132, 199, 0.15); border: 1px solid rgba(2, 132, 199, 0.4); padding: 3px 8px; border-radius: 6px; color: #38bdf8; font-weight: 800; font-size: 10px; letter-spacing: 0.5px;">
+                  RESTRICTED
                 </span>
-                <span style="font-size: 24px;">🏛️</span>
               </div>
 
               <h2 style="font-size: clamp(19px, 4vw, 22px); font-weight: 800; color: #ffffff; margin: 0 0 4px;">
