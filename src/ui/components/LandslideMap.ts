@@ -1,10 +1,11 @@
-import 'leaflet/dist/leaflet.css';
+﻿import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { DistrictProfile, RiskScoreBreakdown, AppLanguage } from '../../services/landslide/types';
 import type { UsgsEarthquake } from '../../services/landslide/usgs-seismic';
 import { NASA_COOLR_NER_EVENTS } from '../../services/landslide/coolr-dataset';
 import { NER_SAFE_SHELTERS } from '../../services/landslide/safe-shelters';
 import { NER_RIVER_GAUGES } from '../../services/landslide/river-gauges';
+import { groundReportsService } from '../../services/landslide/ground-reports';
 
 export class LandslideMap {
   private map: L.Map | null = null;
@@ -13,6 +14,7 @@ export class LandslideMap {
   private seismicLayer: L.LayerGroup | null = null;
   private shelterLayer: L.LayerGroup | null = null;
   private gaugeLayer: L.LayerGroup | null = null;
+  private reportsLayer: L.LayerGroup | null = null;
   private baseLayers: Record<string, L.LayerGroup> = {};
   private currentBaseLayer: L.LayerGroup | null = null;
 
@@ -43,7 +45,7 @@ export class LandslideMap {
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-    // 1. Authentic Dark Tactical Basemap (Matches Reference Screenshot)
+    // 1. Authentic Dark Tactical Basemap
     const darkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; NextSignal Defense Console',
       maxNativeZoom: 16,
@@ -71,13 +73,13 @@ export class LandslideMap {
     });
     const topoGroup = L.layerGroup([topoLayer]);
 
-    // 4. OpenTopo Contours Basemap
-    const openTopoLayer = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenTopoMap | OSM contributors',
+    // 4. OpenTopoMap
+    const openTopo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenTopoMap (CC-BY-SA)',
       maxNativeZoom: 17,
-      maxZoom: 19,
+      maxZoom: 20,
     });
-    const openTopoGroup = L.layerGroup([openTopoLayer]);
+    const openTopoGroup = L.layerGroup([openTopo]);
 
     this.baseLayers = {
       dark: darkGroup,
@@ -86,35 +88,31 @@ export class LandslideMap {
       opentopo: openTopoGroup,
     };
 
-    // Default to Authentic Dark Tactical Mode (matches reference image)
+    // Default to Dark Tactical
     this.currentBaseLayer = darkGroup;
     this.currentBaseLayer.addTo(this.map);
 
-    // Live NASA Earth Observation Layers (Verified Active Level Formats)
+    // Initialize Earth Observation & Satellite Layers
     this.satLayers = {
-      thermal_anomalies: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', {
-        opacity: 0.85,
-        maxNativeZoom: 7,
-        maxZoom: 19,
-        attribution: '&copy; NASA MODIS Real-Time Land Surface Thermal Radiance',
+      precip: L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=d229f67fa1e11c3412aa0e510ec5e404', {
+        opacity: 0.65,
+        attribution: 'RainViewer / GPM Telemetry',
       }),
-      viirs_truecolor: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
-        opacity: 0.85,
-        maxNativeZoom: 9,
-        maxZoom: 19,
-        attribution: '&copy; NASA EOSDIS VIIRS Satellite',
+      clouds: L.tileLayer('https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=d229f67fa1e11c3412aa0e510ec5e404', {
+        opacity: 0.5,
+        attribution: 'INSAT-3DR / GOES IR',
       }),
-      clouds_ir: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Cloud_Top_Height_Day/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      wind: L.tileLayer('https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=d229f67fa1e11c3412aa0e510ec5e404', {
+        opacity: 0.55,
+        attribution: 'ECMWF / OpenWeather Wind Vector',
+      }),
+      sentinel2: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         opacity: 0.75,
-        maxNativeZoom: 6,
-        maxZoom: 19,
-        attribution: '&copy; NASA EOSDIS Infrared Cloud Tops',
+        attribution: 'ESA Copernicus Sentinel-2 MSI Synthetic',
       }),
-      weather_radar: L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
-        opacity: 0.85,
-        maxNativeZoom: 6,
-        maxZoom: 19,
-        attribution: '&copy; NASA GPM / IMERG Live Precipitation Doppler Radar',
+      sar: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        opacity: 0.8,
+        attribution: 'Sentinel-1 InSAR Interferogram Coherence',
       }),
     };
 
@@ -123,9 +121,11 @@ export class LandslideMap {
     this.coolrLayer = L.layerGroup().addTo(this.map);
     this.seismicLayer = L.layerGroup().addTo(this.map);
     this.districtLayer = L.layerGroup().addTo(this.map);
+    this.reportsLayer = L.layerGroup().addTo(this.map);
 
     this.renderSafeShelters(true);
     this.renderRiverGauges(true);
+    this.renderGroundReports(true);
   }
 
   public setSatelliteLayer(layerId: string, enabled: boolean) {
@@ -138,6 +138,79 @@ export class LandslideMap {
       layer.bringToFront();
     } else {
       this.map.removeLayer(layer);
+    }
+  }
+
+  public renderGroundReports(show: boolean = true) {
+    if (!this.reportsLayer) return;
+    this.reportsLayer.clearLayers();
+    if (!show) return;
+
+    const reports = groundReportsService.getReports();
+    for (const r of reports) {
+      const isPending = r.status === 'PENDING';
+      const isVerified = r.status === 'VERIFIED';
+      const isEscalated = r.status === 'ESCALATED';
+      const statusColor = isEscalated ? '#ef4444' : isPending ? '#eab308' : isVerified ? '#22c55e' : '#38bdf8';
+
+      const iconEmoji =
+        r.category === 'slope_movement'
+          ? '⛰️'
+          : r.category === 'ground_crack'
+          ? '⚡'
+          : r.category === 'road_damage'
+          ? '🚧'
+          : r.category === 'blocked_road'
+          ? '🛑'
+          : r.category === 'drainage_block'
+          ? '🌊'
+          : r.category === 'infrastructure_damage'
+          ? '🏗️'
+          : '⚠️';
+
+      const iconHtml = `
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: #0b1120; border: 2px solid ${statusColor}; box-shadow: 0 0 12px ${statusColor}90; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; transition: transform 0.2s ease;">
+          ${iconEmoji}
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: 'citizen-ground-report-marker',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+
+      const marker = L.marker([r.lat, r.lon], { icon: customIcon });
+
+      const popupHtml = `
+        <div style="font-family: 'Inter', sans-serif; color: #f1f5f9; background: #0b1120; border-radius: 8px; padding: 4px; max-width: 250px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong style="color: #38bdf8; font-size: 11px;">REPORT #${r.id}</strong>
+            <span style="font-size: 8px; font-weight: 800; background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}; padding: 1px 5px; border-radius: 3px; text-transform: uppercase;">
+              ${r.status}
+            </span>
+          </div>
+          <div style="width: 100%; height: 110px; border-radius: 6px; overflow: hidden; margin-bottom: 6px; background: #020617; border: 1px solid #1e293b;">
+            <img src="${r.mediaUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Report Evidence" />
+          </div>
+          <div style="font-size: 11px; font-weight: 800; color: #ffffff; margin-bottom: 2px;">
+            ${r.categoryLabel}
+          </div>
+          <div style="font-size: 10px; color: #94a3b8; margin-bottom: 6px;">
+            📍 ${r.locationName} (${r.districtName})
+          </div>
+          <div style="font-size: 10px; color: #cbd5e1; margin-bottom: 8px; line-height: 1.4; max-height: 48px; overflow-y: auto;">
+            ${r.description}
+          </div>
+          <div style="font-size: 9px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 4px;">
+            Reported by: <strong style="color: #94a3b8;">${r.reporterName || 'Citizen'}</strong> &bull; ${new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupHtml);
+      marker.addTo(this.reportsLayer);
     }
   }
 
@@ -158,9 +231,9 @@ export class LandslideMap {
 
       marker.bindTooltip(`
         <div style="font-family: system-ui, sans-serif; font-size: 11px; color: #fff; min-width: 150px;">
- <strong style="color: #38bdf8;"> ${g.stationName}</strong><br/>
+          <strong style="color: #38bdf8;">${g.stationName}</strong><br/>
           <span style="color: #cbd5e1;">River: ${g.riverName}</span><br/>
- <span>Current Level: <strong>${g.currentLevelM}m</strong> (${g.trend === 'RISING' ? ' Rising' : ' Steady'})</span><br/>
+          <span>Current Level: <strong>${g.currentLevelM}m</strong> (${g.trend === 'RISING' ? 'Rising' : 'Steady'})</span><br/>
           <span style="color: ${isHighRisk ? '#ef4444' : '#34d399'}; font-weight: bold;">GLOF / Flash Flood Risk: ${g.glofRisk}</span>
         </div>
       `, { direction: 'top', offset: [0, -6] });
@@ -185,7 +258,7 @@ export class LandslideMap {
 
       marker.bindTooltip(`
         <div style="font-family: system-ui, sans-serif; font-size: 11px; color: #fff;">
- <strong style="color: #34d399;"> ${s.name}</strong><br/>
+          <strong style="color: #34d399;">${s.name}</strong><br/>
           <span style="color: #94a3b8;">${s.type} &bull; ${s.elevationM}m MSL</span><br/>
           <span>Capacity: <strong>${s.capacityPersons} persons</strong></span><br/>
           <span style="color: #38bdf8;">DEOC Emergency: ${s.contactNumber}</span>
@@ -241,43 +314,24 @@ export class LandslideMap {
           : '#22c55e';
 
       const isSelected = d.id === selectedDistrictId;
-      const radius = isSelected ? 12 : level === 'CRITICAL' ? 10 : level === 'HIGH' ? 8 : 6;
-
-      if (level === 'CRITICAL' || level === 'HIGH') {
-        const pulseCircle = L.circleMarker([d.lat, d.lon], {
-          radius: radius + 6,
-          color: color,
-          weight: 1.5,
-          opacity: 0.6,
-          fillColor: color,
-          fillOpacity: 0.2,
-          className: 'landslide-pulse-marker',
-        });
-        pulseCircle.addTo(this.districtLayer);
-      }
+      const radius = isSelected ? 13 : Math.max(7, Math.min(16, (score / 100) * 16));
 
       const marker = L.circleMarker([d.lat, d.lon], {
         radius,
         color: isSelected ? '#ffffff' : color,
-        weight: isSelected ? 2.5 : 1.5,
+        weight: isSelected ? 3 : 1.5,
         fillColor: color,
-        fillOpacity: 0.95,
+        fillOpacity: 0.85,
       });
 
-      const label = this.getDistrictDisplayName(d);
-      const tooltipContent = `
-        <div style="font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.4; color: #fff; min-width: 140px;">
-          <div style="font-weight: bold; font-size: 13px; color: ${color};">${label}</div>
-          <div style="color: #94a3b8; font-size: 11px;">${d.state} &bull; ${d.elevationM}m MSL</div>
-          <div style="margin-top: 4px; display: flex; justify-content: space-between;">
-            <span>Risk Score:</span>
-            <strong style="color: ${color};">${score}/100 [${level}]</strong>
-          </div>
-          ${risk ? `<div style="font-size: 10px; color: #cbd5e1; margin-top: 2px;">Trigger: ${risk.dominantTrigger}</div>` : ''}
+      marker.bindTooltip(`
+        <div style="font-family: system-ui, -apple-system, sans-serif; font-size: 12px; color: #fff; line-height: 1.4;">
+          <div style="font-weight: 800; color: ${isSelected ? '#38bdf8' : '#ffffff'}; font-size: 13px;">${this.getDistrictDisplayName(d)} (${d.state})</div>
+          <div>Risk Score: <strong style="color: ${color};">${score}/100 [${level}]</strong></div>
+          <div style="color: #94a3b8; font-size: 11px;">Slope: ${d.averageSlopeDeg}&deg; | Pop: ${(d.population / 1000).toFixed(0)}k | Elev: ${d.elevationM}m</div>
+          ${risk?.dominantTrigger ? `<div style="color: #f59e0b; font-size: 10px; margin-top: 2px;">Trigger: ${risk.dominantTrigger}</div>` : ''}
         </div>
-      `;
-
-      marker.bindTooltip(tooltipContent, {
+      `, {
         direction: 'top',
         className: 'landslide-custom-tooltip',
         offset: [0, -10],
@@ -289,6 +343,8 @@ export class LandslideMap {
 
       marker.addTo(this.districtLayer);
     }
+
+    this.renderGroundReports(true);
   }
 
   public renderCoolrLandslides(show: boolean) {

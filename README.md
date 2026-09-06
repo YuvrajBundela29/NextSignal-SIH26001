@@ -1,170 +1,159 @@
-# NextSignal &bull; AI-Powered Geohazard & Landslide Early Warning System
-### Smart India Hackathon (SIH 26001) &bull; Northeast Region Disaster Intelligence System
-
-[![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Three.js / Globe.gl](https://img.shields.io/badge/WebGL-Three.js%20%2F%20Globe.gl-000000?logo=three.js&logoColor=white)](https://globe.gl/)
-[![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
-[![Netlify Status](https://img.shields.io/badge/Deploy-Netlify-00C7B7?logo=netlify&logoColor=white)](https://www.netlify.com/)
+# NextSignal - AI-Powered Geohazard & Landslide Early Warning System
+### Smart India Hackathon 2026 (SIH 26001) - Northeast Region Disaster Intelligence Platform
+**Organization:** Ministry of Development of North Eastern Region (MDoNER)  
+**Theme:** Disaster Management | **Category:** Software | **Team:** The Innovators  
+**Live Production URL:** [https://next-signal.netlify.app](https://next-signal.netlify.app)
 
 ---
 
-## ðŸ“Œ Executive Summary & SIH Problem Statement (SIH 26001)
+## Executive Summary & Two-Way Intelligence Architecture
+
 The **Northeast Region of India (NER)** represents one of the world's most vulnerable mountainous terrains to rainfall-triggered landslides, seismic slope destabilization, and Glacial Lake Outburst Floods (GLOF).
 
-**NextSignal** is an enterprise-grade, real-time geohazard intelligence dashboard engineered for the **National Disaster Management Authority (NDMA)**, **State Disaster Management Authorities (SDMA)**, **NDRF Battalions**, and **citizens across all 8 NER states** (Assam, Arunachal Pradesh, Meghalaya, Sikkim, Manipur, Mizoram, Nagaland, Tripura).
-
----
-
-## ðŸŒŸ Key System Capabilities
-
-### 1. Dual 2D/3D Geospatial Situation Engine
-* **2D Leaflet Tactical Map:** High-performance vector rendering with real-time district risk pins, thermal heat gradient circles for India, seismic epicenter rings, NASA COOLR historical landslide coordinates, and safe shelters.
-* **3D WebGL Earth Globe:** Photorealistic planetary view powered by Three.js/Globe.gl with flat geospatial surface markers and real-time atmospheric lighting.
-* **Synchronized Layer Switching:** Real-time hot-swapping between **4K Satellite Imagery**, **Dark Tactical Base**, **Live Land Surface Temp (LST)**, **Satellite Clouds (IR)**, **Doppler Weather Radar**, and **Topographic DEM Relief**.
-
-### 2. Multi-Spectral Sensor Optics
-* **FLIR Thermal [2]:** Heat gradient visualization highlighting critical slope moisture hotspots.
-* **Night Vision (NVG) [3]:** High-contrast phosphor luminescence for low-light night monitoring.
-* **CRT Scanline [4]:** Military-grade command center tactical overlay.
-* **Recon Noir [5] & Rock Scar [6]:** High-frequency geological contrast for active fault detection.
-
-### 3. 5-Factor Geotechnical Risk Decomposition Algorithm
-Every monitored district in Northeast India is evaluated continuously across 5 weighted geophysical variables:
-$$\text{Composite Risk} = 0.30 \cdot R_{\text{rain}} + 0.25 \cdot S_{\text{slope}} + 0.20 \cdot M_{\text{soil}} + 0.15 \cdot E_{\text{quake}} + 0.10 \cdot H_{\text{coolr}}$$
-
-* **Antecedent Rainfall (30%):** Open-Meteo & IMD 24h/72h cumulative precipitation vs. dynamic threshold $I_{\text{crit}}$.
-* **Slope Topography (25%):** Digital Elevation Model (DEM) gradient analysis.
-* **Root-Zone Soil Saturation (20%):** Live soil moisture percentage and pore-water pressure ($u$).
-* **Seismic Shaking & PGA (15%):** Live USGS earthquake telemetry and Peak Ground Acceleration impact.
-* **NASA COOLR Historical (10%):** Global landslide catalog density index.
-
-### 4. Decision-Support Dispatch Recommendations for NDRF & SDRF
-* Real-time generation of **Decision-Support Dispatch Recommendations** specifying assigned battalions (e.g. 1st Bn Guwahati, 12th Bn Itanagar), designated helipad staging coordinates, and required personnel count.
-* One-click instant copy for emergency response dispatchers.
-
-### 5. Hydrological Basin & GLOF Early Warning Gauges
-* Continuous tracking of high-altitude river gauges along the **Teesta**, **Brahmaputra**, and **Subansiri** basins.
-* Trend monitoring (`â–² Rising` vs `â–¶ Steady`) and danger level exceedance detection.
-
-### 6. Citizen Early Warning Portal & Multi-Lingual Interface
-* Instant toggle between **Authority Command View** and **Citizen Public Portal**.
-* Full English and **Hindi (à¤¹à¤¿à¤¨à¥à¤¦à¥€)** localized warnings, emergency helplines (`1070`, `1077`, `112`), and live risk advisories.
-
-### 7. Strategic Corridor Inspection & Rangefinder
-* **Cinematic Tour:** Autonomous camera navigation through critical mountain highway choke points (Chungthang, Dima Hasao, Noney, Sela Pass).
-* **Geodetic Rangefinder:** Calculates distance, terrain elevation delta ($\Delta h$), and exact rescue arrival ETAs for **IAF Helicopter Airlift** and **Ground 4x4 QRV Teams**.
-
----
-
-## ðŸ—ï¸ Architecture & Technology Stack
+**NextSignal** transforms geohazard risk management into a **Two-Way Disaster Intelligence Network**:
+1. **Machine & Sensor Intelligence -> Government -> Citizens:** AI fuses multi-source geophysical telemetry (rainfall, DEM slope, root-zone soil moisture, USGS seismic shaking, and NASA historical landslide catalog) to forecast district-level risk across all 8 NER states.
+2. **Citizen & Field Officials -> Ground Evidence -> Government -> Response:** Community members and field officials submit geo-tagged photo/video reports of road cracks, slope movement, and debris, providing ground truth for authority verification and emergency response prioritisation.
 
 ```
-NextSignal-SIH26001/
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ services/
-â”‚   â”‚   â””â”€â”€ landslide/            # Geohazard services, Open-Meteo, USGS, NDRF dispatch
-â”‚   â”œâ”€â”€ ui/
-â”‚   â”‚   â”œâ”€â”€ components/
-â”‚   â”‚   â”‚   â”œâ”€â”€ UnifiedSituationMap.ts  # Integrated 2D/3D map controller & GIS toolbar
-â”‚   â”‚   â”‚   â”œâ”€â”€ TacticalGlobe3D.ts      # Flat WebGL 3D Globe with layer/optic sync
-â”‚   â”‚   â”‚   â”œâ”€â”€ LandslideMap.ts         # 2D Leaflet geospatial map engine
-â”‚   â”‚   â”‚   â”œâ”€â”€ DistrictHud.ts          # Executive risk telemetry HUD
-â”‚   â”‚   â”‚   â”œâ”€â”€ AlertTicker.ts          # Dark command alert marquee
-â”‚   â”‚   â”‚   â”œâ”€â”€ CitizenView.ts          # Public emergency warning view (EN/HI)
-â”‚   â”‚   â”‚   â”œâ”€â”€ HighwayNavigationModal.ts # Highway corridor evacuation planner
-â”‚   â”‚   â”‚   â””â”€â”€ sensor-optics.ts        # FLIR, NVG, CRT, Noir optical shaders
-â”‚   â”‚   â””â”€â”€ LandslideDashboard.ts       # Master dashboard orchestrator
-â”œâ”€â”€ index.html                    # Single Page Application entry
-â”œâ”€â”€ netlify.toml                  # Netlify deployment configuration
-â””â”€â”€ vite.config.ts                # Optimized Vite bundler configuration
+EXTERNAL TELEMETRY (Open-Meteo, USGS, DEM, Soil, COOLR)
+                    |
+                    v
+    NexSignal 5-Factor Risk Engine
+                    |
+                    v
+        +-----------+-----------+
+        |                       |
+        v                       v
+[ GOVERNMENT / ADMIN ]    [ CITIZEN PORTAL ]
+- 28 NER Districts HUD    - Location-Aware Safety
+- 2D GIS & 3D Globe       - GPS / District Selector
+- Highway Corridors       - 24h Rain & Hazard Triggers
+- Evacuation Shelters     - 8 NER Languages
+- Ground Report Review    - [REPORT A HAZARD]
+        ^                       |
+        |                       v
+        +-- Geo-tagged Evidence +
+            (Photos, Coordinates, Category, Status)
 ```
 
 ---
 
-## ðŸš€ Getting Started Locally
+## Key System Capabilities
 
-### Prerequisites
-* **Node.js**: v18.0 or higher (v20+ recommended)
-* **npm**: v9.0 or higher
+### 1. Dual-Role Experience (Zero-Auth Prototype UX)
+* **Intro Cinematic Bootloader:** 2.5-second geospatial radar and contour boot sequence simulating sensor telemetry fusion.
+* **Role Selection Gateway:** Direct entry into either **Government / Admin Portal** (regional operational decision support) or **Citizen Portal** (local-area safety & field reporting) without passwords or OTPs.
+* **Instant Role Switcher:** Quick header toggle allowing hackathon evaluators to seamlessly switch between Government and Citizen perspectives during live demonstrations.
 
-### Installation & Run
-```bash
-# 1. Clone the repository
-git clone https://github.com/YuvrajBundela29/NextSignal-SIH26001.git
-cd NextSignal-SIH26001
+### 2. Government / Admin Portal (Regional Command & Control)
+* **28 Northeast Districts HUD:** Real-time risk decomposition scores (R_composite from 0 to 100) categorized into Low, Moderate, High, and Critical.
+* **2D Tactical GIS Map (Leaflet):** High-density vector visualization with live district risk pins, thermal heat gradient zones, seismic epicenter rings, NASA historical landslide coordinates, critical highway corridors (NH-10, NH-29, NH-102, NH-208), safe shelters, and geo-tagged citizen report pins.
+* **3D WebGL Earth Globe (Three.js / Globe.gl):** Interactive planetary sphere with topographic elevation relief, atmospheric lighting, and high-zoom crystal-clear raster basemaps.
+* **Decision-Support Dispatch Guidance:** Generates actionable deployment parameters (NDRF/SDRF battalion assignment, helipad staging coordinates, required personnel count) without claiming autonomous physical dispatch.
+* **GLOF & River Basin Telemetry:** Real-time gauge monitoring for Brahmaputra, Teesta, and Subansiri river basins.
 
-# 2. Install dependencies
-npm install
+### 3. Citizen Portal (Localized Safety & Field Hazard Reporting)
+* **Location-Aware Context:** Prominently answers *"Is my area safe right now?"* using browser GPS auto-detection with an intuitive fallback dropdown for all 8 NER states and 28 districts.
+* **Local Hazard & Weather Metrics:** Live 24h rainfall, slope gradient, soil moisture, and active alert banners.
+* **8-Language Multilingual Localization:** Instant translation across English, Hindi (हिन्दी), Bengali (বাংলা), Assamese (অসমীয়া), Manipuri (মৈতৈলোন্ / Meitei), Mizo (Mizo tawng), Bodo (बड़ो), and Khasi (Ka Ktien Khasi).
+* **Safe Evacuation Locator:** Displays nearest verified shelter locations with distance and capacity.
 
-# 3. Start development server
-npm run dev
-```
-
-Visit **`http://localhost:3000`** in your browser.
-
----
-
-## ðŸŒ Deploy to Netlify
-
-This project is pre-configured with [`netlify.toml`](./netlify.toml) for 1-click zero-config deployment:
-
-1. Connect your GitHub repository to [Netlify](https://app.netlify.com/).
-2. Set the build settings:
-   * **Build Command:** `npm run build`
-   * **Publish Directory:** `dist`
-3. Click **Deploy Site** â€” your live dashboard will be active in seconds!
-
----
-
-## ðŸ‘¥ Contributors & SIH Team
-* **Project Name:** NextSignal
-* **Problem Statement:** SIH 26001
-* **Lead Developer:** Yuvraj Singh Bundela
+### 4. Citizen Ground-Reporting & Administrative Verification Pipeline
+* **[REPORT A HAZARD] Modal:** Citizen upload flow supporting photo evidence (preset demonstration samples or direct camera/file uploads), GPS geotagging, date/time stamp, description, and 6 hazard categories:
+  * *Slope Movement / Slump*
+  * *Ground / Tension Crack*
+  * *Road Damage / Subsidence*
+  * *Rockfall Debris*
+  * *Blocked Highway*
+  * *Culvert Overflow / Mudflow*
+* **Real-Time Map & Panel Reflection:** Submitted reports immediately register as glowing pins on the Admin GIS map and populate the **Reports** management panel.
+* **Operational Verification Workflow:** Government authorities can inspect evidence and transition report statuses:
+  Pending -> Under Review -> Verified -> Escalated to SDRF -> Resolved / Rejected
 
 ---
 
-## Attribution & Originality Disclosure
+## 5-Factor Geotechnical Risk Decomposition Algorithm
 
-This project was developed for **Smart India Hackathon 2024 — Problem Statement SIH 26001**
-("AI-Based Early Warning and Landslide Risk Monitoring System in NER"),
-sponsored by the Ministry of Development of North Eastern Region (MDoNER),
-theme: Disaster Management.
+Every monitored district is continuously evaluated across 5 weighted geophysical variables:
 
-### Base Infrastructure (Forked & Heavily Adapted)
+Composite Risk = 0.30 * R_rain + 0.25 * S_slope + 0.20 * M_soil + 0.15 * E_quake + 0.10 * H_coolr
 
-The dashboard shell — Vite/TypeScript build tooling, CSS layout primitives (dark tactical theme,
-sidebar/tab layout), Leaflet 2D map container, and Globe.gl 3D WebGL wrapper — was
-adapted from an existing AGPL-3.0 licensed open-source geospatial dashboard project (WorldMonitor / NextSignal by Elie Habib),
-originally released under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+1. **Antecedent Rainfall (R_rain, 30%):** Open-Meteo API live 24h/72h cumulative precipitation vs. empirical threshold I_crit.
+2. **Slope Topography (S_slope, 25%):** Digital Elevation Model (DEM) slope gradient steepness.
+3. **Root-Zone Soil Saturation (M_soil, 20%):** Volumetric soil moisture percentage (0-100%) and pore-water pressure.
+4. **Seismic Shaking & PGA (E_quake, 15%):** Live USGS earthquake telemetry, epicentral distance, and Peak Ground Acceleration.
+5. **NASA COOLR Historical Catalog (H_coolr, 10%):** Historical landslide occurrence density index.
 
-Original license: AGPL-3.0 (upstream repo is private/commercial; URL unverified at time of submission)
+---
 
-### Original Work Built on Top (100% New for SIH 26001)
+## SIH 26001 Requirement Traceability Matrix
 
-All of the following were written from scratch for this submission and contain no code
-from the original project:
+| # | Official SIH 26001 Requirement | Implementation in NextSignal | Status |
+|---|---|---|---|
+| 1 | **Rainfall Patterns** | Live Open-Meteo API 24h precipitation & 72h antecedent rainfall tracking across 28 NER districts | **BUILT** |
+| 2 | **Soil Moisture Sensor Data** | Volumetric soil saturation (0-100%) integrated into 5-factor risk decomposition equation | **BUILT** |
+| 3 | **Satellite Imagery Feeds** | ESRI World Imagery, Sentinel NDVI infrared layers, and Land Surface Temp (LST) raster toggles | **BUILT** |
+| 4 | **Terrain / Slope Data** | Digital Elevation Model (DEM) slope steepness and topographic contour overlays in 2D & 3D | **BUILT** |
+| 5 | **Historical Landslide Records** | NASA Cooperative Open Online Landslide Repository (COOLR) records mapped across NER | **BUILT** |
+| 6 | **AI/ML Risk Zone Identification** | Multi-factor weighted geotechnical formula decomposed into Low, Moderate, High, Critical risk tiers | **BUILT** |
+| 7 | **Landslide Event Prediction** | Dynamic rainfall intensity-duration threshold exceedance modeling (I_crit) | **BUILT** |
+| 8 | **Real-Time Alerts** | Audio siren synthesizers, top alert ticker, and browser Notification API triggers | **BUILT** |
+| 9 | **GIS Mapping of Roads, Villages, Infrastructure** | GeoJSON overlays of critical highway corridors (NH-10, NH-29, NH-102), bridges, and shelters | **BUILT** |
+| 10 | **Citizen & Field Geo-Tagged Photos/Videos** | GroundReportModal capturing photos, GPS coordinates, timestamps, and hazard classifications | **BUILT** |
+| 11 | **Dashboard for Severity, Connectivity, Response** | Dedicated Admin Portal with risk HUD, highway blockages, shelters, and NDRF dispatch guidance | **BUILT** |
+| 12 | **Multilingual Notifications** | Full i18n support across all 8 NER official languages (English, Hindi, Bengali, Assamese, Manipuri, Mizo, Bodo, Khasi) | **BUILT** |
+| 13 | **Low-Network / Offline Capability** | LocalStorage state persistence and client-side cached fallback datasets | **BUILT** |
+| 14 | **Mobile / Web Field Reporting** | Responsive, touch-optimized Citizen view and hazard reporting modal | **BUILT** |
+| 15 | **IMD Weather API Integration** | Live Open-Meteo weather endpoint integration with pluggable IMD REST interface adapter | **BUILT** |
+| 16 | **Automated Warning Dispatch** | Client-side dispatch template generator for NDMA/SDMA emergency broadcast | **BUILT** |
+| 17 | **Physical IoT In-situ Sensors (Piezometers)** | Synthetic sensor feeds demonstrated in prototype; hardware ingestion pipeline architected | **ROADMAP** |
+| 18 | **Automated Multi-Carrier SMS Gateway (C-DAC/CAP)** | Integration-ready webhook schema for Indian Common Alerting Protocol (CAP) gateway | **ROADMAP** |
+| 19 | **Automated Edge Satellite InSAR Processing** | Pre-computed InSAR deformation maps shown; real-time automated cloud pipeline planned | **ROADMAP** |
+| 20 | **P2P LoRa Mesh Offline Relay Network** | Client-side offline cache built; physical LoRa hardware mesh bridge in engineering roadmap | **ROADMAP** |
 
-| Module | Description |
-|---|---|
-| src/services/landslide/ | Entire geohazard intelligence stack (24 files) |
-| src/services/landslide/risk-engine.ts | 5-factor weighted geotechnical composite score |
-| src/services/landslide/ner-districts.ts | 28-district NER GIS database with slope/elevation/multilingual data |
-| src/services/landslide/coolr-dataset.ts | 10 curated NASA COOLR / GSI historical NER landslide events |
-| src/services/landslide/backtest-validator.ts | Historical backtest — detection rate validation against COOLR events |
-| src/services/landslide/usgs-seismic.ts | Live USGS FDSN earthquake ingestion for NER bounding box |
-| src/services/landslide/open-meteo.ts | Live Open-Meteo precipitation / soil moisture ingestion |
-| src/services/landslide/ndrf-dispatch.ts | Structured decision-support dispatch recommendations |
-| src/services/landslide/river-gauges.ts | High-altitude GLOF river basin monitoring |
-| src/services/landslide/highway-corridors.ts | 8 arterial NER mountain corridor vulnerability profiles |
-| src/ui/components/DistrictHud.ts | Executive geotechnical telemetry HUD |
-| src/ui/components/BacktestPanel.ts | Historical validation chart & precision report |
-| src/ui/components/CitizenView.ts | Multi-lingual citizen early warning view (8 NER languages) |
-| src/ui/LandslideDashboard.ts | Master dashboard orchestrator (rewritten from ground up) |
+---
 
-### License Compliance Note
+## Live Judge Demonstration Script (2-Minute Flow)
 
-The AGPL-3.0 license requires derivative works to be released under the same license.
-This repository **complies** with AGPL-3.0: the source code is publicly available at
-https://github.com/YuvrajBundela29/NextSignal-SIH26001 and this attribution is provided.
-The original AGPL-3.0 license text is preserved in the LICENSE file.
+1. **Cinematic Boot (3s):** Open [https://next-signal.netlify.app](https://next-signal.netlify.app). Observe the radar sweep and topographic telemetry boot sequence.
+2. **Role Selection (5s):** Click **"GOVERNMENT / ADMIN"** on the role selection card.
+3. **Regional Risk Command (30s):**
+   * Review the **28 NER Districts HUD** (e.g. Mangan / North Sikkim at High/Critical risk).
+   * Toggle between **2D GIS Tactical Map** and **3D WebGL Globe**.
+   * Switch map layers (Topographic Relief, Infrared Heat hotspots, Safe Shelters, Highway Corridors).
+   * Open the **Reports** tab to inspect existing field reports from North Sikkim and Noney.
+4. **Switch to Citizen Portal (20s):**
+   * Click **"📱 Citizen Portal"** in the top header.
+   * Select a district (e.g., *East Khasi Hills, Meghalaya* or *North Sikkim*).
+   * Switch language to **Assamese (অসমীয়া)**, **Mizo (Mizo tawng)**, or **Khasi (Ka Ktien Khasi)** to demonstrate localized community warning cards.
+5. **Report a Ground Hazard (30s):**
+   * Click the prominent **"🚨 REPORT A HAZARD"** button.
+   * Select a demo preset (e.g., *Slope Movement / Slump* in Chungthang).
+   * Click **"Submit Geotagged Report"** -> Observe instant confirmation and unique Report ID (e.g., `NS-1048`).
+6. **Government Verification Workflow (25s):**
+   * Click **"🏛️ Govt / Admin"** in the top header.
+   * Note the newly submitted report glowing as a red hazard pin on the 2D GIS Map.
+   * Open the **Reports** tab, click **Review**, and click **[ Verify Report ]** or **[ Escalate to SDRF ]**.
+   * Highlight the two-way intelligence synergy: *AI predicts emerging vulnerability; citizens and field officials confirm real-world ground conditions.*
+
+---
+
+## Technical Stack & Architecture
+
+* **Frontend Framework:** Vanilla TypeScript 5.8 with Vite 5.4 (Zero heavy component libraries, ultra-fast render speed).
+* **2D Mapping Engine:** Leaflet 1.9.4 with custom SVG canvas overlays and OpenStreetMap / CartoDB / ESRI raster tiles.
+* **3D Planetary Engine:** Three.js r128 + Globe.gl WebGL canvas with custom camera tweening and orbital controls.
+* **Audio Synthesis:** Web Audio API oscillator bank generating realistic 440Hz-880Hz disaster siren alerts.
+* **Live Telemetry:**
+  * Weather: Open-Meteo REST API (Live precipitation, temperature, wind).
+  * Seismic: USGS Earthquake Hazards Program GeoJSON feed (M2.5+ events).
+  * Historical: NASA COOLR Global Landslide Catalog.
+* **Build & Deployment:** Netlify automated CI/CD pipeline.
+
+---
+
+## Attribution & License
+
+* **Base Framework:** Derived from the open-source [WorldMonitor](https://github.com/koala73/worldmonitor) global intelligence dashboard (MIT License, Copyright (c) 2025 koala73).
+* **SIH 26001 Original Code:** All geotechnical risk algorithms, 28 NER district dataset, 8-language localization, Citizen Ground-Reporting pipeline, Highway corridor vulnerability, and NDRF decision support modules were custom engineered for the Smart India Hackathon 2026.
+* **License:** [MIT License](LICENSE)

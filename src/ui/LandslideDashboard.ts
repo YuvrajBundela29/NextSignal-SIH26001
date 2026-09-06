@@ -30,48 +30,49 @@ import { UnifiedSituationMap } from './components/UnifiedSituationMap';
 import { DistrictHud } from './components/DistrictHud';
 import { CitizenView } from './components/CitizenView';
 import { AlertTicker } from './components/AlertTicker';
+import { GroundReportsPanel } from './components/GroundReportsPanel';
+import { groundReportsService } from '../services/landslide/ground-reports';
 
 export class LandslideDashboard {
   private container: HTMLElement;
-  private viewMode: AppViewMode = 'authority';
-  private rightTab: 'hud' | 'highways' | 'shelters' = 'hud';
-  private lang: AppLanguage = 'en';
-  private isOfflineDemo = false;
-  private currentScenario: DemoScenario = 'monsoon_deluge';
-  private selectedDistrictId = 'as_dima_hasao';
+  private selectedDistrictId: string = 'mangan';
   private selectedStateFilter: 'ALL' | NerState = 'ALL';
-  private searchQuery = '';
+  private searchQuery: string = '';
+  private viewMode: AppViewMode = 'authority';
+  private lang: AppLanguage = 'en';
 
-  // Telemetry caches
-  private riskMap = new Map<string, RiskScoreBreakdown>();
-  private weatherMap = new Map<string, WeatherTelemetry>();
-  private soilMap = new Map<string, SoilTelemetry>();
-  private seismicMap = new Map<string, SeismicTelemetry>();
-  private aiAdvisoryMap = new Map<string, AiAdvisoryResponse>();
+  private riskMap: Map<string, RiskScoreBreakdown> = new Map();
+  private weatherMap: Map<string, WeatherTelemetry> = new Map();
+  private soilMap: Map<string, SoilTelemetry> = new Map();
+  private seismicMap: Map<string, SeismicTelemetry> = new Map();
+  private aiAdvisoryMap: Map<string, AiAdvisoryResponse> = new Map();
   private liveEarthquakes: UsgsEarthquake[] = [];
 
-  // UI Components
+  private currentScenario: DemoScenario = 'monsoon_deluge';
+  private isOfflineDemo: boolean = false;
+
   private situationMapComp: UnifiedSituationMap | null = null;
   private hudComp: DistrictHud | null = null;
   private citizenComp: CitizenView | null = null;
   private alertTickerComp: AlertTicker | null = null;
+  private reportsPanelComp: GroundReportsPanel | null = null;
+  private onReplayIntro?: () => void;
 
-  constructor(rootContainerId: string) {
-    const root = document.getElementById(rootContainerId);
-    if (!root) throw new Error(`Root #${rootContainerId} not found`);
-    this.container = root;
-    this.init();
-  }
+  constructor(containerId: string, initialRole: AppViewMode = 'authority', onReplayIntro?: () => void) {
+    const el = document.getElementById(containerId);
+    if (!el) throw new Error("Container #" + containerId + " not found");
+    this.container = el;
+    this.viewMode = initialRole;
+    this.onReplayIntro = onReplayIntro;
 
-  public async init() {
-    this.renderSkeleton();
+    this.populateInitialState();
+    this.renderLayout();
     this.initComponents();
     this.bindGlobalEvents();
 
-    this.populateInitialState();
-    this.renderAllViews();
-
-    void this.refreshLiveTelemetryBackground();
+    if (!this.isOfflineDemo) {
+      void this.refreshLiveTelemetryBackground();
+    }
   }
 
   private getDistrictDisplayName(d: DistrictProfile): string {
@@ -87,52 +88,46 @@ export class LandslideDashboard {
     }
   }
 
-  private renderSkeleton() {
+  private populateInitialState() {
+    this.liveEarthquakes = MOCK_EARTHQUAKES[this.currentScenario] || [];
+    let maxRain = 0;
+
+    for (const d of NER_DISTRICTS) {
+      const weather = getMockWeatherForDistrict(d, this.currentScenario);
+      const soil = getMockSoilForDistrict(d, this.currentScenario);
+      const seismic = computeDistrictSeismicTelemetry(d.lat, d.lon, this.liveEarthquakes);
+      const risk = calculateLandslideRisk(d, weather, soil, seismic);
+
+      this.weatherMap.set(d.id, weather);
+      this.soilMap.set(d.id, soil);
+      this.seismicMap.set(d.id, seismic);
+      this.riskMap.set(d.id, risk);
+
+      if (weather.rainfall24hMm > maxRain) maxRain = weather.rainfall24hMm;
+      alertsManager.evaluateAndTriggerAlert(d, risk);
+    }
+  }
+
+  private renderLayout() {
+    const reportsCount = groundReportsService.getReports().length;
+
     this.container.innerHTML = `
-      <div id="landslide-app-root" style="display: flex; flex-direction: column; height: 100vh; width: 100vw; background: #090d16; color: #f8fafc; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div style="display: flex; flex-direction: column; width: 100vw; height: 100vh; overflow: hidden; background: #050811; color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         
-        <!-- Top App Header -->
-        <header id="sih-header-bar" style="background: #050811; border-bottom: 1px solid #1e293b; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; height: 50px; min-height: 50px; box-sizing: border-box;">
-          
-          <!-- Left: Actual NextSignal Logo Image & Clean Title -->
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <img src="/nextsignal-logo.jpg" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover; box-shadow: 0 0 12px rgba(56,189,248,0.4);" alt="NextSignal Logo" />
-            <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 15px; font-weight: 900; color: #ffffff; letter-spacing: 0.8px;">
-                  NEXTSIGNAL
-                </span>
-                <span style="background: rgba(2,132,199,0.2); color: #38bdf8; border: 1px solid rgba(2,132,199,0.4); font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 3px;">
-                  EARLY WARNING SYSTEM &bull; NER
-                </span>
-              </div>
-              <div style="font-size: 10px; color: #94a3b8;">
-                AI-Powered Landslide & Geohazard Intelligence Dashboard &bull; Northeast Region India
-              </div>
+        <!-- Header -->
+        <header style="height: 48px; background: #0b1120; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; z-index: 1000; flex-shrink: 0;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="color: #38bdf8; font-size: 16px;">⚡</span>
+              <span style="font-weight: 900; font-size: 15px; letter-spacing: 0.5px; color: #ffffff;">NexSignal</span>
+            </div>
+            <div style="height: 14px; width: 1px; background: #334155;"></div>
+            <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+              SIH26001 &bull; MDoNER Landslide Risk Intelligence
             </div>
           </div>
 
-          <!-- Live Telemetry KPI Metrics -->
-          <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="text-align: center; border-right: 1px solid #1e293b; padding-right: 14px;">
-              <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: bold;">Districts</div>
-              <div style="font-size: 13px; font-weight: 800; color: #f8fafc;">${NER_DISTRICTS.length}</div>
-            </div>
-            <div style="text-align: center; border-right: 1px solid #1e293b; padding-right: 14px;">
-              <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: bold;">Active Alerts</div>
-              <div id="stat-alerts-count" style="font-size: 13px; font-weight: 800; color: #ef4444;">0</div>
-            </div>
-            <div style="text-align: center; border-right: 1px solid #1e293b; padding-right: 14px;">
-              <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: bold;">Max Rainfall</div>
-              <div id="stat-max-rain" style="font-size: 13px; font-weight: 800; color: #38bdf8;">-- mm</div>
-            </div>
-            <div style="text-align: center; padding-right: 4px;">
-              <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: bold;">72h Quakes</div>
-              <div id="stat-quakes-count" style="font-size: 13px; font-weight: 800; color: #a855f7;">--</div>
-            </div>
-          </div>
-
-          <!-- Controls: Feed, Download PDF Report, View Switcher & Language -->
+          <!-- Controls: Feed, Download PDF Report, View Switcher, Replay & Language -->
           <div style="display: flex; align-items: center; gap: 8px;">
             <!-- Telemetry Data Mode Selector -->
             <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px;">
@@ -151,15 +146,20 @@ export class LandslideDashboard {
               <span>Download PDF Report</span>
             </button>
 
-            <!-- View Switcher (Authority vs Citizen) -->
-            <div style="display: flex; background: #0b1120; border: 1px solid #334155; border-radius: 6px; overflow: hidden;">
-              <button id="btn-view-authority" class="tab-btn ${this.viewMode === 'authority' ? 'active' : ''}" style="padding: 4px 10px; font-size: 10px; font-weight: bold; cursor: pointer; border: none; background: ${this.viewMode === 'authority' ? '#0284c7' : 'transparent'}; color: white;">
-                Authority
+            <!-- View Switcher (Government vs Citizen) -->
+            <div style="display: flex; background: #050811; border: 1.5px solid #0284c7; border-radius: 6px; overflow: hidden; box-shadow: 0 0 10px rgba(2, 132, 199, 0.25);">
+              <button id="btn-view-authority" class="tab-btn" style="padding: 4px 10px; font-size: 10px; font-weight: 800; cursor: pointer; border: none; background: ${this.viewMode === 'authority' ? '#0284c7' : 'transparent'}; color: white; display: flex; align-items: center; gap: 4px;">
+                <span>🏛️</span> Govt / Admin
               </button>
-              <button id="btn-view-citizen" class="tab-btn ${this.viewMode === 'citizen' ? 'active' : ''}" style="padding: 4px 10px; font-size: 10px; font-weight: bold; cursor: pointer; border: none; background: ${this.viewMode === 'citizen' ? '#0284c7' : 'transparent'}; color: white;">
-                Citizen
+              <button id="btn-view-citizen" class="tab-btn" style="padding: 4px 10px; font-size: 10px; font-weight: 800; cursor: pointer; border: none; background: ${this.viewMode === 'citizen' ? '#16a34a' : 'transparent'}; color: white; display: flex; align-items: center; gap: 4px;">
+                <span>📱</span> Citizen Portal
               </button>
             </div>
+
+            <!-- Replay Intro Button -->
+            <button id="btn-replay-intro" style="background: #0b1120; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 10px; font-weight: 700; cursor: pointer;" title="Replay Cinematic Boot Sequence">
+              🔄 Intro
+            </button>
 
             <!-- Multi-Language Selector Dropdown -->
             <div style="display: flex; align-items: center; background: #0b1120; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px;">
@@ -183,16 +183,15 @@ export class LandslideDashboard {
 
         <!-- Main Workspace Area -->
         <div id="main-workspace-container" style="flex: 1; display: flex; position: relative; overflow: hidden; background: #090d16;">
+          
           <!-- AUTHORITY VIEW: Left Sidebar + Center 100% Height Map + Right Multifunction HUD -->
-          <div id="authority-workspace" style="display: flex; width: 100%; height: 100%;">
+          <div id="authority-workspace" style="display: ${this.viewMode === 'authority' ? 'flex' : 'none'}; width: 100%; height: 100%;">
             
             <!-- Left Sidebar: Regional District Explorer -->
             <aside style="width: 280px; background: #050811; border-right: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500;">
-              <!-- Search & Filter Bar -->
               <div style="padding: 8px 10px; border-bottom: 1px solid #1e293b; display: flex; flex-direction: column; gap: 6px;">
                 <input id="input-search-district" type="text" placeholder="Search District or State..." style="width: 100%; background: #0b1120; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; font-size: 11px; outline: none; box-sizing: border-box;" />
                 
-                <!-- State Filter Tabs -->
                 <div style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px;">
                   <button class="state-filter-btn active" data-state="ALL" style="background: #0b1120; color: #38bdf8; border: 1px solid #0284c7; border-radius: 4px; padding: 2px 6px; font-size: 9px; white-space: nowrap; cursor: pointer;">ALL</button>
                   ${NER_STATES.map(s => `
@@ -201,138 +200,136 @@ export class LandslideDashboard {
                 </div>
               </div>
 
-              <!-- District List -->
-              <div id="sih-risk-score-panel" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;"><div id="district-list-scroll" style="width:100%;display:flex;flex-direction:column;"></div></div>
+              <div id="sih-risk-score-panel" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                <div id="district-list-scroll" style="width:100%;display:flex;flex-direction:column;"></div>
+              </div>
             </aside>
 
-            <!-- Center View: 100% Height Tactical Situation Map (Matches Reference Screenshot) -->
+            <!-- Center View: 100% Height Tactical Situation Map -->
             <main style="flex: 1; position: relative; display: flex; flex-direction: column; background: #090d16; overflow: hidden;">
-              <div id="sih-unified-map" style="width: 100%; height: 100%; position: relative;"><div id="unified-situation-map-container" style="width:100%;height:100%;position:relative;"></div></div>
+              <div id="sih-unified-map" style="width: 100%; height: 100%; position: relative;">
+                <div id="unified-situation-map-container" style="width:100%;height:100%;position:relative;"></div>
+              </div>
             </main>
 
-            <!-- Right Sidebar: 3 Clear Purposeful Tabs (HUD, Highways, Shelters) -->
-            <aside style="width: 370px; background: #050811; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500; padding-bottom: 48px;">
-              <!-- Tab Bar (3 Essential Views) -->
-              <div style="display: flex; background: #0b1120; border-bottom: 1px solid #1e293b; font-size: 11px;">
-                <button id="tab-btn-hud" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #050811; color: #38bdf8; border-bottom: 2px solid #38bdf8;">
+            <!-- Right Sidebar: 5 Purposeful Tabs (HUD, Highways, Shelters, Reports, Backtest) -->
+            <aside style="width: 380px; background: #050811; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 500; padding-bottom: 48px;">
+              <div style="display: flex; background: #0b1120; border-bottom: 1px solid #1e293b; font-size: 10.5px;">
+                <button id="tab-btn-hud" style="flex: 1; padding: 10px 2px; font-weight: 700; cursor: pointer; border: none; background: #050811; color: #38bdf8; border-bottom: 2px solid #38bdf8;">
                   Risk HUD
                 </button>
-                <button id="tab-btn-highways" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;">
+                <button id="tab-btn-highways" style="flex: 1; padding: 10px 2px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;">
                   Highways
                 </button>
-                <button id="tab-btn-shelters" style="flex: 1; padding: 10px 4px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;">
+                <button id="tab-btn-shelters" style="flex: 1; padding: 10px 2px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;">
                   Shelters
                 </button>
-                <button id="tab-btn-backtest" style="flex: 1; padding: 10px 4px; font-size: 10px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent; border-left: 1px solid #1e293b;">
+                <button id="tab-btn-reports" style="flex: 1; padding: 10px 2px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;" title="Citizen & Field Ground Reports">
+                  Reports (<span id="reports-tab-badge" style="color: #eab308;">${reportsCount}</span>)
+                </button>
+                <button id="tab-btn-backtest" style="flex: 1; padding: 10px 2px; font-weight: 700; cursor: pointer; border: none; background: #0b1120; color: #94a3b8; border-bottom: 2px solid transparent;" title="Methodology Illustration (NASA COOLR / GSI)">
                   Backtest
                 </button>
               </div>
 
-              <!-- Tab Contents -->
-              <div id="hud-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: block;"></div>
-              
-              <!-- Highways Tab -->
-              <div id="highways-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase;">
-                    Arterial Highway Corridors
-                  </div>
-                  <span style="font-size: 9px; color: #94a3b8;">Google Maps Nav</span>
+              <div style="flex: 1; overflow-y: auto; position: relative;">
+                
+                <!-- 1. Risk HUD Tab -->
+                <div id="hud-tab-content" style="display: block; height: 100%;">
+                  <div id="district-hud-container" style="height: 100%;"></div>
                 </div>
-                ${NER_HIGHWAY_ROUTES.map(h => `
-                  <div class="hwy-corridor-item" data-id="${h.id}" style="background: #0b1120; border-radius: 8px; padding: 10px; border-left: 3px solid ${h.overallVulnerability === 'CRITICAL' ? '#ef4444' : '#f97316'}; cursor: pointer; transition: background 0.15s ease;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <strong style="color: #ffffff; font-size: 11px;">${h.name}</strong>
-                      <span style="background: ${h.currentPassStatus === 'RESTRICTED' ? '#ef4444' : '#f97316'}; color: white; font-size: 8px; font-weight: bold; padding: 1px 6px; border-radius: 3px;">
-                        ${h.currentPassStatus}
-                      </span>
-                    </div>
-                    <div style="font-size: 10px; color: #cbd5e1; margin-top: 3px;">${h.origin} &rarr; ${h.destination}</div>
-                    <div style="font-size: 9px; color: #38bdf8; margin-top: 4px; font-weight: bold;">
-                      &rarr; Click for Step-by-Step Waypoints
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
 
-              <!-- Shelters Tab -->
-              <div id="shelters-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 8px;">
-                <div style="font-size: 11px; font-weight: 800; color: #34d399; text-transform: uppercase;">
-                  Designated Safe Shelters &amp; Evacuation Centers
-                </div>
-                ${NER_SAFE_SHELTERS.map(s => `
-                  <div style="background: #0b1120; border-radius: 8px; padding: 10px; border-left: 3px solid #10b981;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <strong style="color: #ffffff; font-size: 11px;">${s.name}</strong>
-                      <span style="color: #34d399; font-weight: 800; font-size: 10px;">${s.capacityPersons} pax</span>
-                    </div>
-                    <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">
-                      ${s.type} &bull; ${s.elevationM}m MSL
-                    </div>
-                    <div style="font-size: 9px; color: #38bdf8; margin-top: 3px;">
-                      Emergency Helpline: <strong>${s.contactNumber}</strong>
-                    </div>
-                    <div style="font-size: 8px; color: #a7f3d0; margin-top: 2px;">
-                      ${s.hasMedicalPost ? '[+] Medical Post' : ''} ${s.hasGeneratorPower ? '[+] Generator' : ''} ${s.hasSatelliteComms ? '[+] Satellite' : ''}
-                    </div>
+                <!-- 2. Highways Tab -->
+                <div id="highways-tab-content" style="display: none; padding: 12px; flex-direction: column; gap: 8px;">
+                  <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px;">
+                    Critical NER Highway Corridors
                   </div>
-                `).join('')}
+                  ${NER_HIGHWAY_ROUTES.map(h => `
+                    <div class="hwy-corridor-item" data-id="${h.id}" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 8px 10px; cursor: pointer; transition: background 0.15s ease;">
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 800; font-size: 12px; color: #ffffff;">${h.code} &bull; ${h.name}</span>
+                        <span style="font-size: 9px; font-weight: 800; color: ${h.overallVulnerability === 'CRITICAL' || h.overallVulnerability === 'HIGH' ? '#ef4444' : '#f59e0b'}; background: ${h.overallVulnerability === 'CRITICAL' || h.overallVulnerability === 'HIGH' ? '#ef444420' : '#f59e0b20'}; padding: 1px 5px; border-radius: 3px;">
+                          ${h.overallVulnerability}
+                        </span>
+                      </div>
+                      <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                        ${h.totalDistanceKm} km &bull; ${h.origin} &rarr; ${h.destination} &bull; Status: ${h.currentPassStatus}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- 3. Safe Shelters Tab -->
+                <div id="shelters-tab-content" style="display: none; padding: 12px; flex-direction: column; gap: 8px;">
+                  <div style="font-size: 11px; font-weight: 800; color: #34d399; text-transform: uppercase; margin-bottom: 4px;">
+                    Designated Safe Evacuation Shelters
+                  </div>
+                  ${NER_SAFE_SHELTERS.map(s => `
+                    <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 8px 10px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 800; font-size: 12px; color: #ffffff;">${s.name}</span>
+                        <span style="font-size: 9px; font-weight: 800; color: #34d399; background: #05966920; padding: 1px 5px; border-radius: 3px;">
+                          ${s.capacityPersons} Pers.
+                        </span>
+                      </div>
+                      <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                        ${s.type} &bull; ${s.elevationM}m MSL &bull; DEOC: ${s.contactNumber}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- 4. Citizen & Field Reports Tab -->
+                <div id="reports-tab-content" style="display: none; height: 100%; flex-direction: column;"></div>
+
+                <!-- 5. Backtest Validation Tab -->
+                <div id="backtest-tab-content" style="display: none; height: 100%; flex-direction: column;"></div>
+
               </div>
-              <!-- Backtest Validation Tab -->
-              <div id="backtest-tab-content" style="flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0; display: none; flex-direction: column;"></div>
             </aside>
           </div>
 
-          <!-- CITIZEN VIEW OVERLAY -->
-          <div id="citizen-workspace" style="display: none; width: 100%; height: 100%; overflow-y: auto; background: #090d16;"></div>
+          <!-- CITIZEN VIEW -->
+          <div id="citizen-workspace" style="display: ${this.viewMode === 'citizen' ? 'block' : 'none'}; width: 100%; height: 100%; overflow-y: auto; background: #020617;">
+            <div id="citizen-view-container"></div>
+          </div>
+
         </div>
+
       </div>
     `;
   }
 
   private initComponents() {
-    this.situationMapComp = new UnifiedSituationMap('unified-situation-map-container', (districtId) => {
-      void this.selectDistrict(districtId);
+    this.situationMapComp = new UnifiedSituationMap('unified-situation-map-container', (id) => {
+      void this.selectDistrict(id);
     });
 
-    this.hudComp = new DistrictHud('hud-tab-content');
-    this.citizenComp = new CitizenView('citizen-workspace');
+    this.hudComp = new DistrictHud('district-hud-container');
+    
+    this.citizenComp = new CitizenView('citizen-view-container', (id) => {
+      void this.selectDistrict(id);
+    });
+
     this.alertTickerComp = new AlertTicker('alert-ticker-container');
 
-    alertsManager.subscribe((alerts) => {
-      this.alertTickerComp?.render(alerts);
-      const statAlertsEl = document.getElementById('stat-alerts-count');
-      if (statAlertsEl) {
-        statAlertsEl.textContent = String(alerts.length);
-        statAlertsEl.style.color = alerts.some(a => a.level === 'CRITICAL') ? '#ef4444' : '#f97316';
-      }
-    });
-  }
-
-  private populateInitialState() {
-    this.liveEarthquakes = MOCK_EARTHQUAKES['monsoon_deluge'];
-
-    let maxRain = 0;
-    for (const d of NER_DISTRICTS) {
-      const weather = getMockWeatherForDistrict(d, this.isOfflineDemo ? this.currentScenario : 'monsoon_deluge');
-      const soil = getMockSoilForDistrict(d, this.isOfflineDemo ? this.currentScenario : 'monsoon_deluge');
-      const seismic = computeDistrictSeismicTelemetry(d.lat, d.lon, this.liveEarthquakes);
-      const risk = calculateLandslideRisk(d, weather, soil, seismic);
-
-      this.weatherMap.set(d.id, weather);
-      this.soilMap.set(d.id, soil);
-      this.seismicMap.set(d.id, seismic);
-      this.riskMap.set(d.id, risk);
-
-      if (weather.rainfall24hMm > maxRain) maxRain = weather.rainfall24hMm;
-      alertsManager.evaluateAndTriggerAlert(d, risk);
+    const reportsContainer = document.getElementById('reports-tab-content');
+    if (reportsContainer) {
+      this.reportsPanelComp = new GroundReportsPanel(reportsContainer, (report) => {
+        void this.selectDistrict(report.districtId);
+        const targetDist = NER_DISTRICTS.find(d => d.id === report.districtId);
+        if (targetDist) {
+          this.situationMapComp?.flyToDistrict(targetDist);
+        }
+      });
     }
 
-    const statMaxRainEl = document.getElementById('stat-max-rain');
-    if (statMaxRainEl) statMaxRainEl.textContent = `${maxRain} mm`;
+    groundReportsService.subscribe((reports) => {
+      const badge = document.getElementById('reports-tab-badge');
+      if (badge) badge.textContent = String(reports.length);
+    });
 
-    const statQuakesEl = document.getElementById('stat-quakes-count');
-    if (statQuakesEl) statQuakesEl.textContent = String(this.liveEarthquakes.length);
+    this.renderAllViews();
   }
 
   private renderAllViews() {
@@ -348,8 +345,6 @@ export class LandslideDashboard {
       const quakes = await fetchLiveSeismicData();
       if (quakes && quakes.length > 0) {
         this.liveEarthquakes = quakes;
-        const statQuakesEl = document.getElementById('stat-quakes-count');
-        if (statQuakesEl) statQuakesEl.textContent = String(this.liveEarthquakes.length);
       }
     } catch (e) {
       console.warn('[Seismic Ingestion] Live fetch fallback:', e);
@@ -376,15 +371,6 @@ export class LandslideDashboard {
     });
 
     await Promise.allSettled(promises);
-
-    let maxRain = 0;
-    this.weatherMap.forEach(w => {
-      if (w.rainfall24hMm > maxRain) maxRain = w.rainfall24hMm;
-    });
-
-    const statMaxRainEl = document.getElementById('stat-max-rain');
-    if (statMaxRainEl) statMaxRainEl.textContent = `${maxRain} mm`;
-
     this.renderAllViews();
   }
 
@@ -485,6 +471,26 @@ export class LandslideDashboard {
     this.citizenComp?.render(district, risk, weather);
   }
 
+  public setViewMode(mode: AppViewMode) {
+    this.viewMode = mode;
+    const btnAuth = document.getElementById('btn-view-authority');
+    const btnCit = document.getElementById('btn-view-citizen');
+    const authSpace = document.getElementById('authority-workspace');
+    const citSpace = document.getElementById('citizen-workspace');
+
+    if (mode === 'authority') {
+      if (btnAuth) btnAuth.style.background = '#0284c7';
+      if (btnCit) btnCit.style.background = 'transparent';
+      if (authSpace) authSpace.style.display = 'flex';
+      if (citSpace) citSpace.style.display = 'none';
+    } else {
+      if (btnAuth) btnAuth.style.background = 'transparent';
+      if (btnCit) btnCit.style.background = '#16a34a';
+      if (authSpace) authSpace.style.display = 'none';
+      if (citSpace) citSpace.style.display = 'block';
+    }
+  }
+
   private bindGlobalEvents() {
     const listEl = document.getElementById('district-list-scroll');
     listEl?.addEventListener('click', (e) => {
@@ -500,26 +506,23 @@ export class LandslideDashboard {
       openPrintableSitRepPdf(this.riskMap, this.weatherMap, this.soilMap, this.seismicMap, this.selectedDistrictId);
     });
 
+    // Replay Intro Button Event
+    document.getElementById('btn-replay-intro')?.addEventListener('click', () => {
+      if (this.onReplayIntro) {
+        this.onReplayIntro();
+      }
+    });
+
     // Authority vs Citizen View
     const btnAuth = document.getElementById('btn-view-authority');
     const btnCit = document.getElementById('btn-view-citizen');
-    const authSpace = document.getElementById('authority-workspace');
-    const citSpace = document.getElementById('citizen-workspace');
 
     btnAuth?.addEventListener('click', () => {
-      this.viewMode = 'authority';
-      btnAuth.style.background = '#0284c7';
-      if (btnCit) btnCit.style.background = 'transparent';
-      if (authSpace) authSpace.style.display = 'flex';
-      if (citSpace) citSpace.style.display = 'none';
+      this.setViewMode('authority');
     });
 
     btnCit?.addEventListener('click', () => {
-      this.viewMode = 'citizen';
-      if (btnAuth) btnAuth.style.background = 'transparent';
-      if (btnCit) btnCit.style.background = '#0284c7';
-      if (authSpace) authSpace.style.display = 'none';
-      if (citSpace) citSpace.style.display = 'block';
+      this.setViewMode('citizen');
     });
 
     // Language Dropdown
@@ -575,22 +578,24 @@ export class LandslideDashboard {
     const tabBtnHud = document.getElementById('tab-btn-hud') as HTMLButtonElement | null;
     const tabBtnHwy = document.getElementById('tab-btn-highways') as HTMLButtonElement | null;
     const tabBtnShl = document.getElementById('tab-btn-shelters') as HTMLButtonElement | null;
+    const tabBtnReports = document.getElementById('tab-btn-reports') as HTMLButtonElement | null;
     const tabBtnBacktest = document.getElementById('tab-btn-backtest') as HTMLButtonElement | null;
 
     const hudContent = document.getElementById('hud-tab-content') as HTMLElement | null;
     const hwyContent = document.getElementById('highways-tab-content') as HTMLElement | null;
     const shlContent = document.getElementById('shelters-tab-content') as HTMLElement | null;
+    const reportsContent = document.getElementById('reports-tab-content') as HTMLElement | null;
     const backtestContent = document.getElementById('backtest-tab-content') as HTMLElement | null;
 
     const resetTabs = () => {
-      [tabBtnHud, tabBtnHwy, tabBtnShl, tabBtnBacktest].forEach(btn => {
+      [tabBtnHud, tabBtnHwy, tabBtnShl, tabBtnReports, tabBtnBacktest].forEach(btn => {
         if (btn) {
           btn.style.background = '#0b1120';
           btn.style.color = '#94a3b8';
           btn.style.borderBottom = '2px solid transparent';
         }
       });
-      [hudContent, hwyContent, shlContent, backtestContent].forEach(c => {
+      [hudContent, hwyContent, shlContent, reportsContent, backtestContent].forEach(c => {
         if (c) c.style.display = 'none';
       });
     };
@@ -622,6 +627,17 @@ export class LandslideDashboard {
         tabBtnShl.style.color = '#38bdf8';
         tabBtnShl.style.borderBottom = '2px solid #38bdf8';
         shlContent.style.display = 'flex';
+      }
+    });
+
+    tabBtnReports?.addEventListener('click', () => {
+      resetTabs();
+      if (tabBtnReports && reportsContent) {
+        tabBtnReports.style.background = '#050811';
+        tabBtnReports.style.color = '#38bdf8';
+        tabBtnReports.style.borderBottom = '2px solid #38bdf8';
+        reportsContent.style.display = 'flex';
+        this.reportsPanelComp?.render();
       }
     });
 
