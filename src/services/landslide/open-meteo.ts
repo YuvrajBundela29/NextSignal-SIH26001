@@ -1,3 +1,4 @@
+import { offlineService } from './offline-mode-service';
 import type { WeatherTelemetry } from './types';
 
 const weatherCache = new Map<string, { data: WeatherTelemetry; timestamp: number }>();
@@ -11,9 +12,12 @@ export async function fetchLiveWeather(
 ): Promise<WeatherTelemetry> {
  const cacheKey = districtId + '_' + lat.toFixed(2) + '_' + lon.toFixed(2);
  const cached = weatherCache.get(cacheKey);
- if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
- return cached.data;
- }
+ if (offlineService.isOffline()) {
+    return fallbackFallback;
+  }
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
 
  try {
  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' +

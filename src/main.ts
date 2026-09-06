@@ -75,3 +75,14 @@ if (document.readyState === 'loading') {
 } else {
   launchApp();
 }
+
+// Register Disaster-Resilient Offline Service Worker
+if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(() => {
+      console.log('[SIH26001] Offline Disaster Cache Service Worker registered');
+    }).catch((err) => {
+      console.warn('[SIH26001] Service Worker registration skipped:', err);
+    });
+  });
+}

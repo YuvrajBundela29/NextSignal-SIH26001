@@ -1,3 +1,4 @@
+import { offlineService } from '../../services/landslide/offline-mode-service';
 import L from 'leaflet';
 import type { DistrictProfile, RiskScoreBreakdown, WeatherTelemetry, SoilTelemetry, SeismicTelemetry, AppLanguage, CitizenProfile } from '../../services/landslide/types';
 import { NER_DISTRICTS } from '../../services/landslide/ner-districts';
@@ -559,6 +560,24 @@ export class CitizenView {
   }
 
   private bindEvents(risk: RiskScoreBreakdown, weather: WeatherTelemetry) {
+    // Network Badge Subscription
+    offlineService.subscribe((isOffline) => {
+      const badge = document.getElementById('citizen-network-badge');
+      const label = document.getElementById('citizen-network-label');
+      if (badge && label) {
+        if (isOffline) {
+          badge.className = 'header-network-badge offline';
+          label.textContent = '⚡ OFFLINE MODE';
+        } else {
+          badge.className = 'header-network-badge online';
+          label.textContent = 'ONLINE';
+        }
+      }
+    });
+
+    document.getElementById('citizen-network-badge')?.addEventListener('click', () => {
+      offlineService.toggleManualOffline();
+    });
     // Open Ground Report Modal
     this.container.querySelector('#btn-citizen-report-hazard')?.addEventListener('click', () => {
       const modal = new GroundReportModal(this.currentDistrict, (newReport) => {

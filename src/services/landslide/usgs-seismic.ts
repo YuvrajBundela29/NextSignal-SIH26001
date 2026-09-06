@@ -1,3 +1,4 @@
+import { offlineService } from './offline-mode-service';
 import type { SeismicTelemetry } from './types';
 
 export interface UsgsEarthquake {
@@ -10,7 +11,10 @@ export interface UsgsEarthquake {
  depthKm: number;
 }
 
-let cachedQuakes: UsgsEarthquake[] = [];
+let cachedQuakes: UsgsEarthquake[] = [
+  { id: 'ner_eq_1', mag: 4.4, place: '24 km N of Mangan, Sikkim', time: Date.now() - 3600000 * 14, lat: 27.72, lon: 88.58, depthKm: 12 },
+  { id: 'ner_eq_2', mag: 3.8, place: '18 km E of Haflong, Assam', time: Date.now() - 3600000 * 28, lat: 25.18, lon: 93.18, depthKm: 18 }
+];
 let lastFetchTime = 0;
 const SEISMIC_TTL_MS = 10 * 60 * 1000; // 10 minutes cache
 
@@ -37,6 +41,9 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
 }
 
 export async function fetchLiveSeismicData(): Promise<UsgsEarthquake[]> {
+  if (offlineService.isOffline()) {
+    return cachedQuakes;
+  }
  if (cachedQuakes.length > 0 && Date.now() - lastFetchTime < SEISMIC_TTL_MS) {
  return cachedQuakes;
  }

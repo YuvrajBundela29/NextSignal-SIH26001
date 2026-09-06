@@ -1,3 +1,4 @@
+import { offlineService } from '../services/landslide/offline-mode-service';
 import type {
   DistrictProfile,
   RiskScoreBreakdown,
@@ -456,6 +457,20 @@ export class LandslideDashboard {
         </div>
       `;
     }).join('');
+  }
+
+  private showOfflineNoticeToast(msg: string) {
+    const oldToast = document.querySelector('.offline-notice-toast');
+    if (oldToast) oldToast.remove();
+    const toast = document.createElement('div');
+    toast.className = 'offline-notice-toast';
+    toast.innerHTML = `<span>⚡</span> <span>${msg}</span>`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.4s ease';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 400);
+    }, 3500);
   }
 
   public setMobileView(view: 'map' | 'districts' | 'hud') {
