@@ -1,10 +1,12 @@
-﻿export class IntroAnimation {
-  private overlay: HTMLElement | null = null;
+export class IntroAnimation {
+  private onComplete: () => void;
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
-  private animId: number = 0;
-  private onComplete: () => void;
-  private isDone: boolean = false;
+  private animFrameId: number | null = null;
+  private startTime: number = 0;
+  private duration: number = 3200; // 3.2 seconds
+  private isSkipped: boolean = false;
+  private overlay: HTMLElement | null = null;
 
   constructor(onComplete: () => void) {
     this.onComplete = onComplete;
@@ -12,225 +14,281 @@
 
   public play() {
     this.overlay = document.createElement('div');
-    this.overlay.id = 'nexsignal-intro-overlay';
+    this.overlay.id = 'nexsignal-futuristic-intro';
     this.overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #020617;
-      z-index: 999999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      overflow: hidden;
-      transition: opacity 0.5s ease-out;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #020617; z-index: 999999; overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
     `;
 
     this.overlay.innerHTML = `
-      <canvas id="intro-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.6; pointer-events: none;"></canvas>
-
-      <!-- Skip Button -->
-      <button id="btn-skip-intro" style="position: absolute; top: 20px; right: 24px; background: rgba(15, 23, 42, 0.7); border: 1px solid #334155; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(4px); z-index: 10; transition: all 0.15s ease;">
-        SKIP INTRO ⏩
-      </button>
-
-      <!-- Center Branding & Sequence -->
-      <div style="position: relative; z-index: 5; text-align: center; max-width: 540px; padding: 20px;">
+      <canvas id="intro-futuristic-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
+      
+      <!-- Holographic Overlay UI -->
+      <div style="position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 720px; padding: 20px;">
         
-        <!-- Logo Emblem -->
-        <div style="position: relative; width: 80px; height: 80px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid #0284c7; opacity: 0.3; animation: introPulse 2s infinite;"></div>
-          <div style="position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 2px dashed #38bdf8; opacity: 0.6; animation: introSpin 8s linear infinite;"></div>
-          <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #1e1b4b); display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 0 20px #0284c780;">
-            ⚡
+        <!-- Cyber Scanner Frame -->
+        <div style="display: inline-flex; align-items: center; gap: 10px; background: rgba(2, 132, 199, 0.12); border: 1px solid #0284c7; padding: 6px 16px; border-radius: 30px; margin-bottom: 20px; backdrop-filter: blur(10px); box-shadow: 0 0 24px rgba(2, 132, 199, 0.3);">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00f0ff; animation: pulse 1.2s infinite; box-shadow: 0 0 10px #00f0ff;"></span>
+          <span style="font-size: 11px; font-weight: 800; letter-spacing: 2.5px; color: #38bdf8; text-transform: uppercase;">
+            NER GEOSPATIAL INTELLIGENCE CORE v4.8
+          </span>
+        </div>
+
+        <!-- Main Title -->
+        <h1 id="intro-cyber-title" style="font-size: 42px; font-weight: 900; letter-spacing: 4px; color: #ffffff; margin: 0 0 8px; text-shadow: 0 0 30px rgba(56, 189, 248, 0.6); text-transform: uppercase;">
+          NEXSIGNAL
+        </h1>
+        
+        <div style="font-size: 14px; font-weight: 800; letter-spacing: 3px; color: #00f0ff; text-transform: uppercase; margin-bottom: 24px;">
+          AI GEOHAZARD EARLY WARNING NETWORK
+        </div>
+
+        <!-- Telemetry Pipeline Scanner -->
+        <div style="width: 100%; max-width: 440px; background: rgba(11, 17, 32, 0.85); border: 1px solid #1e293b; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; font-family: monospace; margin-bottom: 8px;">
+            <span id="intro-status-text">INITIALIZING SATELLITE RADAR...</span>
+            <span id="intro-pct-text" style="color: #00f0ff; font-weight: bold;">0%</span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div style="width: 100%; height: 6px; background: #050811; border-radius: 3px; overflow: hidden; border: 1px solid #1e293b;">
+            <div id="intro-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #00f0ff, #10b981); box-shadow: 0 0 12px #00f0ff; transition: width 0.08s linear;"></div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 9px; color: #64748b; font-family: monospace; margin-top: 10px;">
+            <span>USGS SEISMIC: SYNCED</span>
+            <span>OPEN-METEO: 28/28</span>
+            <span>InSAR SAR: ACTIVE</span>
           </div>
         </div>
 
-        <h1 style="font-size: 28px; font-weight: 900; letter-spacing: 2px; margin: 0 0 4px; color: #ffffff; text-shadow: 0 0 30px rgba(56, 189, 248, 0.4);">
-          NEXSIGNAL
-        </h1>
-        <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 24px;">
-          GEOSPATIAL DISASTER INTELLIGENCE
-        </div>
-
-        <!-- Dynamic Stage Text -->
-        <div id="intro-stage-label" style="font-size: 12px; font-family: monospace; font-weight: 700; color: #cbd5e1; height: 20px; margin-bottom: 12px; letter-spacing: 0.5px;">
-          INITIALIZING GEOSPATIAL INTELLIGENCE...
-        </div>
-
-        <!-- Progress Bar -->
-        <div style="width: 100%; height: 4px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
-          <div id="intro-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8, #22c55e); transition: width 0.3s ease-out;"></div>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; font-size: 9px; color: #64748b; font-family: monospace;">
-          <span>SIH26001 &bull; MDoNER</span>
-          <span id="intro-pct-label">0%</span>
-          <span>NER INDIA SECTOR</span>
-        </div>
+        <!-- Skip Action -->
+        <button id="btn-skip-intro" style="background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);">
+          SKIP INITIALIZATION &rarr;
+        </button>
 
       </div>
-
-      <style>
-        @keyframes introPulse {
-          0% { transform: scale(0.9); opacity: 0.2; }
-          50% { transform: scale(1.3); opacity: 0.6; }
-          100% { transform: scale(0.9); opacity: 0.2; }
-        }
-        @keyframes introSpin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      </style>
     `;
 
     document.body.appendChild(this.overlay);
 
-    this.canvas = this.overlay.querySelector('#intro-canvas') as HTMLCanvasElement;
+    this.canvas = this.overlay.querySelector('#intro-futuristic-canvas') as HTMLCanvasElement;
     if (this.canvas) {
-      this.canvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
       this.ctx = this.canvas.getContext('2d');
-      this.startCanvasAnimation();
+      this.resizeCanvas();
+      window.addEventListener('resize', this.resizeCanvas.bind(this));
     }
 
-    const skipBtn = this.overlay.querySelector('#btn-skip-intro');
-    skipBtn?.addEventListener('click', () => this.finish());
-
-    this.runSequence();
-  }
-
-  private runSequence() {
-    const stageEl = this.overlay?.querySelector('#intro-stage-label');
-    const barEl = this.overlay?.querySelector('#intro-progress-bar') as HTMLElement;
-    const pctEl = this.overlay?.querySelector('#intro-pct-label');
-
-    const steps = [
-      { t: 0, text: 'INITIALIZING NEXSIGNAL SYSTEM CORE...', pct: 15 },
-      { t: 500, text: 'CONNECTING TO GEOSPATIAL DATA FEEDS (NER INDIA)...', pct: 38 },
-      { t: 1100, text: 'FUSING WEATHER + USGS SEISMIC + NASA SOIL SIGNALS...', pct: 65 },
-      { t: 1700, text: 'SYNTHESIZING 5-FACTOR MULTI-HAZARD RISK MATRIX...', pct: 88 },
-      { t: 2300, text: 'SYSTEM READY • ACTIVATING DISASTER INTELLIGENCE', pct: 100 },
-    ];
-
-    steps.forEach((step) => {
-      setTimeout(() => {
-        if (this.isDone) return;
-        if (stageEl) stageEl.textContent = step.text;
-        if (barEl) barEl.style.width = `${step.pct}%`;
-        if (pctEl) pctEl.textContent = `${step.pct}%`;
-      }, step.t);
+    this.overlay.querySelector('#btn-skip-intro')?.addEventListener('click', () => {
+      this.finish();
     });
 
-    setTimeout(() => {
-      this.finish();
-    }, 2800);
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === ' ') {
+        window.removeEventListener('keydown', keyHandler);
+        this.finish();
+      }
+    };
+    window.addEventListener('keydown', keyHandler);
+
+    this.playAudioSynthBoot();
+    this.startTime = performance.now();
+    this.animate();
   }
 
-  private startCanvasAnimation() {
-    if (!this.canvas || !this.ctx) return;
-    const ctx = this.ctx;
+  private playAudioSynthBoot() {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 1.2);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 2.5);
+
+      gain.gain.setValueAtTime(0.01, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.4);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.0);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 3.0);
+    } catch (e) {
+      // Audio not permitted without direct gesture
+    }
+  }
+
+  private resizeCanvas() {
+    if (!this.canvas) return;
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  private animate() {
+    if (this.isSkipped) return;
+
+    const now = performance.now();
+    const elapsed = now - this.startTime;
+    const progress = Math.min(1, elapsed / this.duration);
+
+    this.drawFuturisticScene(progress, now);
+    this.updateStatus(progress);
+
+    if (progress < 1) {
+      this.animFrameId = requestAnimationFrame(this.animate.bind(this));
+    } else {
+      setTimeout(() => this.finish(), 300);
+    }
+  }
+
+  private updateStatus(progress: number) {
+    const pBar = document.getElementById('intro-progress-bar');
+    const pText = document.getElementById('intro-pct-text');
+    const sText = document.getElementById('intro-status-text');
+
+    const pct = Math.floor(progress * 100);
+    if (pBar) pBar.style.width = `${pct}%`;
+    if (pText) pText.textContent = `${pct}%`;
+
+    if (sText) {
+      if (progress < 0.25) {
+        sText.textContent = 'CONNECTING GEOSPATIAL SATELLITE LINKS...';
+      } else if (progress < 0.55) {
+        sText.textContent = 'FUSING DEM TERRAIN & SOIL MOISTURE DATA...';
+      } else if (progress < 0.85) {
+        sText.textContent = 'EXECUTING 5-FACTOR MULTI-HAZARD AI INFERENCE...';
+      } else {
+        sText.textContent = 'TWO-WAY GROUND INTELLIGENCE SYSTEM READY';
+      }
+    }
+  }
+
+  private drawFuturisticScene(progress: number, now: number) {
+    if (!this.ctx || !this.canvas) return;
     const w = this.canvas.width;
     const h = this.canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
 
-    const nodes: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
-    for (let i = 0; i < 35; i++) {
-      nodes.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: (Math.random() - 0.5) * 0.8,
-        r: Math.random() * 2 + 1,
-      });
+    this.ctx.fillStyle = '#020617';
+    this.ctx.fillRect(0, 0, w, h);
+
+    // 1. Perspective Cyber Grid
+    this.ctx.strokeStyle = 'rgba(2, 132, 199, 0.15)';
+    this.ctx.lineWidth = 1;
+    const gridCols = 16;
+    for (let i = 0; i <= gridCols; i++) {
+      const gx = (w / gridCols) * i;
+      this.ctx.beginPath();
+      this.ctx.moveTo(gx, 0);
+      this.ctx.lineTo(gx, h);
+      this.ctx.stroke();
+    }
+    const gridRows = 12;
+    for (let j = 0; j <= gridRows; j++) {
+      const gy = (h / gridRows) * j;
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, gy);
+      this.ctx.lineTo(w, gy);
+      this.ctx.stroke();
     }
 
-    let sweepAngle = 0;
+    // 2. Rotating Radar Sweep Waves
+    const radarAngle = (now * 0.003) % (Math.PI * 2);
+    const maxRadius = Math.min(w, h) * 0.45;
 
-    const render = () => {
-      if (this.isDone) return;
-      ctx.clearRect(0, 0, w, h);
+    // Concentric Target Rings
+    for (let r = 0.25; r <= 1.0; r += 0.25) {
+      this.ctx.beginPath();
+      this.ctx.arc(cx, cy, maxRadius * r, 0, Math.PI * 2);
+      this.ctx.strokeStyle = `rgba(56, 189, 248, ${0.1 + r * 0.1})`;
+      this.ctx.lineWidth = 1;
+      this.ctx.stroke();
+    }
 
-      // Draw radar sweep
-      sweepAngle += 0.03;
-      const cx = w / 2;
-      const cy = h / 2;
-      const radius = Math.min(w, h) * 0.45;
+    // Radar Beam Sweep
+    const sweepGrad = this.ctx.createConicGradient ? (this.ctx as any).createConicGradient(cx, cy, radarAngle) : null;
+    this.ctx.save();
+    this.ctx.translate(cx, cy);
+    this.ctx.rotate(radarAngle);
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, 0);
+    this.ctx.arc(0, 0, maxRadius, -0.4, 0);
+    this.ctx.closePath();
+    this.ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
+    this.ctx.fill();
 
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(2, 132, 199, 0.15)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+    // Radar Lead Line
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, 0);
+    this.ctx.lineTo(maxRadius, 0);
+    this.ctx.strokeStyle = '#00f0ff';
+    this.ctx.lineWidth = 2;
+    this.ctx.shadowColor = '#00f0ff';
+    this.ctx.shadowBlur = 10;
+    this.ctx.stroke();
+    this.ctx.restore();
 
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius * 0.66, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(2, 132, 199, 0.1)';
-      ctx.stroke();
+    // 3. Northeast India Tactical Nodes Popping In
+    const nodes = [
+      { name: 'MANGAN 27.51°N', ox: -120, oy: -80, color: '#ef4444' },
+      { name: 'CHUNGTHANG 27.60°N', ox: -90, oy: -110, color: '#ef4444' },
+      { name: 'SHILLONG 25.57°N', ox: -30, oy: 40, color: '#f59e0b' },
+      { name: 'NONEY 24.78°N', ox: 90, oy: 60, color: '#ef4444' },
+      { name: 'HAFLONG 25.16°N', ox: 40, oy: 20, color: '#38bdf8' },
+      { name: 'TAWANG 27.58°N', ox: -40, oy: -120, color: '#38bdf8' },
+      { name: 'AIZAWL 23.72°N', ox: 50, oy: 120, color: '#10b981' },
+      { name: 'KOHIMA 25.67°N', ox: 120, oy: 0, color: '#38bdf8' },
+    ];
 
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius * 0.33, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(2, 132, 199, 0.08)';
-      ctx.stroke();
+    nodes.forEach((n, idx) => {
+      const nodeAppearTime = idx / nodes.length;
+      if (progress >= nodeAppearTime) {
+        const nx = cx + n.ox;
+        const ny = cy + n.oy;
 
-      // Radar line
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + Math.cos(sweepAngle) * radius, cy + Math.sin(sweepAngle) * radius);
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+        // Pulsing Circle
+        const pingSize = 6 + (Math.sin(now * 0.01 + idx) + 1) * 6;
+        this.ctx.beginPath();
+        this.ctx.arc(nx, ny, pingSize, 0, Math.PI * 2);
+        this.ctx.strokeStyle = n.color;
+        this.ctx.lineWidth = 1.5;
+        this.ctx.stroke();
 
-      // Nodes & Links
-      for (let i = 0; i < nodes.length; i++) {
-        const n = nodes[i];
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0 || n.x > w) n.vx *= -1;
-        if (n.y < 0 || n.y > h) n.vy *= -1;
+        this.ctx.beginPath();
+        this.ctx.arc(nx, ny, 3, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fill();
 
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = '#38bdf8';
-        ctx.fill();
-
-        for (let j = i + 1; j < nodes.length; j++) {
-          const n2 = nodes[j];
-          const dist = Math.hypot(n.x - n2.x, n.y - n2.y);
-          if (dist < 110) {
-            ctx.beginPath();
-            ctx.moveTo(n.x, n.y);
-            ctx.lineTo(n2.x, n2.y);
-            ctx.strokeStyle = `rgba(56, 189, 248, ${0.25 * (1 - dist / 110)})`;
-            ctx.lineWidth = 0.6;
-            ctx.stroke();
-          }
-        }
+        // Node Label
+        this.ctx.font = '9px monospace';
+        this.ctx.fillStyle = 'rgba(241, 245, 249, 0.85)';
+        this.ctx.fillText(n.name, nx + 10, ny + 3);
       }
-
-      this.animId = requestAnimationFrame(render);
-    };
-
-    render();
+    });
   }
 
   private finish() {
-    if (this.isDone) return;
-    this.isDone = true;
-    cancelAnimationFrame(this.animId);
-
+    if (this.isSkipped) return;
+    this.isSkipped = true;
+    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
     if (this.overlay) {
+      this.overlay.style.transition = 'opacity 0.3s ease';
       this.overlay.style.opacity = '0';
       setTimeout(() => {
-        if (this.overlay && this.overlay.parentNode) {
-          this.overlay.parentNode.removeChild(this.overlay);
-          this.overlay = null;
-        }
+        this.overlay?.remove();
+        this.overlay = null;
         this.onComplete();
-      }, 400);
+      }, 300);
     } else {
       this.onComplete();
     }

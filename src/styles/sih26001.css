@@ -129,3 +129,28 @@ body, html {
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
+/* Citizen Scrollbar & Layout Helpers */
+#citizen-standalone-wrapper,
+#citizen-scroll-container {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #020617;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}

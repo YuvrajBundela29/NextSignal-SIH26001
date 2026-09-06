@@ -119,24 +119,24 @@ export class CitizenView {
     const quakesCount = seismic ? seismic.recentQuakes72hCount : 1;
 
     this.container.innerHTML = `
-      <div style="background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; padding: 20px 24px; box-sizing: border-box; animation: fadeIn 0.3s ease;">
+      <div id="citizen-scroll-container" style="background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; height: 100vh; max-height: 100vh; overflow-y: auto; overflow-x: hidden; padding: 20px 24px 80px 24px; box-sizing: border-box; animation: fadeIn 0.3s ease; scroll-behavior: smooth;">
         
         <!-- Citizen Header -->
-        <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid #1e293b; margin-bottom: 24px;">
+        <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid #1e293b; margin-bottom: 22px;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 16px rgba(22, 163, 74, 0.4);">
+            <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 0 20px rgba(22, 163, 74, 0.4);">
               📱
             </div>
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 18px; font-weight: 900; color: #ffffff; letter-spacing: -0.3px;">
+                <span style="font-size: 19px; font-weight: 900; color: #ffffff; letter-spacing: -0.3px;">
                   NEXSIGNAL CITIZEN
                 </span>
-                <span style="background: #22c55e20; border: 1px solid #22c55e; color: #22c55e; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 12px;">
+                <span style="background: #22c55e20; border: 1px solid #22c55e; color: #22c55e; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 12px; letter-spacing: 0.5px;">
                   LOCAL SAFETY PORTAL
                 </span>
               </div>
-              <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">
+              <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">
                 Hello, <strong style="color: #f1f5f9;">${this.citizenProfile.name}</strong> &bull; 📍 <span style="color: #38bdf8; font-weight: 700;">${this.citizenProfile.localArea}</span> (${district.name}, ${district.state})
               </div>
             </div>
@@ -146,12 +146,12 @@ export class CitizenView {
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             
             <!-- Change Location Button -->
-            <button id="btn-citizen-change-location" style="background: #0b1120; border: 1px solid #334155; color: #38bdf8; font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <button id="btn-citizen-change-location" style="background: #0b1120; border: 1px solid #334155; color: #38bdf8; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
               <span>📍</span> Change Location
             </button>
 
             <!-- Language Selector -->
-            <select id="sel-citizen-lang" style="background: #0b1120; border: 1px solid #334155; color: #cbd5e1; font-size: 12px; font-weight: 600; padding: 7px 10px; border-radius: 8px; outline: none; cursor: pointer;">
+            <select id="sel-citizen-lang" style="background: #0b1120; border: 1px solid #334155; color: #cbd5e1; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; outline: none; cursor: pointer;">
               <option value="en" ${this.lang === 'en' ? 'selected' : ''}>🇬🇧 English</option>
               <option value="hi" ${this.lang === 'hi' ? 'selected' : ''}>🇮🇳 हिन्दी</option>
               <option value="as" ${this.lang === 'as' ? 'selected' : ''}>🇮🇳 অসমীয়া</option>
@@ -163,7 +163,7 @@ export class CitizenView {
             </select>
 
             <!-- Exit to Gateway -->
-            <button id="btn-exit-to-gateway" style="background: transparent; border: 1px solid #ef444460; color: #f87171; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <button id="btn-exit-to-gateway" style="background: transparent; border: 1px solid #ef444460; color: #f87171; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
               <span>🚪</span> Exit Portal
             </button>
           </div>
@@ -200,7 +200,7 @@ export class CitizenView {
         </div>
 
         <!-- Primary Action: Report a Hazard Hero Button -->
-        <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #6366f160; border-radius: 14px; padding: 18px 24px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+        <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #6366f160; border-radius: 14px; padding: 18px 24px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
           <div>
             <div style="font-size: 15px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px;">
               <span>🚨</span> Observed slope cracks, road damage or rockfall nearby?
@@ -383,6 +383,22 @@ export class CitizenView {
         </div>
 
       </div>
+
+      <style>
+        #citizen-scroll-container::-webkit-scrollbar {
+          width: 8px;
+        }
+        #citizen-scroll-container::-webkit-scrollbar-track {
+          background: #020617;
+        }
+        #citizen-scroll-container::-webkit-scrollbar-thumb {
+          background: #1e293b;
+          border-radius: 4px;
+        }
+        #citizen-scroll-container::-webkit-scrollbar-thumb:hover {
+          background: #334155;
+        }
+      </style>
     `;
 
     this.bindEvents(risk, weather);
@@ -404,23 +420,26 @@ export class CitizenView {
       attributionControl: false,
     }).setView([this.citizenProfile.lat, this.citizenProfile.lon], 12);
 
-    // Dark Tactical Tile Layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 18,
-      subdomains: 'abcd',
+    // Free ESRI Dark Canvas Base Layer (Zero watermark / No API Key required)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 16,
+    }).addTo(this.localMap);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 16,
     }).addTo(this.localMap);
 
     // User Location Pulsing Marker
     const userIcon = L.divIcon({
       className: 'citizen-loc-icon',
       html: `
-        <div style="position: relative; width: 20px; height: 20px;">
-          <div style="position: absolute; top: 0; left: 0; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; border: 2px solid #ffffff; box-shadow: 0 0 12px #22c55e;"></div>
-          <div style="position: absolute; top: -5px; left: -5px; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #22c55e; animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; opacity: 0.75;"></div>
+        <div style="position: relative; width: 22px; height: 22px;">
+          <div style="position: absolute; top: 0; left: 0; width: 22px; height: 22px; border-radius: 50%; background: #22c55e; border: 2px solid #ffffff; box-shadow: 0 0 14px #22c55e;"></div>
+          <div style="position: absolute; top: -6px; left: -6px; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #22c55e; animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; opacity: 0.75;"></div>
         </div>
       `,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
     });
 
     this.userMarker = L.marker([this.citizenProfile.lat, this.citizenProfile.lon], { icon: userIcon })
@@ -450,22 +469,22 @@ export class CitizenView {
       const icon = L.divIcon({
         className: 'cit-rep-marker',
         html: `
-          <div style="width: 14px; height: 14px; border-radius: 50%; background: ${color}; border: 2px solid #ffffff; box-shadow: 0 0 8px ${color};"></div>
+          <div style="width: 16px; height: 16px; border-radius: 50%; background: ${color}; border: 2px solid #ffffff; box-shadow: 0 0 10px ${color};"></div>
         `,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
       });
 
-      const marker = L.marker([r.lat, r.lon], { icon })
+      L.marker([r.lat, r.lon], { icon })
         .addTo(this.reportMarkersLayer!)
         .bindPopup(`
-          <div style="font-family: system-ui, sans-serif; width: 180px; padding: 4px;">
+          <div style="font-family: system-ui, sans-serif; width: 200px; padding: 4px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
               <strong style="font-size: 11px; color: #0284c7;">${r.categoryLabel}</strong>
-              <span style="font-size: 9px; font-weight: 800; color: ${color};">${r.status}</span>
+              <span style="font-size: 8px; font-weight: 800; color: ${color}; background: ${color}20; border: 1px solid ${color}; padding: 1px 4px; border-radius: 3px;">${r.status}</span>
             </div>
             <div style="font-size: 10px; color: #475569; margin-bottom: 6px;">${r.locationName}</div>
-            <img src="${r.mediaUrl}" style="width: 100%; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;" alt="Evidence" />
+            <img src="${r.mediaUrl}" style="width: 100%; height: 90px; object-fit: cover; border-radius: 4px; margin-bottom: 4px; border: 1px solid #cbd5e1; background: #0f172a;" alt="Evidence" />
             <div style="font-size: 9px; color: #64748b;">${new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull; ${r.reporterName}</div>
           </div>
         `);
@@ -498,7 +517,7 @@ export class CitizenView {
 
           return `
             <div class="citizen-feed-card" data-id="${r.id}" style="background: #050811; border: 1px solid #1e293b; border-radius: 8px; padding: 10px; display: flex; gap: 10px; cursor: pointer; transition: border-color 0.15s ease;">
-              <div style="width: 48px; height: 48px; border-radius: 6px; overflow: hidden; background: #020617; border: 1px solid #1e293b; flex-shrink: 0;">
+              <div style="width: 52px; height: 52px; border-radius: 6px; overflow: hidden; background: #020617; border: 1px solid #1e293b; flex-shrink: 0;">
                 <img src="${r.mediaUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Thumbnail" />
               </div>
               <div style="flex: 1; min-width: 0;">

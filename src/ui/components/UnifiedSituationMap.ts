@@ -1,3 +1,4 @@
+import { groundReportsService } from '../../services/landslide/ground-reports';
 import { LandslideMap } from './LandslideMap';
 import { TacticalGlobe3D } from './TacticalGlobe3D';
 import { HighwayNavigationModal } from './HighwayNavigationModal';

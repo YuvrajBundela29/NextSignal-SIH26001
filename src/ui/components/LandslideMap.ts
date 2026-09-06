@@ -153,64 +153,47 @@ export class LandslideMap {
       const isEscalated = r.status === 'ESCALATED';
       const statusColor = isEscalated ? '#ef4444' : isPending ? '#eab308' : isVerified ? '#22c55e' : '#38bdf8';
 
-      const iconEmoji =
-        r.category === 'slope_movement'
-          ? '⛰️'
-          : r.category === 'ground_crack'
-          ? '⚡'
-          : r.category === 'road_damage'
-          ? '🚧'
-          : r.category === 'blocked_road'
-          ? '🛑'
-          : r.category === 'drainage_block'
-          ? '🌊'
-          : r.category === 'infrastructure_damage'
-          ? '🏗️'
-          : '⚠️';
+      let iconEmoji = '⚠️';
+      if (r.category === 'slope_movement') iconEmoji = '⛰️';
+      else if (r.category === 'tension_crack') iconEmoji = '⚡';
+      else if (r.category === 'road_damage') iconEmoji = '🛣️';
+      else if (r.category === 'rockfall_debris') iconEmoji = '🪨';
+      else if (r.category === 'blocked_road') iconEmoji = '🚫';
+      else if (r.category === 'culvert_overflow') iconEmoji = '🌊';
 
-      const iconHtml = `
-        <div style="width: 32px; height: 32px; border-radius: 50%; background: #0b1120; border: 2px solid ${statusColor}; box-shadow: 0 0 12px ${statusColor}90; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; transition: transform 0.2s ease;">
-          ${iconEmoji}
+      const markerHtml = `
+        <div style="position: relative; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; width: 28px; height: 28px; border-radius: 50%; background: ${statusColor}25; border: 2px solid ${statusColor}; box-shadow: 0 0 14px ${statusColor}; animation: pulse 1.8s infinite;"></div>
+          <span style="font-size: 13px; z-index: 2;">${iconEmoji}</span>
         </div>
       `;
 
-      const customIcon = L.divIcon({
-        html: iconHtml,
-        className: 'citizen-ground-report-marker',
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+      const icon = L.divIcon({
+        className: 'ground-report-marker',
+        html: markerHtml,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
       });
 
-      const marker = L.marker([r.lat, r.lon], { icon: customIcon });
+      const marker = L.marker([r.lat, r.lon], { icon }).addTo(this.reportsLayer);
 
-      const popupHtml = `
-        <div style="font-family: 'Inter', sans-serif; color: #f1f5f9; background: #0b1120; border-radius: 8px; padding: 4px; max-width: 250px;">
+      marker.bindPopup(`
+        <div style="font-family: system-ui, sans-serif; width: 220px; padding: 4px; color: #f8fafc;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <strong style="color: #38bdf8; font-size: 11px;">REPORT #${r.id}</strong>
-            <span style="font-size: 8px; font-weight: 800; background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}; padding: 1px 5px; border-radius: 3px; text-transform: uppercase;">
-              ${r.status}
-            </span>
+            <strong style="font-size: 11px; color: #38bdf8;">REPORT #${r.id}</strong>
+            <span style="font-size: 8px; font-weight: 800; color: ${statusColor}; background: ${statusColor}20; border: 1px solid ${statusColor}; padding: 1px 5px; border-radius: 3px;">${r.status}</span>
           </div>
-          <div style="width: 100%; height: 110px; border-radius: 6px; overflow: hidden; margin-bottom: 6px; background: #020617; border: 1px solid #1e293b;">
-            <img src="${r.mediaUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Report Evidence" />
+          <div style="width: 100%; height: 95px; border-radius: 6px; overflow: hidden; margin-bottom: 6px; background: #050811; border: 1px solid #334155;">
+            <img src="${r.mediaUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Evidence" />
           </div>
-          <div style="font-size: 11px; font-weight: 800; color: #ffffff; margin-bottom: 2px;">
-            ${r.categoryLabel}
-          </div>
-          <div style="font-size: 10px; color: #94a3b8; margin-bottom: 6px;">
-            📍 ${r.locationName} (${r.districtName})
-          </div>
-          <div style="font-size: 10px; color: #cbd5e1; margin-bottom: 8px; line-height: 1.4; max-height: 48px; overflow-y: auto;">
-            ${r.description}
-          </div>
-          <div style="font-size: 9px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 4px;">
-            Reported by: <strong style="color: #94a3b8;">${r.reporterName || 'Citizen'}</strong> &bull; ${new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          <div style="font-size: 11px; font-weight: 700; color: #ffffff; margin-bottom: 2px;">${r.categoryLabel}</div>
+          <div style="font-size: 10px; color: #94a3b8; margin-bottom: 4px;">📍 ${r.locationName}</div>
+          <div style="font-size: 10px; color: #cbd5e1; line-height: 1.4; margin-bottom: 6px; background: #020617; padding: 5px; border-radius: 4px;">${r.description}</div>
+          <div style="font-size: 9px; color: #64748b; display: flex; justify-content: space-between;">
+            <span>Reported by: <strong>${r.reporterName}</strong></span>
           </div>
         </div>
-      `;
-
-      marker.bindPopup(popupHtml);
-      marker.addTo(this.reportsLayer);
+      `);
     }
   }
 

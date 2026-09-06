@@ -152,66 +152,66 @@ export class LandslideDashboard {
       <div id="authority-workspace" style="display: flex; flex-direction: column; height: 100vh; width: 100vw; background: #020617; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; overflow: hidden;">
         
         <!-- Top Operational Header -->
-        <header style="height: 52px; background: #0b1120; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; box-sizing: border-box; flex-shrink: 0; z-index: 1000;">
+        <header style="height: 52px; background: #0b1120; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box; flex-shrink: 0; z-index: 1000; gap: 12px; overflow: hidden;">
           
-          <!-- Brand & Government Badge -->
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🏛️</span>
+          <!-- Brand & Government Badge (Left) -->
+          <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 18px;">🏛️</span>
               <div>
-                <span style="font-size: 15px; font-weight: 900; letter-spacing: -0.2px; color: #ffffff;">
+                <span style="font-size: 14px; font-weight: 900; letter-spacing: -0.2px; color: #ffffff;">
                   NEXSIGNAL
                 </span>
-                <span style="font-size: 11px; font-weight: 800; color: #38bdf8; margin-left: 6px; letter-spacing: 0.5px;">
-                  GOVERNMENT COMMAND CENTER
+                <span style="font-size: 10px; font-weight: 800; color: #38bdf8; margin-left: 4px; letter-spacing: 0.5px;">
+                  COMMAND CENTER
                 </span>
               </div>
             </div>
 
-            <div style="background: #0284c720; border: 1px solid #0284c7; color: #38bdf8; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 5px;">
-              <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; animation: pulse 2s infinite;"></span>
-              28 NER DISTRICTS ACTIVE
+            <div style="background: #0284c720; border: 1px solid #0284c7; color: #38bdf8; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 4px; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+              <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #38bdf8; animation: pulse 2s infinite;"></span>
+              28 NER ACTIVE
             </div>
           </div>
 
-          <!-- Central Alert Ticker -->
-          <div id="ticker-header-container" style="flex: 1; max-width: 620px; margin: 0 16px; overflow: hidden; height: 32px;"></div>
+          <!-- Central Alert Ticker (Middle) -->
+          <div id="ticker-header-container" style="flex: 1 1 320px; max-width: 480px; min-width: 180px; overflow: hidden; height: 30px; margin: 0 4px;"></div>
 
-          <!-- Header Right Actions -->
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <!-- Header Right Actions (Right) -->
+          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
             
             <!-- Scenario Selector -->
-            <select id="sel-scenario" style="background: #050811; border: 1px solid #334155; color: #cbd5e1; font-size: 11px; font-weight: 600; padding: 5px 8px; border-radius: 6px; outline: none; cursor: pointer;">
-              <option value="monsoon_deluge">🌧️ Scenario: Monsoon Deluge</option>
-              <option value="seismic_crisis">⚡ Scenario: Seismic Crisis</option>
-              <option value="normal_baseline">🟢 Scenario: Normal Baseline</option>
+            <select id="sel-scenario" style="background: #050811; border: 1px solid #334155; color: #cbd5e1; font-size: 11px; font-weight: 600; padding: 5px 6px; border-radius: 6px; outline: none; cursor: pointer; max-width: 170px;">
+              <option value="monsoon_deluge">🌧️ Monsoon Deluge</option>
+              <option value="seismic_crisis">⚡ Seismic Crisis</option>
+              <option value="normal_baseline">🟢 Normal Baseline</option>
             </select>
 
             <!-- SitRep PDF Button -->
-            <button id="btn-download-sitrep" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: 1px solid #38bdf8; color: #ffffff; font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);">
-              <span>📄</span> SitRep PDF
+            <button id="btn-download-sitrep" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: 1px solid #38bdf8; color: #ffffff; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);">
+              <span>📄</span> PDF
             </button>
 
             <!-- Language Dropdown -->
-            <select id="sel-app-language" style="background: #050811; border: 1px solid #334155; color: #cbd5e1; font-size: 11px; font-weight: 600; padding: 5px 8px; border-radius: 6px; outline: none; cursor: pointer;">
-              <option value="en">🇬🇧 English</option>
+            <select id="sel-app-language" style="background: #050811; border: 1px solid #334155; color: #cbd5e1; font-size: 11px; font-weight: 600; padding: 5px 6px; border-radius: 6px; outline: none; cursor: pointer;">
+              <option value="en">🇬🇧 EN</option>
               <option value="hi">🇮🇳 हिन्दी</option>
               <option value="as">🇮🇳 অসমীয়া</option>
               <option value="bn">🇮🇳 বাংলা</option>
-              <option value="mni">🇮🇳 মৈতৈলোন্</option>
-              <option value="lus">🇮🇳 Mizo ṭawng</option>
-              <option value="kha">🇮🇳 Ka Ktien Khasi</option>
+              <option value="mni">🇮🇳 মৈতৈ</option>
+              <option value="lus">🇮🇳 Mizo</option>
+              <option value="kha">🇮🇳 Khasi</option>
               <option value="ne">🇮🇳 नेपाली</option>
             </select>
 
             <!-- Replay Intro Button -->
-            <button id="btn-replay-intro" title="Replay Geospatial Boot Sequence" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 5px 8px; border-radius: 6px; cursor: pointer;">
+            <button id="btn-replay-intro" title="Replay Futuristic Boot Sequence" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 5px 7px; border-radius: 6px; cursor: pointer; white-space: nowrap;">
               🔄 Intro
             </button>
 
             <!-- Exit to Role Selection Gateway -->
-            <button id="btn-exit-to-gateway" style="background: transparent; border: 1px solid #ef444460; color: #f87171; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-              <span>🚪</span> Exit Role
+            <button id="btn-exit-to-gateway" style="background: transparent; border: 1px solid #ef444460; color: #f87171; font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+              <span>🚪</span> Exit
             </button>
 
           </div>
