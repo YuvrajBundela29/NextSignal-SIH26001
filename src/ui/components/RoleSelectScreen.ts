@@ -48,7 +48,7 @@ export class RoleSelectScreen {
         </div>
 
         <!-- 2-Role Cards Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 420px)); gap: 28px; width: 100%; max-width: 920px; justify-content: center; margin-bottom: 32px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 420px)); gap: 24px; width: 100%; max-width: 920px; justify-content: center; margin-bottom: 32px; box-sizing: border-box;">
           
           <!-- Role A: Government / Admin -->
           <div class="role-selection-card" style="background: linear-gradient(180deg, #0b1120 0%, #050811 100%); border: 1px solid #1e293b; border-radius: 18px; padding: 28px 24px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.25s ease; box-shadow: 0 12px 36px rgba(0,0,0,0.6); position: relative; overflow: hidden;">

@@ -60,6 +60,7 @@ export class LandslideDashboard {
   private hudComp: DistrictHud | null = null;
   private citizenComp: CitizenView | null = null;
   private reportsPanelComp: GroundReportsPanel | null = null;
+  private mobileActiveView: 'map' | 'districts' | 'hud' = 'map';
 
   constructor(
     containerId: string,
@@ -246,10 +247,28 @@ export class LandslideDashboard {
           </aside>
 
           <!-- Center Panel: Large Regional GIS Situation Map (Leaflet / 3D Globe) -->
-          <main id="situation-map-container" style="position: relative; overflow: hidden; background: #020617;"></main>
+          <main id="situation-map-container" class="dashboard-map-panel" style="position: relative; overflow: hidden; background: #020617;">
+            <!-- Floating Mobile Quick-Action Chips on Map (Mobile only) -->
+            <div id="mobile-map-floating-chips" class="mobile-map-floating-chips">
+              <button id="btn-quick-open-districts" class="mobile-chip-btn">
+                <span>📋</span> 28 Districts
+              </button>
+              <button id="btn-quick-open-hud" class="mobile-chip-btn">
+                <span>📊</span> Risk HUD & Intel
+              </button>
+            </div>
+          </main>
 
           <!-- Right Sidebar: Tabs for Risk HUD, Highways, Shelters, Citizen Reports, Backtest -->
-          <aside style="background: #0b1120; border-left: 1px solid #1e293b; display: flex; flex-direction: column; overflow: hidden;">
+          <aside id="dashboard-right-panel" class="dashboard-right-panel" style="background: #0b1120; border-left: 1px solid #1e293b; display: flex; flex-direction: column; overflow: hidden;">
+            
+            <!-- Mobile Return to Map Banner -->
+            <div class="mobile-only-header" style="display: none; padding: 10px 14px; background: #050811; border-bottom: 1px solid #1e293b; justify-content: space-between; align-items: center; flex-shrink: 0;">
+              <span style="font-size: 12px; font-weight: 800; color: #38bdf8;">📊 RISK HUD & INTEL</span>
+              <button class="btn-return-to-map" style="background: rgba(2, 132, 199, 0.2); border: 1px solid #0284c7; color: #38bdf8; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                <span>🗺️</span> Return to Map
+              </button>
+            </div>
             
             <!-- Right Tab Switcher Bar -->
             <div style="display: flex; border-bottom: 1px solid #1e293b; background: #0b1120; flex-shrink: 0; overflow-x: auto;">
@@ -439,6 +458,29 @@ export class LandslideDashboard {
     }).join('');
   }
 
+  public setMobileView(view: 'map' | 'districts' | 'hud') {
+    this.mobileActiveView = view;
+    const grid = document.getElementById('tactical-command-grid');
+    if (grid) {
+      grid.setAttribute('data-mobile-view', view);
+    }
+    const navBtns = document.querySelectorAll('.mobile-nav-btn');
+    navBtns.forEach((btn) => {
+      const b = btn as HTMLElement;
+      if (b.getAttribute('data-view') === view) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+
+    if (view === 'map') {
+      setTimeout(() => {
+        this.situationMapComp?.invalidateSize();
+      }, 100);
+    }
+  }
+
   public async selectDistrict(districtId: string) {
     this.selectedDistrictId = districtId;
     this.renderDistrictList();
@@ -447,6 +489,10 @@ export class LandslideDashboard {
     const d = NER_DISTRICTS.find((dist) => dist.id === districtId);
     if (d && this.situationMapComp) {
       this.situationMapComp.flyToDistrict(d);
+    }
+
+    if (window.innerWidth <= 1024 && this.mobileActiveView === 'districts') {
+      this.setMobileView('map');
     }
   }
 

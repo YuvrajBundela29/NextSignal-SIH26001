@@ -661,7 +661,12 @@ export class UnifiedSituationMap {
  void this.updateTelemetryForDistrict(district);
  }
 
- public openHighwayNavigator(routeId?: string) {
+ public invalidateSize() {
+    this.map2d?.invalidateSize();
+    this.globe3d?.resize();
+  }
+
+  public openHighwayNavigator(routeId?: string) {
  this.navModal?.open(routeId);
  }
 

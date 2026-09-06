@@ -154,3 +154,224 @@ body, html {
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
+
+/* ==========================================================================
+   MOBILE & RESPONSIVE ADAPTATIONS (SIH26001 MULTI-SCREEN COMPATIBILITY)
+   Ensures zero overlapping and full map readability across all devices
+   ========================================================================== */
+
+/* Desktop Invariant */
+@media (min-width: 1025px) {
+  .mobile-view-nav {
+    display: none !important;
+  }
+  .mobile-only-header {
+    display: none !important;
+  }
+  .mobile-map-floating-chips {
+    display: none !important;
+  }
+  .tactical-command-grid {
+    display: grid !important;
+    grid-template-columns: 290px 1fr 400px !important;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+    width: 100%;
+  }
+  .dashboard-left-panel,
+  .dashboard-map-panel,
+  .dashboard-right-panel {
+    display: flex !important;
+    height: 100% !important;
+  }
+}
+
+/* Tablet & Mobile Layouts (<= 1024px) */
+@media (max-width: 1024px) {
+  /* Header adjustments */
+  .dashboard-header {
+    padding: 0 10px !important;
+    gap: 8px !important;
+  }
+  #ticker-header-container {
+    display: none !important;
+  }
+  #sel-scenario {
+    max-width: 130px !important;
+    font-size: 10px !important;
+  }
+  #sel-app-language {
+    font-size: 10px !important;
+    padding: 4px 6px !important;
+  }
+  #btn-download-sitrep {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+  #btn-replay-intro {
+    display: none !important;
+  }
+
+  /* Mobile Navigation Switcher Bar */
+  .mobile-view-nav {
+    display: flex !important;
+    background: #080d1a !important;
+    border-bottom: 1px solid #1e293b !important;
+    padding: 6px 8px !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    z-index: 100 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+  }
+  .mobile-nav-btn {
+    flex: 1 !important;
+    min-width: 80px !important;
+    padding: 8px 4px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    background: #050811 !important;
+    color: #94a3b8 !important;
+    border: 1px solid #1e293b !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+    transition: all 0.15s ease !important;
+  }
+  .mobile-nav-btn.active {
+    background: rgba(2, 132, 199, 0.25) !important;
+    border-color: #0284c7 !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 0 12px rgba(2, 132, 199, 0.35) !important;
+  }
+
+  /* Mobile Grid Switcher Behavior */
+  .tactical-command-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    overflow: hidden !important;
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Map View Active (Default) */
+  .tactical-command-grid[data-mobile-view="map"] .dashboard-left-panel,
+  .tactical-command-grid[data-mobile-view="map"] .dashboard-right-panel {
+    display: none !important;
+  }
+  .tactical-command-grid[data-mobile-view="map"] .dashboard-map-panel {
+    display: flex !important;
+    flex: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* 28 Districts View Active */
+  .tactical-command-grid[data-mobile-view="districts"] .dashboard-map-panel,
+  .tactical-command-grid[data-mobile-view="districts"] .dashboard-right-panel {
+    display: none !important;
+  }
+  .tactical-command-grid[data-mobile-view="districts"] .dashboard-left-panel {
+    display: flex !important;
+    flex: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-right: none !important;
+  }
+
+  /* Risk HUD & SitRep Active */
+  .tactical-command-grid[data-mobile-view="hud"] .dashboard-left-panel,
+  .tactical-command-grid[data-mobile-view="hud"] .dashboard-map-panel {
+    display: none !important;
+  }
+  .tactical-command-grid[data-mobile-view="hud"] .dashboard-right-panel {
+    display: flex !important;
+    flex: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-left: none !important;
+  }
+
+  /* Mobile Return to Map Bars */
+  .mobile-only-header {
+    display: flex !important;
+  }
+
+  /* Floating Quick Action Chips over the Tactical Map */
+  .mobile-map-floating-chips {
+    display: flex !important;
+    position: absolute !important;
+    bottom: 16px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1000 !important;
+    gap: 8px !important;
+    background: rgba(11, 17, 32, 0.92) !important;
+    padding: 6px 10px !important;
+    border-radius: 30px !important;
+    border: 1px solid #1e293b !important;
+    backdrop-filter: blur(8px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  }
+  .mobile-chip-btn {
+    background: #050811 !important;
+    border: 1px solid #334155 !important;
+    color: #cbd5e1 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+    transition: all 0.15s ease !important;
+  }
+  .mobile-chip-btn:hover,
+  .mobile-chip-btn:active {
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+  }
+}
+
+/* Smartphone Screen Adjustments (<= 640px) */
+@media (max-width: 640px) {
+  #authority-workspace header {
+    padding: 0 6px !important;
+  }
+  #header-sub-label {
+    display: none !important;
+  }
+  #header-active-count {
+    display: none !important;
+  }
+  #sel-scenario {
+    max-width: 105px !important;
+  }
+
+  /* Citizen View padding & stacking */
+  #citizen-scroll-container {
+    padding: 12px 8px !important;
+  }
+  .citizen-summary-banner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .citizen-summary-actions {
+    width: 100% !important;
+  }
+  .citizen-summary-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}

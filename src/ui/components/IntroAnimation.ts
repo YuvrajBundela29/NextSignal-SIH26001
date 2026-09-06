@@ -1,10 +1,12 @@
+import { HILL_STATION_BG } from '../../services/landslide/hill-station-bg';
+
 export class IntroAnimation {
   private onComplete: () => void;
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private animFrameId: number | null = null;
   private startTime: number = 0;
-  private duration: number = 3200; // 3.2 seconds
+  private duration: number = 3400; // 3.4 seconds
   private isSkipped: boolean = false;
   private overlay: HTMLElement | null = null;
 
@@ -17,39 +19,40 @@ export class IntroAnimation {
     this.overlay.id = 'nexsignal-futuristic-intro';
     this.overlay.style.cssText = `
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #020617; z-index: 999999; overflow: hidden;
+      background: #020617 url('${HILL_STATION_BG}') no-repeat center center / cover;
+      z-index: 999999; overflow: hidden;
       font-family: system-ui, -apple-system, sans-serif;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     `;
 
     this.overlay.innerHTML = `
-      <canvas id="intro-futuristic-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
+      <canvas id="intro-futuristic-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
       
       <!-- Holographic Overlay UI -->
-      <div style="position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 720px; padding: 20px;">
+      <div style="position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: min(92vw, 560px); padding: clamp(14px, 3vw, 24px); box-sizing: border-box;">
         
         <!-- Cyber Scanner Frame -->
-        <div style="display: inline-flex; align-items: center; gap: 10px; background: rgba(2, 132, 199, 0.12); border: 1px solid #0284c7; padding: 6px 16px; border-radius: 30px; margin-bottom: 20px; backdrop-filter: blur(10px); box-shadow: 0 0 24px rgba(2, 132, 199, 0.3);">
-          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00f0ff; animation: pulse 1.2s infinite; box-shadow: 0 0 10px #00f0ff;"></span>
-          <span style="font-size: 11px; font-weight: 800; letter-spacing: 2.5px; color: #38bdf8; text-transform: uppercase;">
+        <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(2, 132, 199, 0.18); border: 1px solid #0284c7; padding: 6px clamp(10px, 2vw, 16px); border-radius: 30px; margin-bottom: clamp(12px, 2.5vh, 20px); backdrop-filter: blur(12px); box-shadow: 0 0 24px rgba(2, 132, 199, 0.4); max-width: 100%; box-sizing: border-box;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00f0ff; animation: pulse 1.2s infinite; box-shadow: 0 0 10px #00f0ff; flex-shrink: 0;"></span>
+          <span style="font-size: clamp(9px, 2vw, 11px); font-weight: 800; letter-spacing: clamp(1px, 0.3vw, 2.5px); color: #38bdf8; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
             NER GEOSPATIAL INTELLIGENCE CORE v4.8
           </span>
         </div>
 
         <!-- Main Title -->
-        <h1 id="intro-cyber-title" style="font-size: 42px; font-weight: 900; letter-spacing: 4px; color: #ffffff; margin: 0 0 8px; text-shadow: 0 0 30px rgba(56, 189, 248, 0.6); text-transform: uppercase;">
+        <h1 id="intro-cyber-title" style="font-size: clamp(28px, 6.5vw, 44px); font-weight: 900; letter-spacing: clamp(2px, 0.8vw, 4px); color: #ffffff; margin: 0 0 6px; text-shadow: 0 0 30px rgba(56, 189, 248, 0.7); text-transform: uppercase; line-height: 1.1;">
           NEXSIGNAL
         </h1>
         
-        <div style="font-size: 14px; font-weight: 800; letter-spacing: 3px; color: #00f0ff; text-transform: uppercase; margin-bottom: 24px;">
+        <div style="font-size: clamp(10px, 2.3vw, 13px); font-weight: 800; letter-spacing: clamp(1px, 0.4vw, 3px); color: #00f0ff; text-transform: uppercase; margin-bottom: clamp(16px, 3.5vh, 24px); line-height: 1.3;">
           AI GEOHAZARD EARLY WARNING NETWORK
         </div>
 
         <!-- Telemetry Pipeline Scanner -->
-        <div style="width: 100%; max-width: 440px; background: rgba(11, 17, 32, 0.85); border: 1px solid #1e293b; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; font-family: monospace; margin-bottom: 8px;">
-            <span id="intro-status-text">INITIALIZING SATELLITE RADAR...</span>
-            <span id="intro-pct-text" style="color: #00f0ff; font-weight: bold;">0%</span>
+        <div style="width: 100%; max-width: 440px; background: rgba(11, 17, 32, 0.88); border: 1px solid #1e293b; border-radius: 12px; padding: clamp(12px, 2.5vw, 16px) clamp(14px, 3vw, 20px); margin-bottom: clamp(16px, 3.5vh, 24px); box-shadow: 0 12px 40px rgba(0,0,0,0.7); backdrop-filter: blur(12px); box-sizing: border-box;">
+          <div style="display: flex; justify-content: space-between; font-size: clamp(9px, 2vw, 11px); color: #94a3b8; font-family: monospace; margin-bottom: 8px; gap: 8px;">
+            <span id="intro-status-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;">INITIALIZING SATELLITE RADAR...</span>
+            <span id="intro-pct-text" style="color: #00f0ff; font-weight: bold; flex-shrink: 0;">0%</span>
           </div>
 
           <!-- Progress Bar -->
@@ -57,7 +60,7 @@ export class IntroAnimation {
             <div id="intro-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #00f0ff, #10b981); box-shadow: 0 0 12px #00f0ff; transition: width 0.08s linear;"></div>
           </div>
 
-          <div style="display: flex; justify-content: space-between; font-size: 9px; color: #64748b; font-family: monospace; margin-top: 10px;">
+          <div style="display: flex; justify-content: space-between; font-size: clamp(8px, 1.8vw, 9.5px); color: #64748b; font-family: monospace; margin-top: 10px; flex-wrap: wrap; gap: 4px;">
             <span>USGS SEISMIC: SYNCED</span>
             <span>OPEN-METEO: 28/28</span>
             <span>InSAR SAR: ACTIVE</span>
@@ -65,7 +68,7 @@ export class IntroAnimation {
         </div>
 
         <!-- Skip Action -->
-        <button id="btn-skip-intro" style="background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px);">
+        <button id="btn-skip-intro" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; color: #94a3b8; font-size: clamp(10px, 2vw, 11px); font-weight: 700; padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(6px); touch-action: manipulation;">
           SKIP INITIALIZATION &rarr;
         </button>
 
@@ -179,13 +182,19 @@ export class IntroAnimation {
     const cx = w / 2;
     const cy = h / 2;
 
-    this.ctx.fillStyle = '#020617';
+    // Translucent dark fill so the Himalayan hill station background artwork is visible
+    this.ctx.clearRect(0, 0, w, h);
+    this.ctx.fillStyle = 'rgba(2, 6, 23, 0.62)';
     this.ctx.fillRect(0, 0, w, h);
 
+    // Dynamic responsive scale factor for small screens (320px - 768px) vs desktop
+    const scale = Math.min(1, Math.min(w, h) / 720);
+    const isMobile = w < 600;
+
     // 1. Perspective Cyber Grid
-    this.ctx.strokeStyle = 'rgba(2, 132, 199, 0.15)';
+    this.ctx.strokeStyle = 'rgba(2, 132, 199, 0.12)';
     this.ctx.lineWidth = 1;
-    const gridCols = 16;
+    const gridCols = isMobile ? 8 : 16;
     for (let i = 0; i <= gridCols; i++) {
       const gx = (w / gridCols) * i;
       this.ctx.beginPath();
@@ -193,7 +202,7 @@ export class IntroAnimation {
       this.ctx.lineTo(gx, h);
       this.ctx.stroke();
     }
-    const gridRows = 12;
+    const gridRows = isMobile ? 8 : 12;
     for (let j = 0; j <= gridRows; j++) {
       const gy = (h / gridRows) * j;
       this.ctx.beginPath();
@@ -204,19 +213,18 @@ export class IntroAnimation {
 
     // 2. Rotating Radar Sweep Waves
     const radarAngle = (now * 0.003) % (Math.PI * 2);
-    const maxRadius = Math.min(w, h) * 0.45;
+    const maxRadius = Math.min(w, h) * (isMobile ? 0.38 : 0.44);
 
     // Concentric Target Rings
     for (let r = 0.25; r <= 1.0; r += 0.25) {
       this.ctx.beginPath();
       this.ctx.arc(cx, cy, maxRadius * r, 0, Math.PI * 2);
-      this.ctx.strokeStyle = `rgba(56, 189, 248, ${0.1 + r * 0.1})`;
+      this.ctx.strokeStyle = `rgba(56, 189, 248, ${0.08 + r * 0.08})`;
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
     }
 
     // Radar Beam Sweep
-    const sweepGrad = this.ctx.createConicGradient ? (this.ctx as any).createConicGradient(cx, cy, radarAngle) : null;
     this.ctx.save();
     this.ctx.translate(cx, cy);
     this.ctx.rotate(radarAngle);
@@ -224,7 +232,7 @@ export class IntroAnimation {
     this.ctx.moveTo(0, 0);
     this.ctx.arc(0, 0, maxRadius, -0.4, 0);
     this.ctx.closePath();
-    this.ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
+    this.ctx.fillStyle = 'rgba(0, 240, 255, 0.12)';
     this.ctx.fill();
 
     // Radar Lead Line
@@ -234,45 +242,47 @@ export class IntroAnimation {
     this.ctx.strokeStyle = '#00f0ff';
     this.ctx.lineWidth = 2;
     this.ctx.shadowColor = '#00f0ff';
-    this.ctx.shadowBlur = 10;
+    this.ctx.shadowBlur = 8;
     this.ctx.stroke();
     this.ctx.restore();
 
     // 3. Northeast India Tactical Nodes Popping In
     const nodes = [
-      { name: 'MANGAN 27.51°N', ox: -120, oy: -80, color: '#ef4444' },
-      { name: 'CHUNGTHANG 27.60°N', ox: -90, oy: -110, color: '#ef4444' },
-      { name: 'SHILLONG 25.57°N', ox: -30, oy: 40, color: '#f59e0b' },
-      { name: 'NONEY 24.78°N', ox: 90, oy: 60, color: '#ef4444' },
-      { name: 'HAFLONG 25.16°N', ox: 40, oy: 20, color: '#38bdf8' },
-      { name: 'TAWANG 27.58°N', ox: -40, oy: -120, color: '#38bdf8' },
-      { name: 'AIZAWL 23.72°N', ox: 50, oy: 120, color: '#10b981' },
-      { name: 'KOHIMA 25.67°N', ox: 120, oy: 0, color: '#38bdf8' },
+      { name: 'MANGAN 27.51°N', ox: -140, oy: -90, color: '#ef4444' },
+      { name: 'CHUNGTHANG 27.60°N', ox: -100, oy: -130, color: '#ef4444' },
+      { name: 'SHILLONG 25.57°N', ox: -40, oy: 50, color: '#f59e0b' },
+      { name: 'NONEY 24.78°N', ox: 100, oy: 70, color: '#ef4444' },
+      { name: 'HAFLONG 25.16°N', ox: 50, oy: 25, color: '#38bdf8' },
+      { name: 'TAWANG 27.58°N', ox: -50, oy: -140, color: '#38bdf8' },
+      { name: 'AIZAWL 23.72°N', ox: 60, oy: 130, color: '#10b981' },
+      { name: 'KOHIMA 25.67°N', ox: 130, oy: 0, color: '#38bdf8' },
     ];
 
     nodes.forEach((n, idx) => {
       const nodeAppearTime = idx / nodes.length;
       if (progress >= nodeAppearTime) {
-        const nx = cx + n.ox;
-        const ny = cy + n.oy;
+        const nx = cx + n.ox * scale;
+        const ny = cy + n.oy * scale;
 
         // Pulsing Circle
-        const pingSize = 6 + (Math.sin(now * 0.01 + idx) + 1) * 6;
+        const pingSize = (4 + (Math.sin(now * 0.01 + idx) + 1) * 5) * scale;
         this.ctx.beginPath();
-        this.ctx.arc(nx, ny, pingSize, 0, Math.PI * 2);
+        this.ctx.arc(nx, ny, Math.max(3, pingSize), 0, Math.PI * 2);
         this.ctx.strokeStyle = n.color;
         this.ctx.lineWidth = 1.5;
         this.ctx.stroke();
 
         this.ctx.beginPath();
-        this.ctx.arc(nx, ny, 3, 0, Math.PI * 2);
+        this.ctx.arc(nx, ny, 2.5 * scale, 0, Math.PI * 2);
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fill();
 
-        // Node Label
-        this.ctx.font = '9px monospace';
-        this.ctx.fillStyle = 'rgba(241, 245, 249, 0.85)';
-        this.ctx.fillText(n.name, nx + 10, ny + 3);
+        // Node Label (scaled & responsive)
+        if (!isMobile || scale > 0.65) {
+          this.ctx.font = `${Math.round(9 * Math.max(0.8, scale))}px monospace`;
+          this.ctx.fillStyle = 'rgba(241, 245, 249, 0.9)';
+          this.ctx.fillText(n.name, nx + 8 * scale, ny + 3);
+        }
       }
     });
   }

@@ -216,7 +216,7 @@ export class CitizenView {
         </div>
 
         <!-- 2-Column Responsive Layout -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 28px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 20px; margin-bottom: 28px;">
           
           <!-- Left Column: Metrics, Weather, Alerts, Helpline -->
           <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -352,11 +352,13 @@ export class CitizenView {
             
             <!-- Local Interactive Map -->
             <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 14px; padding: 20px; display: flex; flex-direction: column;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                 <div style="font-size: 12px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">
                   LOCAL TACTICAL HAZARD MAP &bull; ${this.citizenProfile.localArea}
                 </div>
-                <span style="font-size: 11px; color: #94a3b8;">Zoom to inspect terrain</span>
+                <button id="btn-toggle-citizen-map-expand" style="background: #050811; border: 1px solid #38bdf8; color: #38bdf8; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s ease;">
+                  <span id="citizen-map-expand-icon">⛶</span> <span id="citizen-map-expand-text">Expand Map</span>
+                </button>
               </div>
 
               <div id="citizen-local-map" style="height: 380px; width: 100%; border-radius: 10px; overflow: hidden; background: #050811; border: 1px solid #1e293b;"></div>
