@@ -31,6 +31,21 @@ export class IntroAnimation {
       <!-- Holographic Overlay UI -->
       <div style="position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: min(92vw, 560px); padding: clamp(14px, 3vw, 24px); box-sizing: border-box;">
         
+        <!-- Official Government of India & MDoNER Seal in Loading Screen -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: clamp(10px, 2vh, 16px); background: rgba(3, 7, 18, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); padding: 6px 16px; border-radius: 30px; backdrop-filter: blur(14px); box-shadow: 0 0 24px rgba(255, 153, 51, 0.35); max-width: 95%;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(255, 153, 51, 0.5), 0 0 0 2px #ff9933; padding: 3px; box-sizing: border-box; flex-shrink: 0;">
+            <img src="/emblem-of-india.svg" alt="State Emblem of India" style="height: 100%; width: auto; object-fit: contain;" />
+          </div>
+          <div style="text-align: left;">
+            <div style="font-size: clamp(9.5px, 2vw, 11px); font-weight: 900; letter-spacing: 1.5px; color: #ff9933; text-transform: uppercase; white-space: nowrap;">
+              GOVERNMENT OF INDIA
+            </div>
+            <div style="font-size: clamp(8px, 1.6vw, 9.5px); font-weight: 800; letter-spacing: 0.8px; color: #ffffff; text-transform: uppercase; margin-top: 1px; white-space: nowrap;">
+              MINISTRY OF DEVELOPMENT OF NER (MDoNER)
+            </div>
+          </div>
+        </div>
+
         <!-- Cyber Scanner Frame -->
         <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(2, 132, 199, 0.18); border: 1px solid #0284c7; padding: 6px clamp(10px, 2vw, 16px); border-radius: 30px; margin-bottom: clamp(12px, 2.5vh, 20px); backdrop-filter: blur(12px); box-shadow: 0 0 24px rgba(2, 132, 199, 0.4); max-width: 100%; box-sizing: border-box;">
           <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00f0ff; animation: pulse 1.2s infinite; box-shadow: 0 0 10px #00f0ff; flex-shrink: 0;"></span>

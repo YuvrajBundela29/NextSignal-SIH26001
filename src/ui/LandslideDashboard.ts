@@ -1,4 +1,3 @@
-import { GOVT_INDIA_EMBLEM } from '../services/landslide/govt-emblem';
 import { offlineService } from '../services/landslide/offline-mode-service';
 import type {
   DistrictProfile,
@@ -160,7 +159,9 @@ export class LandslideDashboard {
           <!-- Brand & Government Badge (Left) -->
           <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <img src="${GOVT_INDIA_EMBLEM}" alt="Govt of India & MDoNER Emblem" style="width: 34px; height: 34px; filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.45)); flex-shrink: 0;" />
+              <div style="width: 34px; height: 34px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(255, 153, 51, 0.4), 0 0 0 2px #ff9933; padding: 3px; box-sizing: border-box; flex-shrink: 0;">
+                <img src="/emblem-of-india.svg" alt="State Emblem of India" style="height: 100%; width: auto; object-fit: contain;" />
+              </div>
               <div>
                 <div style="display: flex; align-items: center; gap: 5px;">
                   <span style="font-size: 14px; font-weight: 900; letter-spacing: -0.2px; color: #ffffff;">

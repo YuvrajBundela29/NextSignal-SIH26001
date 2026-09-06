@@ -1,4 +1,3 @@
-import { GOVT_INDIA_EMBLEM } from '../../services/landslide/govt-emblem';
 import type { AppViewMode, CitizenProfile, NerState } from '../../services/landslide/types';
 import { NER_DISTRICTS } from '../../services/landslide/ner-districts';
 import { getLocalAreasForDistrict } from '../../services/landslide/local-areas';
@@ -26,22 +25,44 @@ export class RoleSelectScreen {
 
   private renderRoleCards(container: HTMLElement) {
     container.innerHTML = `
-      <div id="role-select-scroll-container" style="min-height: 100vh; min-height: 100dvh; width: 100%; background: radial-gradient(circle at 50% 15%, #0c192e 0%, #020617 100%); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: clamp(24px, 4.5vw, 44px) clamp(14px, 3.5vw, 24px) 80px; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; color: #f8fafc; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;">
+      <div id="role-select-scroll-container" style="min-height: 100vh; min-height: 100dvh; width: 100%; position: relative; background: #030712; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: clamp(24px, 4.5vw, 44px) clamp(14px, 3.5vw, 24px) 80px; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; color: #f8fafc; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;">
+        
+        <!-- Blurry Indian Tricolor Flag Background Mesh Layers -->
+        <!-- 1. Top Saffron (Kesari) Glow -->
+        <div style="position: fixed; top: -140px; left: 0; width: 100vw; height: 420px; background: radial-gradient(ellipse 90% 75% at 30% 20%, rgba(255, 120, 20, 0.58) 0%, rgba(255, 153, 51, 0.3) 45%, transparent 75%); filter: blur(90px); pointer-events: none; z-index: 1;"></div>
+        
+        <!-- 2. Middle White & Ashoka Chakra Blue Glow -->
+        <div style="position: fixed; top: 30%; left: 0; width: 100vw; height: 360px; background: radial-gradient(ellipse 85% 65% at 70% 50%, rgba(255, 255, 255, 0.32) 0%, rgba(37, 99, 235, 0.28) 45%, transparent 75%); filter: blur(100px); pointer-events: none; z-index: 1;"></div>
+        
+        <!-- 3. Bottom India Green Glow -->
+        <div style="position: fixed; bottom: -140px; left: 0; width: 100vw; height: 420px; background: radial-gradient(ellipse 90% 75% at 35% 80%, rgba(19, 136, 8, 0.6) 0%, rgba(4, 120, 60, 0.32) 45%, transparent 75%); filter: blur(90px); pointer-events: none; z-index: 1;"></div>
+        
+        <!-- 4. Soft Frosted Vignette for Ultra Contrast -->
+        <div style="position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(3, 7, 18, 0.25) 0%, rgba(3, 7, 18, 0.72) 100%); pointer-events: none; z-index: 2;"></div>
+
+        <!-- Content Container (Elevated Above Tricolor Mesh) -->
+        <div style="position: relative; z-index: 10; width: 100%; display: flex; flex-direction: column; align-items: center;">
         
         <!-- Header & Branding -->
         <div style="text-align: center; margin-bottom: clamp(20px, 4vh, 36px); max-width: 620px; width: 100%;">
-          <!-- Official Government of India & MDoNER Seal -->
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 14px; gap: 6px;">
-            <img src="${GOVT_INDIA_EMBLEM}" alt="Government of India & MDoNER Emblem" style="width: 72px; height: 72px; filter: drop-shadow(0 0 16px rgba(234, 179, 8, 0.45));" />
+          <!-- Official Government of India & MDoNER Installed Logos -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px; gap: 8px;">
+            <div style="width: 76px; height: 76px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 28px rgba(255, 153, 51, 0.55), 0 0 0 3px #ff9933, 0 0 0 5px #138808; padding: 7px; box-sizing: border-box;">
+              <img src="/emblem-of-india.svg" alt="State Emblem of India" style="height: 100%; width: auto; object-fit: contain;" />
+            </div>
+
             <div style="text-align: center;">
-              <div style="font-size: 13px; font-weight: 900; letter-spacing: 1.5px; color: #facc15; text-transform: uppercase;">
+              <div style="font-size: 13px; font-weight: 900; letter-spacing: 2px; color: #ff9933; text-transform: uppercase;">
                 GOVERNMENT OF INDIA
               </div>
-              <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: #38bdf8; text-transform: uppercase; margin-top: 2px;">
+              <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: #ffffff; text-transform: uppercase; margin-top: 2px;">
                 MINISTRY OF DEVELOPMENT OF NORTH EASTERN REGION (MDoNER)
               </div>
-              <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: #94a3b8; text-transform: uppercase; margin-top: 2px;">
-                SMART INDIA HACKATHON 2026 &bull; PROBLEM STATEMENT SIH 26001
+              <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; background: rgba(19, 136, 8, 0.2); border: 1px solid rgba(19, 136, 8, 0.5); padding: 3px 12px; border-radius: 20px;">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #22c55e;"></span>
+                <span style="font-size: 9.5px; font-weight: 800; letter-spacing: 0.6px; color: #4ade80; text-transform: uppercase;">
+                  SMART INDIA HACKATHON 2026 &bull; SIH 26001
+                </span>
               </div>
             </div>
           </div>
@@ -68,23 +89,25 @@ export class RoleSelectScreen {
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 420px)); gap: 20px; width: 100%; max-width: 900px; justify-content: center; margin-bottom: 28px; box-sizing: border-box;">
           
           <!-- Role A: Government / Admin -->
-          <div class="role-selection-card" style="background: linear-gradient(180deg, #0b1120 0%, #050811 100%); border: 1px solid #1e293b; border-radius: 16px; padding: clamp(20px, 4vw, 26px) clamp(16px, 3.5vw, 22px); display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease; box-shadow: 0 12px 36px rgba(0,0,0,0.6); position: relative; overflow: hidden; box-sizing: border-box; width: 100%;">
+          <div class="role-selection-card" style="background: rgba(11, 17, 32, 0.85); backdrop-filter: blur(16px); border: 1px solid #1e293b; border-radius: 16px; padding: clamp(20px, 4vw, 26px) clamp(16px, 3.5vw, 22px); display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease; box-shadow: 0 12px 36px rgba(0,0,0,0.6); position: relative; overflow: hidden; box-sizing: border-box; width: 100%;">
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #0284c7, #38bdf8);"></div>
             
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <img src="${GOVT_INDIA_EMBLEM}" alt="Government Emblem" style="width: 42px; height: 42px; filter: drop-shadow(0 0 10px rgba(234, 179, 8, 0.45)); flex-shrink: 0;" />
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 46px; height: 46px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 16px rgba(255, 153, 51, 0.5), 0 0 0 2px #ff9933; padding: 4px; box-sizing: border-box; flex-shrink: 0;">
+                    <img src="/emblem-of-india.svg" alt="State Emblem of India" style="height: 100%; width: auto; object-fit: contain;" />
+                  </div>
                   <div>
-                    <span style="background: #0284c720; border: 1px solid #0284c7; color: #38bdf8; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span style="background: rgba(2, 132, 199, 0.2); border: 1px solid #0284c7; color: #38bdf8; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
                       OFFICIAL PORTAL
                     </span>
-                    <div style="font-size: 9px; font-weight: 700; color: #eab308; margin-top: 2px; letter-spacing: 0.4px;">
+                    <div style="font-size: 10px; font-weight: 800; color: #ff9933; margin-top: 2px; letter-spacing: 0.4px;">
                       MDoNER &bull; NDRF &bull; SDMA
                     </div>
                   </div>
                 </div>
-                <span style="background: rgba(2, 132, 199, 0.15); border: 1px solid rgba(2, 132, 199, 0.4); padding: 3px 8px; border-radius: 6px; color: #38bdf8; font-weight: 800; font-size: 10px; letter-spacing: 0.5px;">
+                <span style="background: rgba(255, 153, 51, 0.15); border: 1px solid rgba(255, 153, 51, 0.4); padding: 4px 10px; border-radius: 6px; color: #ff9933; font-weight: 800; font-size: 10px; letter-spacing: 0.5px;">
                   RESTRICTED
                 </span>
               </div>
@@ -121,7 +144,7 @@ export class RoleSelectScreen {
           </div>
 
           <!-- Role B: Citizen Portal -->
-          <div class="role-selection-card" style="background: linear-gradient(180deg, #0b1120 0%, #050811 100%); border: 1px solid #1e293b; border-radius: 16px; padding: clamp(20px, 4vw, 26px) clamp(16px, 3.5vw, 22px); display: flex; flex-direction: column; justify-content: space-between; transition: all 0.25s ease; box-shadow: 0 12px 36px rgba(0,0,0,0.6); position: relative; overflow: hidden; box-sizing: border-box; width: 100%;">
+          <div class="role-selection-card" style="background: rgba(11, 17, 32, 0.85); backdrop-filter: blur(16px); border: 1px solid #1e293b; border-radius: 16px; padding: clamp(20px, 4vw, 26px) clamp(16px, 3.5vw, 22px); display: flex; flex-direction: column; justify-content: space-between; transition: all 0.25s ease; box-shadow: 0 12px 36px rgba(0,0,0,0.6); position: relative; overflow: hidden; box-sizing: border-box; width: 100%;">
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #22c55e, #10b981);"></div>
             
             <div>
@@ -166,9 +189,11 @@ export class RoleSelectScreen {
         </div>
 
         <!-- Footer Info -->
-        <div style="text-align: center; font-size: 11px; color: #64748b; max-width: 600px; padding: 0 10px;">
+        <div style="text-align: center; font-size: 11px; color: #cbd5e1; max-width: 600px; padding: 0 10px; text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
           Smart India Hackathon 2026 &bull; SIH 26001 Prototype &bull; Zero login or registration required.
         </div>
+
+        </div><!-- End elevated content container -->
 
       </div>
 
@@ -213,7 +238,16 @@ export class RoleSelectScreen {
     const allStates: NerState[] = ['Sikkim', 'Meghalaya', 'Assam', 'Manipur', 'Mizoram', 'Nagaland', 'Arunachal Pradesh', 'Tripura'];
 
     container.innerHTML = `
-      <div id="citizen-setup-scroll-container" style="min-height: 100vh; min-height: 100dvh; width: 100%; background: radial-gradient(circle at 50% 15%, #0c192e 0%, #020617 100%); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: clamp(20px, 4vw, 36px) clamp(12px, 3.5vw, 20px) 90px; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; color: #f8fafc; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;">
+      <div id="citizen-setup-scroll-container" style="min-height: 100vh; min-height: 100dvh; width: 100%; position: relative; background: #030712; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: clamp(20px, 4vw, 36px) clamp(12px, 3.5vw, 20px) 90px; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; color: #f8fafc; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;">
+        
+        <!-- Blurry Indian Tricolor Flag Background Mesh Layers -->
+        <div style="position: fixed; top: -140px; left: 0; width: 100vw; height: 400px; background: radial-gradient(ellipse 90% 75% at 30% 20%, rgba(255, 120, 20, 0.55) 0%, rgba(255, 153, 51, 0.3) 45%, transparent 75%); filter: blur(90px); pointer-events: none; z-index: 1;"></div>
+        <div style="position: fixed; top: 30%; left: 0; width: 100vw; height: 350px; background: radial-gradient(ellipse 85% 65% at 70% 50%, rgba(255, 255, 255, 0.3) 0%, rgba(37, 99, 235, 0.25) 45%, transparent 75%); filter: blur(100px); pointer-events: none; z-index: 1;"></div>
+        <div style="position: fixed; bottom: -140px; left: 0; width: 100vw; height: 400px; background: radial-gradient(ellipse 90% 75% at 35% 80%, rgba(19, 136, 8, 0.58) 0%, rgba(4, 120, 60, 0.3) 45%, transparent 75%); filter: blur(90px); pointer-events: none; z-index: 1;"></div>
+        <div style="position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(3, 7, 18, 0.25) 0%, rgba(3, 7, 18, 0.72) 100%); pointer-events: none; z-index: 2;"></div>
+
+        <!-- Elevate content above mesh -->
+        <div style="position: relative; z-index: 10; width: 100%; display: flex; flex-direction: column; align-items: center;">
         
         <div style="width: 100%; max-width: 480px; background: #0b1120; border: 1px solid #1e293b; border-radius: 18px; padding: clamp(20px, 4vw, 28px) clamp(16px, 3.5vw, 24px); box-shadow: 0 16px 40px rgba(0,0,0,0.7); box-sizing: border-box; position: relative;">
           
@@ -285,6 +319,7 @@ export class RoleSelectScreen {
 
         </div>
 
+        </div><!-- End elevated citizen setup wrapper -->
       </div>
     `;
 
